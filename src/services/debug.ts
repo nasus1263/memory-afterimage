@@ -28,7 +28,8 @@ export function getDummyAudio(durationSec = 5): Blob {
 const KEY = 'memory_debug_mode'
 
 export function isDebugMode(): boolean {
-  return localStorage.getItem(KEY) === 'true'
+  const v = localStorage.getItem(KEY)
+  return v === null ? true : v === 'true' // default ON
 }
 
 export function setDebugMode(on: boolean) {

@@ -1,4 +1,5 @@
 import type { ApiKeys, ModelConfig } from '../types'
+import { isDebugMode, getDummyImage } from './debug'
 
 async function imageOpenAI(prompt: string, key: string, onProgress?: (msg: string) => void): Promise<Blob> {
   onProgress?.('DALL-E 3 요청 전송...')
@@ -147,6 +148,7 @@ export async function generateImage(
   keys: ApiKeys,
   onProgress?: (msg: string) => void
 ): Promise<Blob> {
+  if (isDebugMode()) return getDummyImage()
   const { provider, model } = config.image
   if (provider === 'openai') return imageOpenAI(prompt, keys.openai, onProgress)
   if (provider === 'google') return imageGoogle(prompt, model, keys.google, onProgress)
