@@ -104,9 +104,9 @@ export const VIDEO_MODELS = {
 
 // Default: 무료 경로만 사용
 export const DEFAULT_CONFIG = {
-  llm: { provider: 'google' as const, model: 'gemini-2.5-flash' },
+  llm: { provider: 'google' as const, model: 'gemini-2.5-flash-lite' },
   tts: { provider: 'elevenlabs' as const, model: 'eleven_multilingual_v2', voice: 'pNInz6obpgDQGcFmaJgB' },
   image: { provider: 'nvidia' as const, model: 'black-forest-labs/flux.1-dev' },
   video: { provider: 'fal' as const, model: 'fal-ai/ltx-video/image-to-video' },
-  audio: { provider: 'freesound' as const },
+  audio: { provider: 'jamendo' as const },
 }

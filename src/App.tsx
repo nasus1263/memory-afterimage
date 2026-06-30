@@ -14,7 +14,11 @@ const IDLE_PIPELINE: PipelineState = {
 export default function App() {
   const [keys, setKeys] = useState<ApiKeys>(loadKeys)
   const [config, setConfig] = useState<ModelConfig>(loadConfig)
-  const [showSettings, setShowSettings] = useState(false)
+  const [showSettings, setShowSettings] = useState(() => {
+    const visited = localStorage.getItem('memory_visited')
+    if (!visited) localStorage.setItem('memory_visited', '1')
+    return !visited
+  })
   const [userText, setUserText] = useState('')
   const [running, setRunning] = useState(false)
   const [pipelineState, setPipelineState] = useState<PipelineState>(IDLE_PIPELINE)
