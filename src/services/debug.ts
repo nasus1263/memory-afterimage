@@ -2,7 +2,7 @@ export const DUMMY_TEXT = '다낭 해변에서 노을을 봤다'
 export const DUMMY_TTS_TEXT = '황금빛 노을이 물드는 다낭의 바다, 그 순간 나는 세상의 끝에 서 있는 것 같았다.'
 export const DUMMY_IMAGE_PROMPT =
   'Golden sunset over Da Nang beach Vietnam, cinematic painterly warm tones, ocean waves, dreamlike nostalgic memory atmosphere, soft bokeh, wide angle'
-export const DUMMY_AUDIO_KEYWORDS = ['ambient']
+export const DUMMY_AUDIO_KEYWORDS = ['ocean']
 export const DUMMY_LLM_RESULT = {
   refinedText: DUMMY_TTS_TEXT,
   imagePrompt: DUMMY_IMAGE_PROMPT,
