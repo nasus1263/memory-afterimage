@@ -36,12 +36,26 @@ export const TTS_MODELS = {
     { id: 'gemini-3.1-flash-tts-preview', label: 'Gemini 3.1 Flash TTS ✓무료(preview)' },
     { id: 'gemini-2.5-flash-preview-tts', label: 'Gemini 2.5 Flash TTS 유료 $0.30/M' },
   ],
+  // ElevenLabs: model_id + voice_id 분리. 무료 10K chars/월
+  elevenlabs: [
+    { id: 'eleven_multilingual_v2', label: 'Multilingual v2 (한국어 지원·고품질)' },
+    { id: 'eleven_turbo_v2_5', label: 'Turbo v2.5 (저지연·저렴)' },
+    { id: 'eleven_flash_v2_5', label: 'Flash v2.5 (최속·최저가)' },
+  ],
 }
 
-export const TTS_VOICES = {
+export const TTS_VOICES: Record<string, string[]> = {
   openai: ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'],
   google: ['Aoede', 'Charon', 'Fenrir', 'Kore', 'Puck'],
   'local-kokoro': [],
+  // ElevenLabs voice IDs — elevenslabs.io/voice-library 에서 추가 가능
+  elevenlabs: [
+    'JBFqnCBsd6RMkjVDRZzb',  // George
+    '21m00Tcm4TlvDq8ikWAM',  // Rachel
+    'pNInz6obpgDQGcFmaJgB',  // Adam
+    'EXAVITQu4vr4xnSDxMaL',  // Bella
+    'yoZ06aMxZJJ28mfd3POQ',  // Sam
+  ],
 }
 
 export const IMAGE_MODELS = {

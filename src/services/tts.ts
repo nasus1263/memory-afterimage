@@ -91,6 +91,18 @@ function ttsLocal(text: string): TTSResult {
   return { blob, duration }
 }
 
+async function ttsElevenLabs(text: string, model: string, voice: string, key: string): Promise<TTSResult> {
+  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'xi-api-key': key },
+    body: JSON.stringify({ text, model_id: model }),
+  })
+  if (!res.ok) throw new Error(`ElevenLabs TTS ${res.status}: ${await res.text()}`)
+  const blob = await res.blob()
+  const duration = await getBlobDuration(blob)
+  return { blob, duration }
+}
+
 export async function generateTTS(
   text: string,
   config: ModelConfig,
@@ -99,6 +111,7 @@ export async function generateTTS(
   const { provider, model, voice } = config.tts
   if (provider === 'openai') return ttsOpenAI(text, model, voice, keys.openai)
   if (provider === 'google') return ttsGoogle(text, model, voice, keys.google)
+  if (provider === 'elevenlabs') return ttsElevenLabs(text, model, voice, keys.elevenlabs)
   if (provider === 'local-kokoro') return ttsLocal(text)
   throw new Error(`Unknown TTS provider: ${provider}`)
 }
