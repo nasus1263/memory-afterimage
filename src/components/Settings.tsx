@@ -65,6 +65,7 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
         <KeyInput label="OpenAI" value={keys.openai} onChange={(v) => onKeys({ ...keys, openai: v })} />
         <KeyInput label="Anthropic" value={keys.anthropic} onChange={(v) => onKeys({ ...keys, anthropic: v })} hint="※ 브라우저 CORS 제한 있을 수 있음" />
         <KeyInput label="Google AI Studio" value={keys.google} onChange={(v) => onKeys({ ...keys, google: v })} hint="무료 티어 사용 가능" />
+        <KeyInput label="NVIDIA NIM (nvapi-...)" value={keys.nvidia} onChange={(v) => onKeys({ ...keys, nvidia: v })} hint="✓ 무료 1000크레딧 — build.nvidia.com 무료 계정 후 API Keys 탭" />
         <KeyInput label="fal.ai" value={keys.fal} onChange={(v) => onKeys({ ...keys, fal: v })} hint="$20 가입 크레딧 (비즈니스 이메일)" />
         <KeyInput label="Replicate" value={keys.replicate} onChange={(v) => onKeys({ ...keys, replicate: v })} hint="신규 계정 무료 predictions 한도" />
         <KeyInput label="HuggingFace" value={keys.huggingface} onChange={(v) => onKeys({ ...keys, huggingface: v })} hint="✓ 무료 Serverless Inference API (계정 없이도 가능)" />

@@ -13,6 +13,14 @@ export const LLM_MODELS = {
     { id: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite ✓무료·최속' },
     { id: 'gemini-3.1-pro', label: 'Gemini 3.1 Pro 유료·최고품질' },
   ],
+  // NVIDIA NIM: integrate.api.nvidia.com/v1, OpenAI-compatible, nvapi-* key
+  // 무료: 1000 크레딧 / 40 RPM (build.nvidia.com 무료 계정)
+  nvidia: [
+    { id: 'nvidia/llama-3.3-nemotron-super-49b-v1', label: 'Nemotron-Super 49B ✓무료크레딧·NVIDIA 플래그십' },
+    { id: 'meta/llama-3.3-70b-instruct', label: 'Llama 3.3 70B Instruct ✓무료크레딧·고품질' },
+    { id: 'meta/llama-3.1-8b-instruct', label: 'Llama 3.1 8B Instruct ✓무료크레딧·최속' },
+    { id: 'deepseek-ai/deepseek-r1', label: 'DeepSeek R1 ✓무료크레딧·최고추론(크레딧 소모大)' },
+  ],
 }
 
 export const TTS_MODELS = {
@@ -53,6 +61,13 @@ export const IMAGE_MODELS = {
     { id: 'fal-ai/flux-pro', label: 'FLUX Pro ($20 크레딧)' },
     { id: 'fal-ai/flux/dev', label: 'FLUX Dev ($20 크레딧)' },
     { id: 'fal-ai/flux/schnell', label: 'FLUX Schnell ($20 크레딧)' },
+  ],
+  // NVIDIA NIM: integrate.api.nvidia.com/v1/images/generations, OpenAI-compatible
+  // 무료: 1000 크레딧 / 40 RPM (build.nvidia.com 무료 계정)
+  nvidia: [
+    { id: 'black-forest-labs/flux.1-schnell', label: 'FLUX.1 Schnell ✓무료크레딧·최속' },
+    { id: 'black-forest-labs/flux.1-dev', label: 'FLUX.1 Dev ✓무료크레딧·고품질' },
+    { id: 'qwen/qwen-image', label: 'Qwen Image 20B ✓무료크레딧·텍스트렌더링강점' },
   ],
 }
 

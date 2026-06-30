@@ -103,6 +103,28 @@ async function imageFal(prompt: string, model: string, key: string): Promise<Blo
   throw new Error('fal.ai image generation timed out')
 }
 
+const NVIDIA_IMG_BASE = 'https://integrate.api.nvidia.com/v1'
+
+async function imageNvidia(prompt: string, model: string, key: string): Promise<Blob> {
+  const res = await fetch(`${NVIDIA_IMG_BASE}/images/generations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+    body: JSON.stringify({
+      model,
+      prompt,
+      n: 1,
+      size: '1024x576',
+      response_format: 'b64_json',
+    }),
+  })
+  if (!res.ok) throw new Error(`NVIDIA NIM Image error: ${res.status} ${await res.text()}`)
+  const data = await res.json()
+  const b64 = data.data?.[0]?.b64_json
+  if (!b64) throw new Error('No image data in NVIDIA NIM response')
+  const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))
+  return new Blob([bytes], { type: 'image/png' })
+}
+
 export async function generateImage(
   prompt: string,
   config: ModelConfig,
@@ -114,5 +136,6 @@ export async function generateImage(
   if (provider === 'google') return imageGoogle(prompt, model, keys.google)
   if (provider === 'huggingface') return imageHuggingFace(prompt, model, keys.huggingface)
   if (provider === 'fal') return imageFal(prompt, model, keys.fal)
+  if (provider === 'nvidia') return imageNvidia(prompt, model, keys.nvidia)
   throw new Error(`Unknown image provider: ${provider}`)
 }

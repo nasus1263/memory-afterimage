@@ -1,4 +1,4 @@
-import type { ApiKeys, LLMProvider, LLMResult, ModelConfig } from '../types'
+import type { ApiKeys, LLMResult, ModelConfig } from '../types'
 
 const SYSTEM_PROMPT = `You are a creative AI for an immersive memory art installation.
 The user will describe a travel memory. You must output JSON with exactly these fields:
@@ -9,8 +9,13 @@ The user will describe a travel memory. You must output JSON with exactly these 
 }
 Output ONLY the JSON, no markdown, no explanation.`
 
-async function callOpenAI(text: string, model: string, key: string): Promise<LLMResult> {
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+async function callOpenAICompat(
+  text: string,
+  model: string,
+  key: string,
+  baseUrl = 'https://api.openai.com/v1'
+): Promise<LLMResult> {
+  const res = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
     body: JSON.stringify({
@@ -22,7 +27,7 @@ async function callOpenAI(text: string, model: string, key: string): Promise<LLM
       response_format: { type: 'json_object' },
     }),
   })
-  if (!res.ok) throw new Error(`OpenAI LLM error: ${res.status} ${await res.text()}`)
+  if (!res.ok) throw new Error(`LLM error (${baseUrl}): ${res.status} ${await res.text()}`)
   const data = await res.json()
   return JSON.parse(data.choices[0].message.content)
 }
@@ -65,16 +70,17 @@ async function callGoogle(text: string, model: string, key: string): Promise<LLM
   return JSON.parse(data.candidates[0].content.parts[0].text)
 }
 
+const NVIDIA_LLM_BASE = 'https://integrate.api.nvidia.com/v1'
+
 export async function refineMemo(
   userText: string,
   config: ModelConfig,
   keys: ApiKeys
 ): Promise<LLMResult> {
   const { provider, model } = config.llm
-  const providerMap: Record<LLMProvider, () => Promise<LLMResult>> = {
-    openai: () => callOpenAI(userText, model, keys.openai),
-    anthropic: () => callAnthropic(userText, model, keys.anthropic),
-    google: () => callGoogle(userText, model, keys.google),
-  }
-  return providerMap[provider]()
+  if (provider === 'openai') return callOpenAICompat(userText, model, keys.openai)
+  if (provider === 'nvidia') return callOpenAICompat(userText, model, keys.nvidia, NVIDIA_LLM_BASE)
+  if (provider === 'anthropic') return callAnthropic(userText, model, keys.anthropic)
+  if (provider === 'google') return callGoogle(userText, model, keys.google)
+  throw new Error(`Unknown LLM provider: ${provider}`)
 }

@@ -1,6 +1,6 @@
-export type LLMProvider = 'openai' | 'anthropic' | 'google'
+export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'nvidia'
 export type TTSProvider = 'local-kokoro' | 'openai' | 'google'
-export type ImageProvider = 'openai' | 'google' | 'huggingface' | 'fal'
+export type ImageProvider = 'openai' | 'google' | 'huggingface' | 'fal' | 'nvidia'
 export type VidProvider = 'google' | 'fal' | 'replicate'
 export type AudioProvider = 'freesound' | 'jamendo'
 
@@ -8,6 +8,7 @@ export interface ApiKeys {
   openai: string
   anthropic: string
   google: string
+  nvidia: string
   fal: string
   replicate: string
   huggingface: string
