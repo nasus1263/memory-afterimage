@@ -258,6 +258,70 @@ body {
 }
 .reset-btn:hover { border-color: var(--gold-dim); color: var(--text); }
 
+/* API Test */
+.api-test { display: flex; flex-direction: column; gap: 8px; }
+
+.test-row {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+.test-row-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.test-idle   { opacity: 0.6; }
+.test-running { border-color: var(--running); }
+.test-done   { border-color: var(--success); }
+.test-error  { border-color: var(--error); color: var(--error); }
+
+.test-icon { width: 16px; text-align: center; flex-shrink: 0; }
+.test-running .test-icon { animation: spin 1.5s linear infinite; display: inline-block; }
+.test-label { font-weight: 500; }
+.test-msg { font-size: 11px; color: var(--text-dim); margin-left: 4px; }
+
+.test-btn {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--gold-dim);
+  color: var(--gold-dim);
+  border-radius: 3px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.test-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.test-btn:not(:disabled):hover { border-color: var(--gold); color: var(--gold); }
+
+.test-result-text {
+  font-size: 11px;
+  color: var(--text-dim);
+  background: rgba(255,255,255,0.04);
+  border-radius: 3px;
+  padding: 8px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.test-result-media {
+  width: 100%;
+  max-height: 200px;
+  border-radius: 3px;
+  object-fit: contain;
+  background: #000;
+}
+
 /* Debug */
 .debug-banner {
   background: rgba(106, 158, 207, 0.12);

@@ -5,6 +5,7 @@ import {
   IMAGE_MODELS, VIDEO_MODELS,
 } from '../config/models'
 import { isDebugMode, setDebugMode } from '../services/debug'
+import { ApiTest } from './ApiTest'
 
 interface Props {
   keys: ApiKeys
@@ -175,6 +176,11 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
             <option value="jamendo">Jamendo ✓무료 (developers.jamendo.com)</option>
           </select>
         </div>
+      </section>
+
+      <section>
+        <h3>API 테스트</h3>
+        <ApiTest keys={keys} config={config} />
       </section>
     </div>
   )
