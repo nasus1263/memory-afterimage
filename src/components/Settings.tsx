@@ -45,11 +45,11 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
         <KeyInput label="OpenAI" value={keys.openai} onChange={(v) => onKeys({ ...keys, openai: v })} />
         <KeyInput label="Anthropic" value={keys.anthropic} onChange={(v) => onKeys({ ...keys, anthropic: v })} hint="※ 브라우저 CORS 제한 있을 수 있음" />
         <KeyInput label="Google AI Studio" value={keys.google} onChange={(v) => onKeys({ ...keys, google: v })} hint="무료 티어 사용 가능" />
-        <KeyInput label="fal.ai" value={keys.fal} onChange={(v) => onKeys({ ...keys, fal: v })} hint="$10 가입 크레딧" />
-        <KeyInput label="Replicate" value={keys.replicate} onChange={(v) => onKeys({ ...keys, replicate: v })} />
-        <KeyInput label="HuggingFace" value={keys.huggingface} onChange={(v) => onKeys({ ...keys, huggingface: v })} hint="무료 Inference API" />
-        <KeyInput label="Freesound" value={keys.freesound} onChange={(v) => onKeys({ ...keys, freesound: v })} hint="무료 등록 필요 — freesound.org" />
-        <KeyInput label="Pixabay" value={keys.pixabay} onChange={(v) => onKeys({ ...keys, pixabay: v })} hint="무료 등록 필요 — pixabay.com" />
+        <KeyInput label="fal.ai" value={keys.fal} onChange={(v) => onKeys({ ...keys, fal: v })} hint="$20 가입 크레딧 (비즈니스 이메일)" />
+        <KeyInput label="Replicate" value={keys.replicate} onChange={(v) => onKeys({ ...keys, replicate: v })} hint="신규 계정 무료 predictions 한도" />
+        <KeyInput label="HuggingFace" value={keys.huggingface} onChange={(v) => onKeys({ ...keys, huggingface: v })} hint="✓ 무료 Serverless Inference API (계정 없이도 가능)" />
+        <KeyInput label="Freesound" value={keys.freesound} onChange={(v) => onKeys({ ...keys, freesound: v })} hint="✓ 무료 — freesound.org 계정 후 /apiv2/apply 에서 키 발급" />
+        <KeyInput label="Jamendo" value={keys.jamendo} onChange={(v) => onKeys({ ...keys, jamendo: v })} hint="✓ 무료 — developers.jamendo.com 에서 client_id 발급" />
       </section>
 
       <section>
@@ -150,8 +150,8 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
             value={config.audio.provider}
             onChange={(e) => onConfig({ ...config, audio: { provider: e.target.value as any } })}
           >
-            <option value="freesound">Freesound (무료 등록)</option>
-            <option value="pixabay">Pixabay (무료 등록)</option>
+            <option value="freesound">Freesound ✓무료 (freesound.org)</option>
+            <option value="jamendo">Jamendo ✓무료 (developers.jamendo.com)</option>
           </select>
         </div>
       </section>

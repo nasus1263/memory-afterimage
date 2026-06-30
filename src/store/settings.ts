@@ -7,7 +7,7 @@ const CONFIG_KEY = 'memory_afterimage_config'
 const DEFAULT_KEYS: ApiKeys = {
   openai: '', anthropic: '', google: '',
   fal: '', replicate: '', huggingface: '',
-  freesound: '', pixabay: '',
+  freesound: '', jamendo: '',
 }
 
 export function loadKeys(): ApiKeys {

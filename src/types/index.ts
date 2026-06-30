@@ -2,7 +2,7 @@ export type LLMProvider = 'openai' | 'anthropic' | 'google'
 export type TTSProvider = 'local-kokoro' | 'openai' | 'google'
 export type ImageProvider = 'openai' | 'google' | 'huggingface' | 'fal'
 export type VidProvider = 'google' | 'fal' | 'replicate'
-export type AudioProvider = 'freesound' | 'pixabay'
+export type AudioProvider = 'freesound' | 'jamendo'
 
 export interface ApiKeys {
   openai: string
@@ -12,7 +12,7 @@ export interface ApiKeys {
   replicate: string
   huggingface: string
   freesound: string
-  pixabay: string
+  jamendo: string
 }
 
 export interface ModelConfig {

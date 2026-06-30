@@ -8,31 +8,31 @@ export const LLM_MODELS = {
     { id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5 (저렴)' },
   ],
   google: [
-    { id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash (무료)' },
-    { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (무료)' },
-    { id: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite (무료·최속)' },
-    { id: 'gemini-3.1-pro', label: 'Gemini 3.1 Pro (유료·최고품질)' },
+    { id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash ✓무료 15RPM/1500RPD' },
+    { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash ✓무료 10RPM/1500RPD' },
+    { id: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite ✓무료·최속' },
+    { id: 'gemini-3.1-pro', label: 'Gemini 3.1 Pro 유료·최고품질' },
   ],
 }
 
 export const TTS_MODELS = {
   'local-kokoro': [
-    { id: 'kokoro-82m', label: 'Kokoro 82M (로컬·무료·Apache 2.0)' },
+    { id: 'local', label: '브라우저 Web Speech API ✓무료·오프라인 (녹음 불가 — 음성은 스피커 재생)' },
   ],
   openai: [
     { id: 'tts-1', label: 'TTS-1 (빠름)' },
     { id: 'tts-1-hd', label: 'TTS-1 HD (고품질)' },
   ],
   google: [
-    { id: 'gemini-3.1-flash-tts', label: 'Gemini 3.1 Flash TTS (최신)' },
-    { id: 'gemini-2.5-flash-preview-tts', label: 'Gemini 2.5 Flash TTS' },
+    { id: 'gemini-3.1-flash-tts-preview', label: 'Gemini 3.1 Flash TTS ✓무료(preview)' },
+    { id: 'gemini-2.5-flash-preview-tts', label: 'Gemini 2.5 Flash TTS 유료 $0.30/M' },
   ],
 }
 
 export const TTS_VOICES = {
   openai: ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'],
   google: ['Aoede', 'Charon', 'Fenrir', 'Kore', 'Puck'],
-  'local-kokoro': ['af_heart', 'af_bella', 'am_adam', 'bf_emma', 'bm_george'],
+  'local-kokoro': [],
 }
 
 export const IMAGE_MODELS = {
@@ -40,41 +40,43 @@ export const IMAGE_MODELS = {
     { id: 'dall-e-3', label: 'DALL-E 3' },
   ],
   google: [
-    { id: 'imagen-4-fast', label: 'Imagen 4 Fast (무료·빠름)' },
-    { id: 'imagen-4', label: 'Imagen 4' },
-    { id: 'imagen-4-ultra', label: 'Imagen 4 Ultra (최고품질)' },
+    // Imagen 4 deprecated 2026-06-24 → 대체: Gemini image generation
+    { id: 'gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash Image ✓무료(free tier)' },
+    { id: 'imagen-4-fast', label: 'Imagen 4 Fast ⚠deprecated 2026-06-24 / 2 IPM' },
+    { id: 'imagen-4-ultra', label: 'Imagen 4 Ultra ⚠deprecated 2026-06-24' },
   ],
   huggingface: [
-    { id: 'black-forest-labs/FLUX.1-schnell', label: 'FLUX.1 Schnell (무료)' },
-    { id: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'SDXL (무료)' },
+    { id: 'black-forest-labs/FLUX.1-schnell', label: 'FLUX.1 Schnell ✓무료(rate-limited)' },
+    { id: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'SDXL ✓무료(rate-limited)' },
   ],
   fal: [
-    { id: 'fal-ai/flux-pro', label: 'FLUX Pro (크레딧)' },
-    { id: 'fal-ai/flux/dev', label: 'FLUX Dev (크레딧)' },
-    { id: 'fal-ai/flux/schnell', label: 'FLUX Schnell (크레딧)' },
+    { id: 'fal-ai/flux-pro', label: 'FLUX Pro ($20 크레딧)' },
+    { id: 'fal-ai/flux/dev', label: 'FLUX Dev ($20 크레딧)' },
+    { id: 'fal-ai/flux/schnell', label: 'FLUX Schnell ($20 크레딧)' },
   ],
 }
 
 export const VIDEO_MODELS = {
   google: [
-    { id: 'veo-3.1', label: 'Veo 3.1 (최신)' },
-    { id: 'veo-3.1-lite', label: 'Veo 3.1 Lite (저렴)' },
-    { id: 'veo-3', label: 'Veo 3' },
+    { id: 'veo-3.1', label: 'Veo 3.1 유료 ~$0.50/5s' },
+    { id: 'veo-3.1-lite', label: 'Veo 3.1 Lite 유료 (저렴)' },
+    { id: 'veo-3', label: 'Veo 3 유료' },
   ],
   fal: [
-    { id: 'fal-ai/wan/i2v-14b', label: 'Wan 2.2 I2V (크레딧·Apache 2.0)' },
-    { id: 'fal-ai/ltx-video/image-to-video', label: 'LTX-Video (크레딧·빠름)' },
+    { id: 'fal-ai/wan/i2v-14b', label: 'Wan 2.2 I2V ($20 크레딧·Apache 2.0)' },
+    { id: 'fal-ai/ltx-video/image-to-video', label: 'LTX-Video ($20 크레딧·빠름)' },
   ],
   replicate: [
-    { id: 'stability-ai/stable-video-diffusion', label: 'SVD (무료 predictions)' },
+    { id: 'stability-ai/stable-video-diffusion', label: 'SVD on Replicate (신규계정 무료예측 한도)' },
     { id: 'lightricks/ltx-video', label: 'LTX-Video on Replicate' },
   ],
 }
 
+// Default: 무료 경로만 사용
 export const DEFAULT_CONFIG = {
   llm: { provider: 'google' as const, model: 'gemini-2.5-flash' },
-  tts: { provider: 'google' as const, model: 'gemini-2.5-flash-preview-tts', voice: 'Aoede' },
-  image: { provider: 'google' as const, model: 'imagen-4-fast' },
+  tts: { provider: 'google' as const, model: 'gemini-3.1-flash-tts-preview', voice: 'Aoede' },
+  image: { provider: 'huggingface' as const, model: 'black-forest-labs/FLUX.1-schnell' },
   video: { provider: 'fal' as const, model: 'fal-ai/ltx-video/image-to-video' },
   audio: { provider: 'freesound' as const },
 }

@@ -3,7 +3,7 @@ import type { ApiKeys, ModelConfig } from '../types'
 async function searchFreesound(keywords: string[], key: string): Promise<Blob> {
   const query = keywords.join(' ')
   const res = await fetch(
-    `https://freesound.org/apiv2/search/text/?query=${encodeURIComponent(query)}&fields=id,name,previews&filter=duration:[5 TO 120]&page_size=5&token=${key}`
+    `https://freesound.org/apiv2/search/text/?query=${encodeURIComponent(query)}&fields=id,name,previews&filter=duration:[10 TO 120]&page_size=5&token=${key}`
   )
   if (!res.ok) throw new Error(`Freesound search error: ${res.status}`)
   const data = await res.json()
@@ -13,28 +13,27 @@ async function searchFreesound(keywords: string[], key: string): Promise<Blob> {
   const previewUrl = sound.previews?.['preview-hq-mp3'] ?? sound.previews?.['preview-lq-mp3']
   if (!previewUrl) throw new Error('No Freesound preview URL')
 
-  // Freesound previews require auth token in URL
   const audioRes = await fetch(`${previewUrl}?token=${key}`)
   if (!audioRes.ok) throw new Error(`Freesound download error: ${audioRes.status}`)
   return audioRes.blob()
 }
 
-async function searchPixabay(keywords: string[], key: string): Promise<Blob> {
-  const query = keywords.slice(0, 2).join(' ')
+// Jamendo: free music API with ambient/soundtrack tracks
+async function searchJamendo(keywords: string[], key: string): Promise<Blob> {
+  const tags = keywords.join('+')
   const res = await fetch(
-    `https://pixabay.com/api/music/?key=${key}&q=${encodeURIComponent(query)}&order=popular`
+    `https://api.jamendo.com/v3.0/tracks/?client_id=${key}&format=json&limit=5&tags=${encodeURIComponent(tags)}&audioformat=mp32&include=musicinfo&groupby=artist_id`
   )
-  if (!res.ok) throw new Error(`Pixabay search error: ${res.status}`)
+  if (!res.ok) throw new Error(`Jamendo search error: ${res.status}`)
   const data = await res.json()
-  if (!data.hits?.length) throw new Error('No Pixabay results')
+  if (!data.results?.length) throw new Error('No Jamendo results')
 
-  // Pixabay music hits have audio URL
-  const hit = data.hits[0]
-  const audioUrl = hit.audio ?? hit.downloads?.mp3
-  if (!audioUrl) throw new Error('No Pixabay audio URL')
+  const track = data.results[0]
+  const audioUrl = track.audiodownload ?? track.audio
+  if (!audioUrl) throw new Error('No Jamendo audio URL')
 
   const audioRes = await fetch(audioUrl)
-  if (!audioRes.ok) throw new Error(`Pixabay download error: ${audioRes.status}`)
+  if (!audioRes.ok) throw new Error(`Jamendo download error: ${audioRes.status}`)
   return audioRes.blob()
 }
 
@@ -49,9 +48,9 @@ export async function fetchAmbientAudio(
       if (!keys.freesound) throw new Error('Freesound API key missing')
       return await searchFreesound(keywords, keys.freesound)
     }
-    if (provider === 'pixabay') {
-      if (!keys.pixabay) throw new Error('Pixabay API key missing')
-      return await searchPixabay(keywords, keys.pixabay)
+    if (provider === 'jamendo') {
+      if (!keys.jamendo) throw new Error('Jamendo client_id missing')
+      return await searchJamendo(keywords, keys.jamendo)
     }
   } catch (e) {
     console.warn('Ambient audio fetch failed, continuing without:', e)

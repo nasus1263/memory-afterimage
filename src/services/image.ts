@@ -19,22 +19,43 @@ async function imageOpenAI(prompt: string, key: string): Promise<Blob> {
 }
 
 async function imageGoogle(prompt: string, model: string, key: string): Promise<Blob> {
-  const endpoint = model.includes('imagen-4')
-    ? `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${key}`
-    : `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateImages?key=${key}`
+  // Gemini native image generation (gemini-2.0-flash-exp etc.)
+  if (model.startsWith('gemini-')) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
+        }),
+      }
+    )
+    if (!res.ok) throw new Error(`Google Gemini Image error: ${res.status} ${await res.text()}`)
+    const data = await res.json()
+    const part = data.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData)
+    if (!part?.inlineData) throw new Error('No image in Gemini response')
+    const bytes = Uint8Array.from(atob(part.inlineData.data), (c) => c.charCodeAt(0))
+    return new Blob([bytes], { type: part.inlineData.mimeType || 'image/png' })
+  }
 
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      instances: [{ prompt }],
-      parameters: { sampleCount: 1, aspectRatio: '16:9' },
-    }),
-  })
-  if (!res.ok) throw new Error(`Google Image error: ${res.status} ${await res.text()}`)
+  // Imagen 4 (deprecated 2026-06-24 — may return 404)
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${key}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        instances: [{ prompt }],
+        parameters: { sampleCount: 1, aspectRatio: '16:9' },
+      }),
+    }
+  )
+  if (!res.ok) throw new Error(`Google Imagen error: ${res.status} ${await res.text()}`)
   const data = await res.json()
-  const b64 = data.predictions?.[0]?.bytesBase64Encoded ?? data.images?.[0]?.imageBytes
-  if (!b64) throw new Error('No image data in Google response')
+  const b64 = data.predictions?.[0]?.bytesBase64Encoded
+  if (!b64) throw new Error('No image data in Imagen response')
   const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))
   return new Blob([bytes], { type: 'image/png' })
 }
