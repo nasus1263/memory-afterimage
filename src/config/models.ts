@@ -92,7 +92,7 @@ export const VIDEO_MODELS = {
 export const DEFAULT_CONFIG = {
   llm: { provider: 'google' as const, model: 'gemini-2.5-flash' },
   tts: { provider: 'google' as const, model: 'gemini-3.1-flash-tts-preview', voice: 'Aoede' },
-  image: { provider: 'huggingface' as const, model: 'black-forest-labs/FLUX.1-schnell' },
+  image: { provider: 'nvidia' as const, model: 'black-forest-labs/flux.1-dev' },
   video: { provider: 'fal' as const, model: 'fal-ai/ltx-video/image-to-video' },
   audio: { provider: 'freesound' as const },
 }

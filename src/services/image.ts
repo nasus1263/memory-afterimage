@@ -103,26 +103,29 @@ async function imageFal(prompt: string, model: string, key: string): Promise<Blo
   throw new Error('fal.ai image generation timed out')
 }
 
-const NVIDIA_IMG_BASE = import.meta.env.DEV
-  ? '/nvidia-nim/v1'
-  : 'https://integrate.api.nvidia.com/v1'
+// ai.api.nvidia.com/v1/genai/{model} — response: artifacts[0].base64_string
+const NVIDIA_GENAI_BASE = import.meta.env.DEV
+  ? '/nvidia-genai'
+  : 'https://ai.api.nvidia.com'
 
 async function imageNvidia(prompt: string, model: string, key: string): Promise<Blob> {
-  const res = await fetch(`${NVIDIA_IMG_BASE}/images/generations`, {
+  const res = await fetch(`${NVIDIA_GENAI_BASE}/v1/genai/${model}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
     body: JSON.stringify({
-      model,
       prompt,
-      n: 1,
-      size: '1024x576',
-      response_format: 'b64_json',
+      mode: 'base',
+      cfg_scale: 3.5,
+      width: 1024,
+      height: 576,
+      seed: 0,
+      steps: 50,
     }),
   })
-  if (!res.ok) throw new Error(`NVIDIA NIM Image error: ${res.status} ${await res.text()}`)
+  if (!res.ok) throw new Error(`NVIDIA GenAI Image error: ${res.status} ${await res.text()}`)
   const data = await res.json()
-  const b64 = data.data?.[0]?.b64_json
-  if (!b64) throw new Error('No image data in NVIDIA NIM response')
+  const b64 = data.artifacts?.[0]?.base64_string
+  if (!b64) throw new Error('No image data in NVIDIA GenAI response')
   const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))
   return new Blob([bytes], { type: 'image/png' })
 }
