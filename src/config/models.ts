@@ -16,10 +16,11 @@ export const LLM_MODELS = {
   // NVIDIA NIM: integrate.api.nvidia.com/v1, OpenAI-compatible, nvapi-* key
   // 무료: 1000 크레딧 / 40 RPM (build.nvidia.com 무료 계정)
   nvidia: [
+    { id: 'deepseek-ai/deepseek-v4-pro', label: 'DeepSeek V4 Pro ✓무료크레딧·최신·최고품질' },
     { id: 'nvidia/llama-3.3-nemotron-super-49b-v1', label: 'Nemotron-Super 49B ✓무료크레딧·NVIDIA 플래그십' },
     { id: 'meta/llama-3.3-70b-instruct', label: 'Llama 3.3 70B Instruct ✓무료크레딧·고품질' },
     { id: 'meta/llama-3.1-8b-instruct', label: 'Llama 3.1 8B Instruct ✓무료크레딧·최속' },
-    { id: 'deepseek-ai/deepseek-r1', label: 'DeepSeek R1 ✓무료크레딧·최고추론(크레딧 소모大)' },
+    { id: 'deepseek-ai/deepseek-r1', label: 'DeepSeek R1 ✓무료크레딧·추론특화(크레딧 소모大)' },
   ],
 }
 
