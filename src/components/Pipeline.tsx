@@ -47,8 +47,10 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
     const setMsg = makeSetMsg(setState)
 
     async function run() {
+      let currentStage: Stage = 'refine'
       try {
         // ── 1. LLM 다듬기 ──────────────────────────────
+        currentStage = 'refine'
         set(setState, stageStatus({ refine: 'running' }))
         setMsg('refine', 'API 요청 전송...')
         const llmResult = await refineMemo(userText, config, keys)
@@ -56,6 +58,7 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
         set(setState, { ...stageStatus({ refine: 'done' }), llmResult })
 
         // ── 2. TTS / 이미지 / 오디오 병렬 ──────────────
+        currentStage = 'tts'
         set(setState, stageStatus({ tts: 'running', image: 'running', audio: 'running' }))
         setMsg('tts', '음성 합성 요청...')
         setMsg('image', '이미지 생성 요청...')
@@ -87,6 +90,7 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
         if (!ambBlob) setMsg('audio', '오디오 없음 (건너뜀)')
 
         // ── 3. img → vid ──────────────────────────────
+        currentStage = 'imgToVid'
         set(setState, stageStatus({ imgToVid: 'running' }))
         setMsg('imgToVid', '비디오 생성 요청...')
         const videoBlob = await generateVideo(
@@ -97,6 +101,7 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
         set(setState, { ...stageStatus({ imgToVid: 'done' }), videoBlob })
 
         // ── 4. ffmpeg 합성 ────────────────────────────
+        currentStage = 'compose'
         set(setState, stageStatus({ compose: 'running' }))
         setMsg('compose', 'ffmpeg.wasm 로드 중...')
         const finalBlob = await composeVideo(
@@ -108,10 +113,8 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
         set(setState, { ...stageStatus({ compose: 'done' }), finalBlob })
       } catch (e: any) {
         const msg = e?.message ?? String(e)
-        const failStage = (
-          ['refine', 'tts', 'image', 'imgToVid', 'compose'] as Stage[]
-        ).find((s) => msg.toLowerCase().startsWith(s.toLowerCase())) ?? 'compose'
-        set(setState, { [failStage]: 'error' as StageStatus, error: msg })
+        set(setState, { [currentStage]: 'error' as StageStatus, error: msg })
+        setMsg(currentStage, `오류: ${msg}`)
       }
     }
 
