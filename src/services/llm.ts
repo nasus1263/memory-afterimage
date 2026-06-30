@@ -70,7 +70,11 @@ async function callGoogle(text: string, model: string, key: string): Promise<LLM
   return JSON.parse(data.candidates[0].content.parts[0].text)
 }
 
-const NVIDIA_LLM_BASE = 'https://integrate.api.nvidia.com/v1'
+// Dev: Vite proxy (/nvidia-nim → https://integrate.api.nvidia.com)
+// Prod: direct call will CORS-fail — needs a reverse proxy
+const NVIDIA_LLM_BASE = import.meta.env.DEV
+  ? '/nvidia-nim/v1'
+  : 'https://integrate.api.nvidia.com/v1'
 
 export async function refineMemo(
   userText: string,

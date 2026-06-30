@@ -103,7 +103,9 @@ async function imageFal(prompt: string, model: string, key: string): Promise<Blo
   throw new Error('fal.ai image generation timed out')
 }
 
-const NVIDIA_IMG_BASE = 'https://integrate.api.nvidia.com/v1'
+const NVIDIA_IMG_BASE = import.meta.env.DEV
+  ? '/nvidia-nim/v1'
+  : 'https://integrate.api.nvidia.com/v1'
 
 async function imageNvidia(prompt: string, model: string, key: string): Promise<Blob> {
   const res = await fetch(`${NVIDIA_IMG_BASE}/images/generations`, {
