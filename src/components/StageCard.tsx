@@ -19,13 +19,17 @@ const ICON: Record<StageStatus, string> = {
 interface Props {
   stage: string
   status: StageStatus
+  message?: string
 }
 
-export function StageCard({ stage, status }: Props) {
+export function StageCard({ stage, status, message }: Props) {
   return (
     <div className={`stage-card stage-${status}`}>
       <span className="stage-icon">{ICON[status]}</span>
-      <span className="stage-label">{LABEL[stage] ?? stage}</span>
+      <div className="stage-info">
+        <span className="stage-label">{LABEL[stage] ?? stage}</span>
+        {message && <span className="stage-msg">{message}</span>}
+      </div>
     </div>
   )
 }

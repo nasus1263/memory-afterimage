@@ -21,16 +21,20 @@ export async function composeVideo(
   ttsBlob: Blob,
   ambientBlob: Blob | null,
   ttsDuration: number,
-  onProgress?: (p: number) => void
+  onProgress?: (p: number) => void,
+  onMessage?: (msg: string) => void
 ): Promise<Blob> {
+  onMessage?.('ffmpeg.wasm 로드 중...')
   const ff = await getFFmpeg(onProgress)
   const total = ttsDuration + 2
 
+  onMessage?.('파일 기록 중...')
   ff.writeFile('src_video.mp4', await fetchFile(videoBlob))
   ff.writeFile('tts.mp3', await fetchFile(ttsBlob))
   if (ambientBlob) ff.writeFile('ambient.mp3', await fetchFile(ambientBlob))
 
   // Step 1: loop source video to total duration
+  onMessage?.('비디오 루프 생성...')
   await ff.exec([
     '-stream_loop', '-1',
     '-i', 'src_video.mp4',
@@ -40,6 +44,7 @@ export async function composeVideo(
   ])
 
   // Step 2: build audio mix
+  onMessage?.('오디오 믹싱...')
   if (ambientBlob) {
     await ff.exec([
       '-i', 'tts.mp3',
@@ -61,6 +66,7 @@ export async function composeVideo(
   }
 
   // Step 3: mux video + audio → mp4
+  onMessage?.('최종 인코딩...')
   await ff.exec([
     '-i', 'looped.mp4',
     '-i', 'mixed.mp3',

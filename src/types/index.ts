@@ -32,6 +32,15 @@ export interface LLMResult {
 
 export type StageStatus = 'idle' | 'running' | 'done' | 'error'
 
+export interface StageMessages {
+  refine?: string
+  tts?: string
+  image?: string
+  audio?: string
+  imgToVid?: string
+  compose?: string
+}
+
 export interface PipelineState {
   refine: StageStatus
   tts: StageStatus
@@ -39,6 +48,7 @@ export interface PipelineState {
   audio: StageStatus
   imgToVid: StageStatus
   compose: StageStatus
+  messages: StageMessages
   error?: string
   ttsBlob?: Blob
   ttsDuration?: number

@@ -8,6 +8,7 @@ import { Pipeline } from './components/Pipeline'
 const IDLE_PIPELINE: PipelineState = {
   refine: 'idle', tts: 'idle', image: 'idle',
   audio: 'idle', imgToVid: 'idle', compose: 'idle',
+  messages: {},
 }
 
 export default function App() {
@@ -45,7 +46,7 @@ export default function App() {
     <div className="app">
       {debugActive && (
         <div className="debug-banner">
-          🛠 디버그 모드 — 이미지·동영상 API 미호출 (더미 파일)
+          🛠 디버그 모드 — 동영상 API 미호출 (이미지는 실제 생성)
         </div>
       )}
       <header className="app-header">

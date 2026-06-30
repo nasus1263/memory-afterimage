@@ -40,17 +40,24 @@ async function searchJamendo(keywords: string[], key: string): Promise<Blob> {
 export async function fetchAmbientAudio(
   keywords: string[],
   config: ModelConfig,
-  keys: ApiKeys
+  keys: ApiKeys,
+  onProgress?: (msg: string) => void
 ): Promise<Blob | null> {
   const { provider } = config.audio
   try {
     if (provider === 'freesound') {
       if (!keys.freesound) throw new Error('Freesound API key missing')
-      return await searchFreesound(keywords, keys.freesound)
+      onProgress?.('Freesound 검색...')
+      const blob = await searchFreesound(keywords, keys.freesound)
+      onProgress?.('오디오 다운로드 완료')
+      return blob
     }
     if (provider === 'jamendo') {
       if (!keys.jamendo) throw new Error('Jamendo client_id missing')
-      return await searchJamendo(keywords, keys.jamendo)
+      onProgress?.('Jamendo 검색...')
+      const blob = await searchJamendo(keywords, keys.jamendo)
+      onProgress?.('오디오 다운로드 완료')
+      return blob
     }
   } catch (e) {
     console.warn('Ambient audio fetch failed, continuing without:', e)

@@ -1,7 +1,7 @@
 import type { ApiKeys, ModelConfig } from '../types'
-import { isDebugMode, getDummyImage } from './debug'
 
-async function imageOpenAI(prompt: string, key: string): Promise<Blob> {
+async function imageOpenAI(prompt: string, key: string, onProgress?: (msg: string) => void): Promise<Blob> {
+  onProgress?.('DALL-E 3 요청 전송...')
   const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
@@ -14,14 +14,16 @@ async function imageOpenAI(prompt: string, key: string): Promise<Blob> {
     }),
   })
   if (!res.ok) throw new Error(`OpenAI Image error: ${res.status}`)
+  onProgress?.('이미지 디코딩...')
   const data = await res.json()
   const bytes = Uint8Array.from(atob(data.data[0].b64_json), (c) => c.charCodeAt(0))
   return new Blob([bytes], { type: 'image/png' })
 }
 
-async function imageGoogle(prompt: string, model: string, key: string): Promise<Blob> {
+async function imageGoogle(prompt: string, model: string, key: string, onProgress?: (msg: string) => void): Promise<Blob> {
   // Gemini native image generation (gemini-2.0-flash-exp etc.)
   if (model.startsWith('gemini-')) {
+    onProgress?.('Gemini 이미지 생성 요청...')
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
       {
@@ -34,6 +36,7 @@ async function imageGoogle(prompt: string, model: string, key: string): Promise<
       }
     )
     if (!res.ok) throw new Error(`Google Gemini Image error: ${res.status} ${await res.text()}`)
+    onProgress?.('이미지 디코딩...')
     const data = await res.json()
     const part = data.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData)
     if (!part?.inlineData) throw new Error('No image in Gemini response')
@@ -42,6 +45,7 @@ async function imageGoogle(prompt: string, model: string, key: string): Promise<
   }
 
   // Imagen 4 (deprecated 2026-06-24 — may return 404)
+  onProgress?.('Imagen 요청 전송...')
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${key}`,
     {
@@ -61,7 +65,8 @@ async function imageGoogle(prompt: string, model: string, key: string): Promise<
   return new Blob([bytes], { type: 'image/png' })
 }
 
-async function imageHuggingFace(prompt: string, model: string, key: string): Promise<Blob> {
+async function imageHuggingFace(prompt: string, model: string, key: string, onProgress?: (msg: string) => void): Promise<Blob> {
+  onProgress?.('HuggingFace 추론 API 요청...')
   const res = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
     method: 'POST',
     headers: {
@@ -71,11 +76,12 @@ async function imageHuggingFace(prompt: string, model: string, key: string): Pro
     body: JSON.stringify({ inputs: prompt }),
   })
   if (!res.ok) throw new Error(`HuggingFace Image error: ${res.status}`)
+  onProgress?.('이미지 수신 중...')
   return res.blob()
 }
 
-async function imageFal(prompt: string, model: string, key: string): Promise<Blob> {
-  // Submit request
+async function imageFal(prompt: string, model: string, key: string, onProgress?: (msg: string) => void): Promise<Blob> {
+  onProgress?.('fal.ai 큐 제출...')
   const submitRes = await fetch(`https://queue.fal.run/${model}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Key ${key}` },
@@ -84,15 +90,18 @@ async function imageFal(prompt: string, model: string, key: string): Promise<Blo
   if (!submitRes.ok) throw new Error(`fal.ai submit error: ${submitRes.status}`)
   const { request_id } = await submitRes.json()
 
-  // Poll for result
+  const startTime = Date.now()
   for (let i = 0; i < 60; i++) {
     await new Promise((r) => setTimeout(r, 2000))
+    const elapsed = Math.round((Date.now() - startTime) / 1000)
+    onProgress?.(`처리 중... ${elapsed}s`)
     const statusRes = await fetch(`https://queue.fal.run/${model}/requests/${request_id}`, {
       headers: { Authorization: `Key ${key}` },
     })
     if (!statusRes.ok) continue
     const result = await statusRes.json()
     if (result.status === 'COMPLETED') {
+      onProgress?.('이미지 다운로드...')
       const imageUrl = result.output?.images?.[0]?.url ?? result.output?.image?.url
       if (!imageUrl) throw new Error('No image URL in fal.ai response')
       const imgRes = await fetch(imageUrl)
@@ -108,7 +117,8 @@ const NVIDIA_GENAI_BASE = import.meta.env.DEV
   ? '/nvidia-genai'
   : 'https://ai.api.nvidia.com'
 
-async function imageNvidia(prompt: string, model: string, key: string): Promise<Blob> {
+async function imageNvidia(prompt: string, model: string, key: string, onProgress?: (msg: string) => void): Promise<Blob> {
+  onProgress?.('NVIDIA GenAI 요청 전송...')
   const res = await fetch(`${NVIDIA_GENAI_BASE}/v1/genai/${model}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
@@ -123,6 +133,7 @@ async function imageNvidia(prompt: string, model: string, key: string): Promise<
     }),
   })
   if (!res.ok) throw new Error(`NVIDIA GenAI Image error: ${res.status} ${await res.text()}`)
+  onProgress?.('이미지 디코딩...')
   const data = await res.json()
   const b64 = data.artifacts?.[0]?.base64_string
   if (!b64) throw new Error('No image data in NVIDIA GenAI response')
@@ -133,14 +144,14 @@ async function imageNvidia(prompt: string, model: string, key: string): Promise<
 export async function generateImage(
   prompt: string,
   config: ModelConfig,
-  keys: ApiKeys
+  keys: ApiKeys,
+  onProgress?: (msg: string) => void
 ): Promise<Blob> {
-  if (isDebugMode()) return getDummyImage()
   const { provider, model } = config.image
-  if (provider === 'openai') return imageOpenAI(prompt, keys.openai)
-  if (provider === 'google') return imageGoogle(prompt, model, keys.google)
-  if (provider === 'huggingface') return imageHuggingFace(prompt, model, keys.huggingface)
-  if (provider === 'fal') return imageFal(prompt, model, keys.fal)
-  if (provider === 'nvidia') return imageNvidia(prompt, model, keys.nvidia)
+  if (provider === 'openai') return imageOpenAI(prompt, keys.openai, onProgress)
+  if (provider === 'google') return imageGoogle(prompt, model, keys.google, onProgress)
+  if (provider === 'huggingface') return imageHuggingFace(prompt, model, keys.huggingface, onProgress)
+  if (provider === 'fal') return imageFal(prompt, model, keys.fal, onProgress)
+  if (provider === 'nvidia') return imageNvidia(prompt, model, keys.nvidia, onProgress)
   throw new Error(`Unknown image provider: ${provider}`)
 }

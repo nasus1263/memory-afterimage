@@ -196,8 +196,11 @@ body {
 .stage-done   { border-color: var(--success); }
 .stage-error  { border-color: var(--error); color: var(--error); }
 
-.stage-icon { font-size: 16px; width: 20px; text-align: center; }
+.stage-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
 .stage-running .stage-icon { animation: spin 1.5s linear infinite; display: inline-block; }
+.stage-info { display: flex; flex-direction: column; gap: 2px; }
+.stage-label { font-size: 13px; }
+.stage-msg { font-size: 11px; color: var(--text-dim); opacity: 0.85; }
 
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
