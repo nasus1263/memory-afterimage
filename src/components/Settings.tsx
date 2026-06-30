@@ -4,6 +4,7 @@ import {
   LLM_MODELS, TTS_MODELS, TTS_VOICES,
   IMAGE_MODELS, VIDEO_MODELS,
 } from '../config/models'
+import { isDebugMode, setDebugMode } from '../services/debug'
 
 interface Props {
   keys: ApiKeys
@@ -37,9 +38,28 @@ function KeyInput({
 
 export function Settings({ keys, config, onKeys, onConfig }: Props) {
   const ttsVoices = TTS_VOICES[config.tts.provider] ?? []
+  const [debug, setDebug] = useState(isDebugMode())
+
+  function toggleDebug(on: boolean) {
+    setDebugMode(on)
+    setDebug(on)
+  }
 
   return (
     <div className="settings">
+      <section>
+        <h3>디버그</h3>
+        <label className="debug-toggle">
+          <input
+            type="checkbox"
+            checked={debug}
+            onChange={(e) => toggleDebug(e.target.checked)}
+          />
+          <span>디버그 모드</span>
+          <span className="hint">이미지·동영상 API 호출 건너뜀 → 더미 파일 반환</span>
+        </label>
+      </section>
+
       <section>
         <h3>API 키</h3>
         <KeyInput label="OpenAI" value={keys.openai} onChange={(v) => onKeys({ ...keys, openai: v })} />

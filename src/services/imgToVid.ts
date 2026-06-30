@@ -1,4 +1,5 @@
 import type { ApiKeys, ModelConfig } from '../types'
+import { isDebugMode, getDummyVideo } from './debug'
 
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -126,6 +127,7 @@ export async function generateVideo(
   config: ModelConfig,
   keys: ApiKeys
 ): Promise<Blob> {
+  if (isDebugMode()) return getDummyVideo()
   const { provider, model } = config.video
   if (provider === 'fal') return vidFal(imageBlob, model, keys.fal, imagePrompt)
   if (provider === 'replicate') return vidReplicate(imageBlob, model, keys.replicate)

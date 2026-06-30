@@ -254,3 +254,34 @@ body {
   transition: border-color 0.2s, color 0.2s;
 }
 .reset-btn:hover { border-color: var(--gold-dim); color: var(--text); }
+
+/* Debug */
+.debug-banner {
+  background: rgba(106, 158, 207, 0.12);
+  border-bottom: 1px solid rgba(106, 158, 207, 0.3);
+  color: var(--running);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  padding: 6px 20px;
+  text-align: center;
+}
+
+.settings-btn--debug {
+  border-color: var(--running);
+  color: var(--running);
+}
+
+.debug-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+.debug-toggle input[type="checkbox"] {
+  margin-top: 2px;
+  accent-color: var(--running);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.debug-toggle span:first-of-type { color: var(--running); font-size: 13px; font-weight: 500; }
+.debug-toggle .hint { display: inline; margin-left: 8px; }

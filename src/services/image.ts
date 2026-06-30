@@ -1,4 +1,5 @@
 import type { ApiKeys, ModelConfig } from '../types'
+import { isDebugMode, getDummyImage } from './debug'
 
 async function imageOpenAI(prompt: string, key: string): Promise<Blob> {
   const res = await fetch('https://api.openai.com/v1/images/generations', {
@@ -107,6 +108,7 @@ export async function generateImage(
   config: ModelConfig,
   keys: ApiKeys
 ): Promise<Blob> {
+  if (isDebugMode()) return getDummyImage()
   const { provider, model } = config.image
   if (provider === 'openai') return imageOpenAI(prompt, keys.openai)
   if (provider === 'google') return imageGoogle(prompt, model, keys.google)

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import type { ApiKeys, ModelConfig, PipelineState } from './types'
 import { loadKeys, saveKeys, loadConfig, saveConfig } from './store/settings'
+import { isDebugMode } from './services/debug'
 import { Settings } from './components/Settings'
 import { Pipeline } from './components/Pipeline'
 
@@ -17,6 +18,7 @@ export default function App() {
   const [running, setRunning] = useState(false)
   const [pipelineState, setPipelineState] = useState<PipelineState>(IDLE_PIPELINE)
   const [composeProgress, setComposeProgress] = useState(0)
+  const [debugActive, setDebugActive] = useState(isDebugMode)
 
   function handleKeys(k: ApiKeys) { setKeys(k); saveKeys(k) }
   function handleConfig(c: ModelConfig) { setConfig(c); saveConfig(c) }
@@ -41,12 +43,25 @@ export default function App() {
 
   return (
     <div className="app">
+      {debugActive && (
+        <div className="debug-banner">
+          🛠 디버그 모드 — 이미지·동영상 API 미호출 (더미 파일)
+        </div>
+      )}
       <header className="app-header">
         <div className="header-title">
           <h1>기억의 잔상</h1>
           <p className="subtitle">말하면 되살아나는 내 여행의 기억</p>
         </div>
-        <button className="settings-btn" onClick={() => setShowSettings((s) => !s)}>
+        <button
+          className={`settings-btn${debugActive ? ' settings-btn--debug' : ''}`}
+          onClick={() => {
+            setShowSettings((s) => {
+              if (s) setDebugActive(isDebugMode()) // sync on close
+              return !s
+            })
+          }}
+        >
           {showSettings ? '✕ 닫기' : '⚙ 설정'}
         </button>
       </header>
