@@ -108,5 +108,5 @@ export const DEFAULT_CONFIG = {
   tts: { provider: 'elevenlabs' as const, model: 'eleven_multilingual_v2', voice: 'pNInz6obpgDQGcFmaJgB' },
   image: { provider: 'nvidia' as const, model: 'black-forest-labs/flux.1-dev' },
   video: { provider: 'fal' as const, model: 'fal-ai/ltx-video/image-to-video' },
-  audio: { provider: 'jamendo' as const },
+  audio: { provider: 'freesound' as const },
 }
