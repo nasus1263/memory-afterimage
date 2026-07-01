@@ -47,6 +47,7 @@ export async function fetchAmbientAudio(
 ): Promise<Blob | null> {
   const { provider } = config.audio
   const keywordLabel = keywords.join(', ')
+  console.log(`[audio] 검색 키워드: ${keywordLabel} (provider: ${provider})`)
   try {
     if (provider === 'freesound') {
       if (!keys.freesound) throw new Error('Freesound API key missing')
