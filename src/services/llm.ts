@@ -22,12 +22,28 @@ function makeSignal(): AbortSignal {
   return AbortSignal.timeout(TIMEOUT_MS)
 }
 
+// Small/local models sometimes stop generating before closing the JSON object
+// (finish_reason "stop" with a dangling string or missing braces). Best-effort repair.
+function repairTruncatedJSON(s: string): string {
+  let out = s
+  const quoteCount = (out.match(/(?<!\\)"/g) ?? []).length
+  if (quoteCount % 2 === 1) out += '"'
+  const openBraces = (out.match(/{/g) ?? []).length
+  const closeBraces = (out.match(/}/g) ?? []).length
+  out += '}'.repeat(Math.max(0, openBraces - closeBraces))
+  return out
+}
+
 function extractJSON<T>(raw: string): T {
   // strip <think>...</think> blocks (DeepSeek reasoning models)
   const stripped = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim()
   // strip ```json ... ``` fences
   const fenced = stripped.replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '').trim()
-  return JSON.parse(fenced)
+  try {
+    return JSON.parse(fenced)
+  } catch {
+    return JSON.parse(repairTruncatedJSON(fenced))
+  }
 }
 
 async function callOpenAI(systemPrompt: string, text: string, model: string, key: string): Promise<string> {
