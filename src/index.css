@@ -126,7 +126,7 @@ body {
 .model-group select:focus { outline: none; border-color: var(--gold-dim); }
 
 /* Input */
-.input-section { max-width: 640px; }
+.input-section { max-width: 640px; margin: 0 auto; }
 .input-label { display: block; font-size: 16px; color: var(--gold); margin-bottom: 14px; font-weight: 500; }
 
 .memory-input {
