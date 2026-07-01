@@ -1,5 +1,6 @@
 import type { ApiKeys, ModelConfig } from '../types'
 import { FREESOUND_BASE, JAMENDO_BASE } from '../config/endpoints'
+import { refineAudioKeywords } from './llm'
 
 async function searchFreesound(keywords: string[], key: string): Promise<Blob> {
   const query = keywords.join(' ')
@@ -64,6 +65,35 @@ export async function fetchAmbientAudio(
   } catch (e) {
     console.warn('Ambient audio fetch failed, continuing without:', e)
     return null
+  }
+  return null
+}
+
+const MAX_RETRIES = 5
+
+export async function fetchAmbientAudioWithRetry(
+  userText: string,
+  initialKeywords: string[],
+  config: ModelConfig,
+  keys: ApiKeys,
+  onProgress?: (msg: string) => void
+): Promise<Blob | null> {
+  let keywords = initialKeywords
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const blob = await fetchAmbientAudio(keywords, config, keys, onProgress)
+    if (blob) return blob
+
+    if (attempt === MAX_RETRIES) break
+
+    const maxWords = Math.max(1, 3 - attempt)
+    onProgress?.(`검색 실패 (${attempt + 1}/${MAX_RETRIES}), 새 키워드 요청 중...`)
+    try {
+      keywords = await refineAudioKeywords(userText, maxWords, config, keys)
+    } catch (e) {
+      console.warn('Audio keyword re-request failed:', e)
+      break
+    }
   }
   return null
 }

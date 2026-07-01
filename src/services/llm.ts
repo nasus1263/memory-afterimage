@@ -10,13 +10,21 @@ The user will describe a travel memory. You must output JSON with exactly these 
 }
 Output ONLY the JSON, no markdown, no explanation.`
 
+function keywordSystemPrompt(maxWords: number): string {
+  return `You are a creative AI for an immersive memory art installation.
+The user will describe a travel memory. Suggest 3 alternative English ambient sound search
+keywords for it, each at most ${maxWords} word${maxWords > 1 ? 's' : ''} long.
+Output ONLY JSON: { "audioKeywords": ["keyword1", "keyword2", "keyword3"] }
+No markdown, no explanation.`
+}
+
 const TIMEOUT_MS = 60_000
 
 function makeSignal(): AbortSignal {
   return AbortSignal.timeout(TIMEOUT_MS)
 }
 
-function extractJSON(raw: string): LLMResult {
+function extractJSON<T>(raw: string): T {
   // strip <think>...</think> blocks (DeepSeek reasoning models)
   const stripped = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim()
   // strip ```json ... ``` fences
@@ -24,24 +32,24 @@ function extractJSON(raw: string): LLMResult {
   return JSON.parse(fenced)
 }
 
-async function callOpenAI(text: string, model: string, key: string): Promise<LLMResult> {
+async function callOpenAI(systemPrompt: string, text: string, model: string, key: string): Promise<string> {
   const res = await fetch(`${OPENAI_BASE}/chat/completions`, {
     method: 'POST',
     signal: makeSignal(),
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
     body: JSON.stringify({
       model,
-      messages: [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: text }],
+      messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }],
       response_format: { type: 'json_object' },
       max_tokens: 1024,
     }),
   })
   if (!res.ok) throw new Error(`OpenAI LLM ${res.status}: ${await res.text()}`)
   const data = await res.json()
-  return extractJSON(data.choices[0].message.content)
+  return data.choices[0].message.content
 }
 
-async function callNvidia(text: string, model: string, key: string, baseUrl: string): Promise<LLMResult> {
+async function callNvidia(systemPrompt: string, text: string, model: string, key: string, baseUrl: string): Promise<string> {
   // NVIDIA NIM: response_format not universally supported; rely on system prompt + extractJSON
   const res = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
@@ -49,17 +57,17 @@ async function callNvidia(text: string, model: string, key: string, baseUrl: str
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
     body: JSON.stringify({
       model,
-      messages: [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: text }],
+      messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }],
       max_tokens: 2048,
       temperature: 0.7,
     }),
   })
   if (!res.ok) throw new Error(`NVIDIA LLM ${res.status}: ${await res.text()}`)
   const data = await res.json()
-  return extractJSON(data.choices[0].message.content)
+  return data.choices[0].message.content
 }
 
-async function callAnthropic(text: string, model: string, key: string): Promise<LLMResult> {
+async function callAnthropic(systemPrompt: string, text: string, model: string, key: string): Promise<string> {
   const res = await fetch(`${ANTHROPIC_BASE}/messages`, {
     method: 'POST',
     signal: makeSignal(),
@@ -71,16 +79,16 @@ async function callAnthropic(text: string, model: string, key: string): Promise<
     body: JSON.stringify({
       model,
       max_tokens: 1024,
-      system: SYSTEM_PROMPT,
+      system: systemPrompt,
       messages: [{ role: 'user', content: text }],
     }),
   })
   if (!res.ok) throw new Error(`Anthropic LLM ${res.status}: ${await res.text()}`)
   const data = await res.json()
-  return extractJSON(data.content[0].text)
+  return data.content[0].text
 }
 
-async function callGoogle(text: string, model: string, key: string): Promise<LLMResult> {
+async function callGoogle(systemPrompt: string, text: string, model: string, key: string): Promise<string> {
   const res = await fetch(
     `${GOOGLE_BASE}/models/${model}:generateContent?key=${key}`,
     {
@@ -88,7 +96,7 @@ async function callGoogle(text: string, model: string, key: string): Promise<LLM
       signal: makeSignal(),
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        systemInstruction: { parts: [{ text: systemPrompt }] },
         contents: [{ parts: [{ text }] }],
         generationConfig: { responseMimeType: 'application/json' },
       }),
@@ -96,7 +104,21 @@ async function callGoogle(text: string, model: string, key: string): Promise<LLM
   )
   if (!res.ok) throw new Error(`Google LLM ${res.status}: ${await res.text()}`)
   const data = await res.json()
-  return extractJSON(data.candidates[0].content.parts[0].text)
+  return data.candidates[0].content.parts[0].text
+}
+
+async function callProvider(
+  systemPrompt: string,
+  userText: string,
+  config: ModelConfig,
+  keys: ApiKeys
+): Promise<string> {
+  const { provider, model } = config.llm
+  if (provider === 'openai') return callOpenAI(systemPrompt, userText, model, keys.openai)
+  if (provider === 'nvidia') return callNvidia(systemPrompt, userText, model, keys.nvidia, NVIDIA_LLM_BASE)
+  if (provider === 'anthropic') return callAnthropic(systemPrompt, userText, model, keys.anthropic)
+  if (provider === 'google') return callGoogle(systemPrompt, userText, model, keys.google)
+  throw new Error(`Unknown LLM provider: ${provider}`)
 }
 
 export async function refineMemo(
@@ -104,10 +126,17 @@ export async function refineMemo(
   config: ModelConfig,
   keys: ApiKeys
 ): Promise<LLMResult> {
-  const { provider, model } = config.llm
-  if (provider === 'openai') return callOpenAI(userText, model, keys.openai)
-  if (provider === 'nvidia') return callNvidia(userText, model, keys.nvidia, NVIDIA_LLM_BASE)
-  if (provider === 'anthropic') return callAnthropic(userText, model, keys.anthropic)
-  if (provider === 'google') return callGoogle(userText, model, keys.google)
-  throw new Error(`Unknown LLM provider: ${provider}`)
+  const raw = await callProvider(SYSTEM_PROMPT, userText, config, keys)
+  return extractJSON<LLMResult>(raw)
+}
+
+export async function refineAudioKeywords(
+  userText: string,
+  maxWords: number,
+  config: ModelConfig,
+  keys: ApiKeys
+): Promise<string[]> {
+  const raw = await callProvider(keywordSystemPrompt(maxWords), userText, config, keys)
+  const { audioKeywords } = extractJSON<{ audioKeywords: string[] }>(raw)
+  return audioKeywords
 }

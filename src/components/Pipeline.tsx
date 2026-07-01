@@ -4,7 +4,7 @@ import { refineMemo } from '../services/llm'
 import { generateTTS } from '../services/tts'
 import { generateImage } from '../services/image'
 import { generateVideo } from '../services/imgToVid'
-import { fetchAmbientAudio } from '../services/audio'
+import { fetchAmbientAudioWithRetry } from '../services/audio'
 import { composeVideo } from '../services/composer'
 import { StageCard } from './StageCard'
 
@@ -91,7 +91,7 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
             return r
           }),
           generateImage(llmResult.imagePrompt, config, keys, (msg) => setMsg('image', msg)),
-          fetchAmbientAudio(llmResult.audioKeywords, config, keys, (msg) => setMsg('audio', msg)),
+          fetchAmbientAudioWithRetry(userText, llmResult.audioKeywords, config, keys, (msg) => setMsg('audio', msg)),
         ])
 
         if (ttsSettled.status === 'rejected') throw new Error(`TTS: ${ttsSettled.reason}`)
