@@ -87,10 +87,9 @@ export async function fetchAmbientAudioWithRetry(
 
     if (attempt === MAX_RETRIES) break
 
-    const maxWords = Math.max(1, 3 - (attempt + 1))
     onProgress?.(`검색 실패 (${attempt + 1}/${MAX_RETRIES}), 새 키워드 요청 중...`)
     try {
-      keywords = await refineAudioKeywords(userText, maxWords, config, keys)
+      keywords = await refineAudioKeywords(userText, config, keys)
     } catch (e) {
       console.warn('Audio keyword re-request failed:', e)
       break

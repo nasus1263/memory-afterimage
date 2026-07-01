@@ -6,20 +6,15 @@ The user will describe a travel memory. You must output JSON with exactly these 
 {
   "refinedText": "Korean narration text (natural, emotional, 1st person, ≤200 chars — must complete within 1 minute when spoken aloud)",
   "imagePrompt": "English image generation prompt (cinematic, painterly, detailed, evocative — describe the scene as idealized memory, 100-150 words)",
-  "audioKeywords": ["keyword1", "keyword2"] // 2-3 English ambient sound keywords (e.g. 'ocean waves', 'summer cicadas')
+  "audioKeywords": ["keyword1", "keyword2"] // 2-3 ambient sound keywords, EACH EXACTLY 1 single English word, no phrases (e.g. "waves", "rain", "cicadas")
 }
 Output ONLY the JSON, no markdown, no explanation.`
 
-function keywordSystemPrompt(maxWords: number): string {
-  const lengthRule = maxWords === 1
-    ? 'each keyword must be exactly 1 English word — a single word, no phrases (e.g. "waves", "rain", "cicadas")'
-    : `each keyword at most ${maxWords} English words long`
-  return `You are a creative AI for an immersive memory art installation.
-The user will describe a travel memory. Suggest 3 alternative English ambient sound search
-keywords for it. ${lengthRule}.
+const KEYWORD_SYSTEM_PROMPT = `You are a creative AI for an immersive memory art installation.
+The user will describe a travel memory. Suggest 3 alternative ambient sound search keywords for it.
+Each keyword must be exactly 1 single English word — no phrases (e.g. "waves", "rain", "cicadas").
 Output ONLY JSON: { "audioKeywords": ["keyword1", "keyword2", "keyword3"] }
 No markdown, no explanation.`
-}
 
 const TIMEOUT_MS = 60_000
 
@@ -135,11 +130,10 @@ export async function refineMemo(
 
 export async function refineAudioKeywords(
   userText: string,
-  maxWords: number,
   config: ModelConfig,
   keys: ApiKeys
 ): Promise<string[]> {
-  const raw = await callProvider(keywordSystemPrompt(maxWords), userText, config, keys)
+  const raw = await callProvider(KEYWORD_SYSTEM_PROMPT, userText, config, keys)
   const { audioKeywords } = extractJSON<{ audioKeywords: string[] }>(raw)
   return audioKeywords
 }
