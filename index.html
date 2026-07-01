@@ -7,6 +7,17 @@
     <title>기억의 잔상</title>
     <!-- Injects COOP/COEP headers via service worker for SharedArrayBuffer (ffmpeg.wasm) -->
     <script src="coi-serviceworker.js"></script>
+    <script type="text/javascript">
+      // Restore the path GitHub Pages' 404.html redirect encoded as a query string.
+      (function (l) {
+        if (l.search[1] === '/') {
+          var decoded = l.search.slice(1).split('&').map(function (s) {
+            return s.replace(/~and~/g, '&')
+          }).join('?')
+          window.history.replaceState(null, '', l.pathname.slice(0, -1) + decoded + l.hash)
+        }
+      })(window.location)
+    </script>
   </head>
   <body>
     <div id="root"></div>

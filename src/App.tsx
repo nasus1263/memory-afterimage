@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { ApiKeys, ModelConfig, PipelineState } from './types'
 import { loadKeys, saveKeys, loadConfig, saveConfig } from './store/settings'
 import { isDebugMode } from './services/debug'
@@ -11,19 +11,40 @@ const IDLE_PIPELINE: PipelineState = {
   messages: {},
 }
 
+function useRoute() {
+  const [path, setPath] = useState(() => window.location.pathname)
+
+  useEffect(() => {
+    const onPopState = () => setPath(window.location.pathname)
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
+  const navigate = useCallback((to: string) => {
+    window.history.pushState({}, '', to)
+    setPath(to)
+  }, [])
+
+  return { path, navigate }
+}
+
 export default function App() {
+  const { path, navigate } = useRoute()
   const [keys, setKeys] = useState<ApiKeys>(loadKeys)
   const [config, setConfig] = useState<ModelConfig>(loadConfig)
-  const [showSettings, setShowSettings] = useState(() => {
-    const visited = localStorage.getItem('memory_visited')
-    if (!visited) localStorage.setItem('memory_visited', '1')
-    return !visited
-  })
   const [userText, setUserText] = useState('')
   const [running, setRunning] = useState(false)
   const [pipelineState, setPipelineState] = useState<PipelineState>(IDLE_PIPELINE)
   const [composeProgress, setComposeProgress] = useState(0)
-  const [debugActive, setDebugActive] = useState(isDebugMode)
+  const debugActive = isDebugMode()
+
+  useEffect(() => {
+    const visited = localStorage.getItem('memory_visited')
+    if (!visited) {
+      localStorage.setItem('memory_visited', '1')
+      navigate('/settings')
+    }
+  }, [navigate])
 
   function handleKeys(k: ApiKeys) { setKeys(k); saveKeys(k) }
   function handleConfig(c: ModelConfig) { setConfig(c); saveConfig(c) }
@@ -54,29 +75,23 @@ export default function App() {
         </div>
       )}
       <header className="app-header">
-        <div className="header-title">
+        <button className="header-title header-title-btn" onClick={() => navigate('/')}>
           <h1>기억의 잔상</h1>
           <p className="subtitle">말하면 되살아나는 내 여행의 기억</p>
-        </div>
+        </button>
         <button
           className={`settings-btn${debugActive ? ' settings-btn--debug' : ''}`}
-          onClick={() => {
-            setShowSettings((s) => {
-              if (s) setDebugActive(isDebugMode()) // sync on close
-              return !s
-            })
-          }}
+          onClick={() => navigate(path === '/settings' ? '/' : '/settings')}
         >
-          {showSettings ? '✕ 닫기' : '⚙ 설정'}
+          {path === '/settings' ? '✕ 닫기' : '⚙ 설정'}
         </button>
       </header>
 
-      {showSettings && (
+      {path === '/settings' ? (
         <div className="settings-panel">
           <Settings keys={keys} config={config} onKeys={handleKeys} onConfig={handleConfig} />
         </div>
-      )}
-
+      ) : (
       <main className="app-main">
         {!running ? (
           <div className="input-section">
@@ -148,6 +163,7 @@ export default function App() {
           </div>
         )}
       </main>
+      )}
     </div>
   )
 }
