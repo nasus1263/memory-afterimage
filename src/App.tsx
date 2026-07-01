@@ -4,6 +4,7 @@ import { loadKeys, saveKeys, loadConfig, saveConfig } from './store/settings'
 import { isDebugMode } from './services/debug'
 import { Settings } from './components/Settings'
 import { Pipeline } from './components/Pipeline'
+import { VoiceInput } from './components/VoiceInput'
 
 const IDLE_PIPELINE: PipelineState = {
   refine: 'idle', tts: 'idle', image: 'idle',
@@ -32,8 +33,8 @@ export default function App() {
   const { path, navigate } = useRoute()
   const [keys, setKeys] = useState<ApiKeys>(loadKeys)
   const [config, setConfig] = useState<ModelConfig>(loadConfig)
+  const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice')
   const [userText, setUserText] = useState('')
-  const [running, setRunning] = useState(false)
   const [pipelineState, setPipelineState] = useState<PipelineState>(IDLE_PIPELINE)
   const [composeProgress, setComposeProgress] = useState(0)
   const debugActive = isDebugMode()
@@ -46,22 +47,33 @@ export default function App() {
     }
   }, [navigate])
 
+  useEffect(() => {
+    if (path === '/process' && !userText.trim()) navigate('/')
+  }, [path, userText, navigate])
+
   function handleKeys(k: ApiKeys) { setKeys(k); saveKeys(k) }
   function handleConfig(c: ModelConfig) { setConfig(c); saveConfig(c) }
 
   const handleProgress = useCallback((p: number) => setComposeProgress(p), [])
 
-  function handleSubmit() {
-    if (!userText.trim()) return
-    setRunning(true)
+  function startProcess(text: string) {
+    setUserText(text)
     setComposeProgress(0)
     setPipelineState(IDLE_PIPELINE)
+    navigate('/process')
+  }
+
+  function handleSubmit() {
+    if (!userText.trim()) return
+    startProcess(userText)
   }
 
   function handleReset() {
-    setRunning(false)
+    setUserText('')
+    setInputMode('voice')
     setPipelineState(IDLE_PIPELINE)
     setComposeProgress(0)
+    navigate('/')
   }
 
   const finalBlob = pipelineState.finalBlob
@@ -87,33 +99,14 @@ export default function App() {
         </button>
       </header>
 
-      {path === '/settings' ? (
+      {path === '/settings' && (
         <div className="settings-panel">
           <Settings keys={keys} config={config} onKeys={handleKeys} onConfig={handleConfig} />
         </div>
-      ) : (
-      <main className="app-main">
-        {!running ? (
-          <div className="input-section">
-            <label className="input-label">여행의 기억을 들려주세요</label>
-            <textarea
-              className="memory-input"
-              placeholder={
-                '인상 깊었던 여행의 한 장면과 그때의 감정을 자유롭게 적어주세요.\n예: 노을 지던 다낭 바다, 친구들과 들떠 있던 저녁...'
-              }
-              value={userText}
-              onChange={(e) => setUserText(e.target.value)}
-              rows={6}
-            />
-            <button
-              className="submit-btn"
-              onClick={handleSubmit}
-              disabled={!userText.trim()}
-            >
-              기억 되살리기
-            </button>
-          </div>
-        ) : (
+      )}
+
+      {path === '/process' && (
+        <main className="app-main">
           <div className="running-section">
             <div className="user-text-preview">
               <span className="preview-label">입력한 기억</span>
@@ -124,6 +117,13 @@ export default function App() {
               <div className="refined-text">
                 <span className="preview-label">다듬어진 나레이션</span>
                 <p>{pipelineState.llmResult.refinedText}</p>
+              </div>
+            )}
+
+            {!finalUrl && !pipelineState.error && (
+              <div className="loading-banner">
+                <div className="bleed-anim" />
+                <p>당신의 기억을 그리는 중입니다...</p>
               </div>
             )}
 
@@ -161,8 +161,43 @@ export default function App() {
               <button className="reset-btn" onClick={handleReset}>다시 시도</button>
             )}
           </div>
-        )}
-      </main>
+        </main>
+      )}
+
+      {path === '/' && (
+        <main className="app-main">
+          {inputMode === 'voice' ? (
+            <>
+              <VoiceInput onComplete={startProcess} />
+              <button className="mode-toggle" onClick={() => setInputMode('text')}>
+                또는 직접 텍스트 입력
+              </button>
+            </>
+          ) : (
+            <div className="input-section">
+              <label className="input-label">여행의 기억을 들려주세요</label>
+              <textarea
+                className="memory-input"
+                placeholder={
+                  '인상 깊었던 여행의 한 장면과 그때의 감정을 자유롭게 적어주세요.\n예: 노을 지던 다낭 바다, 친구들과 들떠 있던 저녁...'
+                }
+                value={userText}
+                onChange={(e) => setUserText(e.target.value)}
+                rows={6}
+              />
+              <button
+                className="submit-btn"
+                onClick={handleSubmit}
+                disabled={!userText.trim()}
+              >
+                기억 되살리기
+              </button>
+              <button className="mode-toggle" onClick={() => setInputMode('voice')}>
+                또는 음성으로 입력
+              </button>
+            </div>
+          )}
+        </main>
       )}
     </div>
   )

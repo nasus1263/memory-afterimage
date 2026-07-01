@@ -161,6 +161,62 @@ body {
 .submit-btn:hover { background: var(--gold); }
 .submit-btn:disabled { background: var(--border); color: var(--text-dim); cursor: not-allowed; }
 
+.mode-toggle {
+  display: block;
+  margin: 16px auto 0;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.mode-toggle:hover { color: var(--gold); }
+
+/* Voice input */
+.voice-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 40px 0 8px;
+}
+.voice-guide { color: var(--text-dim); font-size: 14px; max-width: 420px; }
+
+.mic-btn {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 48px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 32px auto 0;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+.mic-btn:hover:not(:disabled) { border-color: var(--gold-dim); }
+.mic-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.mic-btn--listening {
+  border-color: var(--error);
+  background: rgba(192, 80, 80, 0.15);
+  color: var(--error);
+  animation: pulse-red 1.4s ease-out infinite;
+}
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(192, 80, 80, 0.5); }
+  70% { box-shadow: 0 0 0 22px rgba(192, 80, 80, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(192, 80, 80, 0); }
+}
+
+.listening-label { color: var(--error); font-size: 14px; font-weight: 500; margin-top: 4px; }
+.waveform { margin-top: 12px; }
+.voice-error { color: var(--error); font-size: 12px; margin-top: 10px; max-width: 360px; }
+
 /* Running */
 .running-section { display: flex; flex-direction: column; gap: 20px; }
 
@@ -182,6 +238,31 @@ body {
 
 .user-text-preview p { color: var(--text-dim); font-size: 13px; }
 .refined-text p { color: var(--text); font-size: 14px; line-height: 1.8; }
+
+/* Process loading banner */
+.loading-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 0;
+  text-align: center;
+}
+.loading-banner p { color: var(--gold); font-size: 15px; font-weight: 500; }
+.bleed-anim {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, var(--gold), var(--running), var(--gold-dim));
+  background-size: 200% 200%;
+  filter: blur(6px);
+  animation: bleed 3s ease-in-out infinite;
+}
+@keyframes bleed {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 
 /* Pipeline */
 .pipeline { display: flex; flex-direction: column; gap: 12px; }
