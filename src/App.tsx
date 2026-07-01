@@ -5,6 +5,8 @@ import { isDebugMode } from './services/debug'
 import { Settings } from './components/Settings'
 import { Pipeline } from './components/Pipeline'
 import { VoiceInput } from './components/VoiceInput'
+import { Memories } from './components/Memories'
+import { saveMemory } from './services/memories'
 
 const IDLE_PIPELINE: PipelineState = {
   refine: 'idle', tts: 'idle', image: 'idle',
@@ -52,6 +54,13 @@ export default function App() {
     if (path === '/process' && !userText.trim()) navigate('/')
   }, [path, userText, navigate])
 
+  useEffect(() => {
+    if (pipelineState.finalBlob) {
+      saveMemory({ text: userText, video: pipelineState.finalBlob, createdAt: Date.now() })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pipelineState.finalBlob])
+
   function handleKeys(k: ApiKeys) { setKeys(k); saveKeys(k) }
   function handleConfig(c: ModelConfig) { setConfig(c); saveConfig(c) }
 
@@ -92,16 +101,28 @@ export default function App() {
           <h1 className="text-2xl md:text-3xl font-bold tracking-wide text-gold">기억의 잔상</h1>
           <p className="text-text-dim text-xs mt-1">말하면 되살아나는 내 여행의 기억</p>
         </button>
-        <button
-          className={`bg-transparent border rounded px-3.5 py-1.5 text-sm transition-colors ${
-            debugActive
-              ? 'border-running text-running'
-              : 'border-border text-text-dim hover:border-gold-dim hover:text-gold'
-          }`}
-          onClick={() => navigate(path === '/settings' ? '/' : '/settings')}
-        >
-          {path === '/settings' ? '✕ 닫기' : '⚙ 설정'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            className={`bg-transparent border rounded px-3.5 py-1.5 text-sm transition-colors ${
+              path === '/memories'
+                ? 'border-gold-dim text-gold'
+                : 'border-border text-text-dim hover:border-gold-dim hover:text-gold'
+            }`}
+            onClick={() => navigate('/memories')}
+          >
+            보관함
+          </button>
+          <button
+            className={`bg-transparent border rounded px-3.5 py-1.5 text-sm transition-colors ${
+              debugActive
+                ? 'border-running text-running'
+                : 'border-border text-text-dim hover:border-gold-dim hover:text-gold'
+            }`}
+            onClick={() => navigate(path === '/settings' ? '/' : '/settings')}
+          >
+            {path === '/settings' ? '✕ 닫기' : '⚙ 설정'}
+          </button>
+        </div>
       </header>
 
       {path === '/settings' && (
@@ -109,6 +130,8 @@ export default function App() {
           <Settings keys={keys} config={config} onKeys={handleKeys} onConfig={handleConfig} />
         </div>
       )}
+
+      {path === '/memories' && <Memories />}
 
       {path === '/process' && (
         <main className="py-8">
