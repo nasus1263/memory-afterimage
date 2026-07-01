@@ -57,6 +57,7 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
       setState((prev) => {
         const durations = { ...prev.durations }
         for (const stage of stages) {
+          if (durations[stage] != null) continue
           const start = startTimes.current[stage]
           if (start != null) durations[stage] = now - start
         }
@@ -89,9 +90,9 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
           generateTTS(llmResult.refinedText, config, keys).then((r) => {
             setMsg('tts', `오디오 수신 완료 (${r.duration.toFixed(1)}s)`)
             return r
-          }),
-          generateImage(llmResult.imagePrompt, config, keys, (msg) => setMsg('image', msg)),
-          fetchAmbientAudioWithRetry(userText, llmResult.audioKeywords, config, keys, (msg) => setMsg('audio', msg)),
+          }).finally(() => markDone('tts')),
+          generateImage(llmResult.imagePrompt, config, keys, (msg) => setMsg('image', msg)).finally(() => markDone('image')),
+          fetchAmbientAudioWithRetry(userText, llmResult.audioKeywords, config, keys, (msg) => setMsg('audio', msg)).finally(() => markDone('audio')),
         ])
 
         if (ttsSettled.status === 'rejected') throw new Error(`TTS: ${ttsSettled.reason}`)
@@ -109,7 +110,6 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
           ambientBlob: ambBlob ?? undefined,
         })
         if (!ambBlob) setMsg('audio', '오디오 없음 (건너뜀)')
-        markDone('tts', 'image', 'audio')
 
         // ── 3. img → vid ──────────────────────────────
         currentStage = 'imgToVid'
