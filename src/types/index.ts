@@ -28,7 +28,7 @@ export interface ModelConfig {
 export interface LLMResult {
   refinedText: string
   imagePrompt: string
-  audioKeywords: string[]
+  audioKeyword: string
 }
 
 export type StageStatus = 'idle' | 'running' | 'done' | 'error'

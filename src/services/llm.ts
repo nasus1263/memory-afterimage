@@ -6,14 +6,14 @@ The user will describe a travel memory. You must output JSON with exactly these 
 {
   "refinedText": "Korean narration text (natural, emotional, 1st person, ≤200 chars — must complete within 1 minute when spoken aloud)",
   "imagePrompt": "English image generation prompt (cinematic, painterly, detailed, evocative — describe the scene as idealized memory, 100-150 words)",
-  "audioKeywords": ["keyword1", "keyword2"] // 2-3 ambient sound keywords, EACH EXACTLY 1 single English word, no phrases (e.g. "waves", "rain", "cicadas")
+  "audioKeyword": "waves" // exactly 1 single English ambient sound word, no phrases (e.g. "waves", "rain", "cicadas")
 }
 Output ONLY the JSON, no markdown, no explanation.`
 
 const KEYWORD_SYSTEM_PROMPT = `You are a creative AI for an immersive memory art installation.
-The user will describe a travel memory. Suggest 3 alternative ambient sound search keywords for it.
-Each keyword must be exactly 1 single English word — no phrases (e.g. "waves", "rain", "cicadas").
-Output ONLY JSON: { "audioKeywords": ["keyword1", "keyword2", "keyword3"] }
+The user will describe a travel memory. Suggest 1 alternative ambient sound search keyword for it.
+The keyword must be exactly 1 single English word — no phrases (e.g. "waves", "rain", "cicadas").
+Output ONLY JSON: { "audioKeyword": "waves" }
 No markdown, no explanation.`
 
 const TIMEOUT_MS = 60_000
@@ -128,12 +128,12 @@ export async function refineMemo(
   return extractJSON<LLMResult>(raw)
 }
 
-export async function refineAudioKeywords(
+export async function refineAudioKeyword(
   userText: string,
   config: ModelConfig,
   keys: ApiKeys
-): Promise<string[]> {
+): Promise<string> {
   const raw = await callProvider(KEYWORD_SYSTEM_PROMPT, userText, config, keys)
-  const { audioKeywords } = extractJSON<{ audioKeywords: string[] }>(raw)
-  return audioKeywords
+  const { audioKeyword } = extractJSON<{ audioKeyword: string }>(raw)
+  return audioKeyword
 }

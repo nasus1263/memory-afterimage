@@ -8,7 +8,7 @@ import { generateVideo } from '../services/imgToVid'
 import { composeVideo } from '../services/composer'
 import {
   getDummyImage, getDummyVideo, getDummyAudio,
-  DUMMY_TEXT, DUMMY_TTS_TEXT, DUMMY_IMAGE_PROMPT, DUMMY_AUDIO_KEYWORDS,
+  DUMMY_TEXT, DUMMY_TTS_TEXT, DUMMY_IMAGE_PROMPT, DUMMY_AUDIO_KEYWORD,
 } from '../services/debug'
 
 interface Props {
@@ -166,8 +166,8 @@ export function ApiTest({ keys, config }: Props) {
         state={audio}
         onRun={() =>
           run(setAudio, async (setMsg) => {
-            setMsg(`키워드: ${DUMMY_AUDIO_KEYWORDS.join(', ')}`)
-            return fetchAmbientAudio(DUMMY_AUDIO_KEYWORDS, config, keys, setMsg)
+            setMsg(`키워드: ${DUMMY_AUDIO_KEYWORD}`)
+            return fetchAmbientAudio(DUMMY_AUDIO_KEYWORD, config, keys, setMsg)
           }, (blob, set) => {
             if (!blob) {
               set({ status: 'error', msg: 'API 키 없음 또는 결과 없음' })

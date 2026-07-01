@@ -84,7 +84,7 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
         set(setState, stageStatus({ tts: 'running', image: 'running', audio: 'running' }))
         setMsg('tts', '음성 합성 요청...')
         setMsg('image', '이미지 생성 요청...')
-        setMsg('audio', `키워드: ${llmResult.audioKeywords.join(', ')}`)
+        setMsg('audio', `키워드: ${llmResult.audioKeyword}`)
 
         const [ttsSettled, imgSettled, ambSettled] = await Promise.allSettled([
           generateTTS(llmResult.refinedText, config, keys).then((r) => {
@@ -92,7 +92,7 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
             return r
           }).finally(() => markDone('tts')),
           generateImage(llmResult.imagePrompt, config, keys, (msg) => setMsg('image', msg)).finally(() => markDone('image')),
-          fetchAmbientAudioWithRetry(userText, llmResult.audioKeywords, config, keys, (msg) => setMsg('audio', msg)).finally(() => markDone('audio')),
+          fetchAmbientAudioWithRetry(userText, llmResult.audioKeyword, config, keys, (msg) => setMsg('audio', msg)).finally(() => markDone('audio')),
         ])
 
         if (ttsSettled.status === 'rejected') throw new Error(`TTS: ${ttsSettled.reason}`)
