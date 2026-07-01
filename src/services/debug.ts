@@ -29,7 +29,7 @@ const KEY = 'memory_debug_mode'
 
 export function isDebugMode(): boolean {
   const v = localStorage.getItem(KEY)
-  return v === null ? true : v === 'true' // default ON
+  return v === null ? false : v === 'true' // default OFF
 }
 
 export function setDebugMode(on: boolean) {
