@@ -10,6 +10,7 @@ const IDLE_PIPELINE: PipelineState = {
   refine: 'idle', tts: 'idle', image: 'idle',
   audio: 'idle', imgToVid: 'idle', compose: 'idle',
   messages: {},
+  durations: {},
 }
 
 function useRoute() {

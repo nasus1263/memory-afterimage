@@ -16,13 +16,22 @@ const ICON: Record<StageStatus, string> = {
   error: '✕',
 }
 
+function formatDuration(ms: number): string {
+  const totalSec = ms / 1000
+  if (totalSec < 60) return `${totalSec.toFixed(1)}초`
+  const min = Math.floor(totalSec / 60)
+  const sec = Math.round(totalSec % 60)
+  return `${min}분 ${sec}초`
+}
+
 interface Props {
   stage: string
   status: StageStatus
   message?: string
+  durationMs?: number
 }
 
-export function StageCard({ stage, status, message }: Props) {
+export function StageCard({ stage, status, message, durationMs }: Props) {
   return (
     <div className={`stage-card stage-${status}`}>
       <span className="stage-icon">{ICON[status]}</span>
@@ -30,6 +39,7 @@ export function StageCard({ stage, status, message }: Props) {
         <span className="stage-label">{LABEL[stage] ?? stage}</span>
         {message && <span className="stage-msg">{message}</span>}
       </div>
+      {durationMs != null && <span className="stage-duration">{formatDuration(durationMs)}</span>}
     </div>
   )
 }

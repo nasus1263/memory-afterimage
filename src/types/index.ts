@@ -42,6 +42,15 @@ export interface StageMessages {
   compose?: string
 }
 
+export interface StageDurations {
+  refine?: number
+  tts?: number
+  image?: number
+  audio?: number
+  imgToVid?: number
+  compose?: number
+}
+
 export interface PipelineState {
   refine: StageStatus
   tts: StageStatus
@@ -50,6 +59,7 @@ export interface PipelineState {
   imgToVid: StageStatus
   compose: StageStatus
   messages: StageMessages
+  durations: StageDurations
   error?: string
   ttsBlob?: Blob
   ttsDuration?: number

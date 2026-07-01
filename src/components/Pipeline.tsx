@@ -39,6 +39,7 @@ function makeSetMsg(setState: SetState) {
 
 export function Pipeline({ userText, keys, config, state, setState, onProgress, composeProgress }: Props) {
   const ran = useRef(false)
+  const startTimes = useRef<Partial<Record<Stage, number>>>({})
 
   useEffect(() => {
     if (ran.current) return
@@ -46,19 +47,39 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
 
     const setMsg = makeSetMsg(setState)
 
+    function markRunning(...stages: Stage[]) {
+      const now = performance.now()
+      for (const stage of stages) startTimes.current[stage] = now
+    }
+
+    function markDone(...stages: Stage[]) {
+      const now = performance.now()
+      setState((prev) => {
+        const durations = { ...prev.durations }
+        for (const stage of stages) {
+          const start = startTimes.current[stage]
+          if (start != null) durations[stage] = now - start
+        }
+        return { ...prev, durations }
+      })
+    }
+
     async function run() {
       let currentStage: Stage = 'refine'
       try {
         // ── 1. LLM 다듬기 ──────────────────────────────
         currentStage = 'refine'
+        markRunning('refine')
         set(setState, stageStatus({ refine: 'running' }))
         setMsg('refine', 'API 요청 전송...')
         const llmResult = await refineMemo(userText, config, keys)
         setMsg('refine', `완료 (${llmResult.refinedText.length}자)`)
         set(setState, { ...stageStatus({ refine: 'done' }), llmResult })
+        markDone('refine')
 
         // ── 2. TTS / 이미지 / 오디오 병렬 ──────────────
         currentStage = 'tts'
+        markRunning('tts', 'image', 'audio')
         set(setState, stageStatus({ tts: 'running', image: 'running', audio: 'running' }))
         setMsg('tts', '음성 합성 요청...')
         setMsg('image', '이미지 생성 요청...')
@@ -88,9 +109,11 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
           ambientBlob: ambBlob ?? undefined,
         })
         if (!ambBlob) setMsg('audio', '오디오 없음 (건너뜀)')
+        markDone('tts', 'image', 'audio')
 
         // ── 3. img → vid ──────────────────────────────
         currentStage = 'imgToVid'
+        markRunning('imgToVid')
         set(setState, stageStatus({ imgToVid: 'running' }))
         setMsg('imgToVid', '비디오 생성 요청...')
         const videoBlob = await generateVideo(
@@ -99,9 +122,11 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
         )
         setMsg('imgToVid', '완료')
         set(setState, { ...stageStatus({ imgToVid: 'done' }), videoBlob })
+        markDone('imgToVid')
 
         // ── 4. ffmpeg 합성 ────────────────────────────
         currentStage = 'compose'
+        markRunning('compose')
         set(setState, stageStatus({ compose: 'running' }))
         setMsg('compose', 'ffmpeg.wasm 로드 중...')
         const finalBlob = await composeVideo(
@@ -111,10 +136,12 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
         )
         setMsg('compose', '완료')
         set(setState, { ...stageStatus({ compose: 'done' }), finalBlob })
+        markDone('compose')
       } catch (e: any) {
         const msg = e?.message ?? String(e)
         set(setState, { [currentStage]: 'error' as StageStatus, error: msg })
         setMsg(currentStage, `오류: ${msg}`)
+        markDone(currentStage)
       }
     }
 
@@ -126,7 +153,7 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
     <div className="pipeline">
       <div className="stages">
         {STAGES.map((s) => (
-          <StageCard key={s} stage={s} status={state[s]} message={state.messages[s]} />
+          <StageCard key={s} stage={s} status={state[s]} message={state.messages[s]} durationMs={state.durations[s]} />
         ))}
       </div>
       {state.compose === 'running' && composeProgress > 0 && (
