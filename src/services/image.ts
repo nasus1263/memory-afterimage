@@ -1,6 +1,6 @@
 import type { ApiKeys, ModelConfig } from '../types'
 import { isDebugMode, getDummyImage } from './debug'
-import { OPENAI_BASE, GOOGLE_BASE, HUGGINGFACE_BASE, FAL_QUEUE_BASE, NVIDIA_LLM_BASE } from '../config/endpoints'
+import { OPENAI_BASE, GOOGLE_BASE, HUGGINGFACE_BASE, FAL_QUEUE_BASE, NVIDIA_GENAI_BASE } from '../config/endpoints'
 
 async function imageOpenAI(prompt: string, key: string, onProgress?: (msg: string) => void): Promise<Blob> {
   onProgress?.('DALL-E 3 요청 전송...')
@@ -115,17 +115,18 @@ async function imageFal(prompt: string, model: string, key: string, onProgress?:
 }
 
 async function imageNvidia(prompt: string, model: string, key: string, onProgress?: (msg: string) => void): Promise<Blob> {
-  // NVIDIA NIM images/generations: OpenAI-compatible endpoint, same host as chat/completions
-  // (model itself is a third-party model — e.g. black-forest-labs/flux.1-dev — NIM just hosts it)
+  // hosted NIM visual-genai endpoint (model is a third-party model — e.g. black-forest-labs/flux.1-dev — NIM just hosts it)
   onProgress?.('NVIDIA NIM 이미지 생성 요청...')
-  const res = await fetch(`${NVIDIA_LLM_BASE}/images/generations`, {
+  const res = await fetch(`${NVIDIA_GENAI_BASE}/v1/genai/${model}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
     body: JSON.stringify({
-      model,
       prompt,
-      n: 1,
-      response_format: 'b64_json',
+      mode: 'base',
+      cfg_scale: 5,
+      width: 1024,
+      height: 576,
+      samples: 1,
       seed: 0,
       steps: 50,
     }),
@@ -133,7 +134,7 @@ async function imageNvidia(prompt: string, model: string, key: string, onProgres
   if (!res.ok) throw new Error(`NVIDIA NIM Image error: ${res.status} ${await res.text()}`)
   onProgress?.('이미지 디코딩...')
   const data = await res.json()
-  const b64 = data.data?.[0]?.b64_json
+  const b64 = data.artifacts?.[0]?.base64
   if (!b64) throw new Error('No image data in NVIDIA NIM response')
   const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))
   return new Blob([bytes], { type: 'image/png' })
