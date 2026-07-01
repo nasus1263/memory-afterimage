@@ -26,7 +26,7 @@ export async function composeVideo(
 ): Promise<Blob> {
   onMessage?.('ffmpeg.wasm 로드 중...')
   const ff = new FFmpeg()
-  ff.on('progress', ({ progress }: { progress: number }) => onProgress?.(Math.round(progress * 100)))
+  ff.on('progress', ({ progress }: { progress: number }) => onProgress?.(Math.min(100, Math.max(0, Math.round(progress * 100)))))
   await ff.load({
     coreURL: `${FFMPEG_CORE_BASE}/ffmpeg-core.js`,
     wasmURL: `${FFMPEG_CORE_BASE}/ffmpeg-core.wasm`,
