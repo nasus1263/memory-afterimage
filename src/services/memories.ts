@@ -41,3 +41,14 @@ export async function listMemories(): Promise<MemoryRecord[]> {
   db.close()
   return records.sort((a, b) => b.createdAt - a.createdAt)
 }
+
+export async function deleteMemory(id: number): Promise<void> {
+  const db = await openDb()
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite')
+    tx.objectStore(STORE).delete(id)
+    tx.oncomplete = () => resolve()
+    tx.onerror = () => reject(tx.error)
+  })
+  db.close()
+}
