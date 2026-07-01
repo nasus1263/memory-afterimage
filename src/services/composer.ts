@@ -1,5 +1,6 @@
 import { FFmpeg } from '@ffmpeg/ffmpeg'
 import { fetchFile } from '@ffmpeg/util'
+import { FFMPEG_CORE_BASE } from '../config/endpoints'
 
 function extOf(blob: Blob): string {
   if (blob.type.includes('webm')) return 'webm'
@@ -21,8 +22,8 @@ export async function composeVideo(
   const ff = new FFmpeg()
   ff.on('progress', ({ progress }: { progress: number }) => onProgress?.(Math.round(progress * 100)))
   await ff.load({
-    coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js',
-    wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm',
+    coreURL: `${FFMPEG_CORE_BASE}/ffmpeg-core.js`,
+    wasmURL: `${FFMPEG_CORE_BASE}/ffmpeg-core.wasm`,
   })
 
   const total = ttsDuration + 2

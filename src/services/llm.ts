@@ -1,4 +1,5 @@
 import type { ApiKeys, LLMResult, ModelConfig } from '../types'
+import { OPENAI_BASE, ANTHROPIC_BASE, GOOGLE_BASE, NVIDIA_LLM_BASE } from '../config/endpoints'
 
 const SYSTEM_PROMPT = `You are a creative AI for an immersive memory art installation.
 The user will describe a travel memory. You must output JSON with exactly these fields:
@@ -24,7 +25,7 @@ function extractJSON(raw: string): LLMResult {
 }
 
 async function callOpenAI(text: string, model: string, key: string): Promise<LLMResult> {
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+  const res = await fetch(`${OPENAI_BASE}/chat/completions`, {
     method: 'POST',
     signal: makeSignal(),
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
@@ -59,7 +60,7 @@ async function callNvidia(text: string, model: string, key: string, baseUrl: str
 }
 
 async function callAnthropic(text: string, model: string, key: string): Promise<LLMResult> {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch(`${ANTHROPIC_BASE}/messages`, {
     method: 'POST',
     signal: makeSignal(),
     headers: {
@@ -81,7 +82,7 @@ async function callAnthropic(text: string, model: string, key: string): Promise<
 
 async function callGoogle(text: string, model: string, key: string): Promise<LLMResult> {
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+    `${GOOGLE_BASE}/models/${model}:generateContent?key=${key}`,
     {
       method: 'POST',
       signal: makeSignal(),
@@ -97,12 +98,6 @@ async function callGoogle(text: string, model: string, key: string): Promise<LLM
   const data = await res.json()
   return extractJSON(data.candidates[0].content.parts[0].text)
 }
-
-// Dev: Vite proxy (/nvidia-nim → https://integrate.api.nvidia.com)
-// Prod: direct call will CORS-fail — needs a reverse proxy
-const NVIDIA_LLM_BASE = import.meta.env.DEV
-  ? '/nvidia-nim/v1'
-  : 'https://integrate.api.nvidia.com/v1'
 
 export async function refineMemo(
   userText: string,

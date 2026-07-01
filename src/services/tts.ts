@@ -1,4 +1,5 @@
 import type { ApiKeys, ModelConfig } from '../types'
+import { OPENAI_BASE, GOOGLE_BASE, ELEVENLABS_BASE } from '../config/endpoints'
 
 export interface TTSResult {
   blob: Blob
@@ -21,7 +22,7 @@ async function getBlobDuration(blob: Blob): Promise<number> {
 }
 
 async function ttsOpenAI(text: string, model: string, voice: string, key: string): Promise<TTSResult> {
-  const res = await fetch('https://api.openai.com/v1/audio/speech', {
+  const res = await fetch(`${OPENAI_BASE}/audio/speech`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
     body: JSON.stringify({ model, input: text, voice, response_format: 'mp3' }),
@@ -34,7 +35,7 @@ async function ttsOpenAI(text: string, model: string, voice: string, key: string
 
 async function ttsGoogle(text: string, model: string, voice: string, key: string): Promise<TTSResult> {
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+    `${GOOGLE_BASE}/models/${model}:generateContent?key=${key}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -92,7 +93,7 @@ function ttsLocal(text: string): TTSResult {
 }
 
 async function ttsElevenLabs(text: string, model: string, voice: string, key: string): Promise<TTSResult> {
-  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}`, {
+  const res = await fetch(`${ELEVENLABS_BASE}/text-to-speech/${voice}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'xi-api-key': key },
     body: JSON.stringify({ text, model_id: model }),

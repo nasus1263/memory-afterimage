@@ -1,9 +1,10 @@
 import type { ApiKeys, ModelConfig } from '../types'
 import { isDebugMode, getDummyImage } from './debug'
+import { OPENAI_BASE, GOOGLE_BASE, HUGGINGFACE_BASE, FAL_QUEUE_BASE, NVIDIA_GENAI_BASE } from '../config/endpoints'
 
 async function imageOpenAI(prompt: string, key: string, onProgress?: (msg: string) => void): Promise<Blob> {
   onProgress?.('DALL-E 3 요청 전송...')
-  const res = await fetch('https://api.openai.com/v1/images/generations', {
+  const res = await fetch(`${OPENAI_BASE}/images/generations`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
     body: JSON.stringify({
@@ -26,7 +27,7 @@ async function imageGoogle(prompt: string, model: string, key: string, onProgres
   if (model.startsWith('gemini-')) {
     onProgress?.('Gemini 이미지 생성 요청...')
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+      `${GOOGLE_BASE}/models/${model}:generateContent?key=${key}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -48,7 +49,7 @@ async function imageGoogle(prompt: string, model: string, key: string, onProgres
   // Imagen 4 (deprecated 2026-06-24 — may return 404)
   onProgress?.('Imagen 요청 전송...')
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${key}`,
+    `${GOOGLE_BASE}/models/${model}:predict?key=${key}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -68,7 +69,7 @@ async function imageGoogle(prompt: string, model: string, key: string, onProgres
 
 async function imageHuggingFace(prompt: string, model: string, key: string, onProgress?: (msg: string) => void): Promise<Blob> {
   onProgress?.('HuggingFace 추론 API 요청...')
-  const res = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
+  const res = await fetch(`${HUGGINGFACE_BASE}/${model}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -83,7 +84,7 @@ async function imageHuggingFace(prompt: string, model: string, key: string, onPr
 
 async function imageFal(prompt: string, model: string, key: string, onProgress?: (msg: string) => void): Promise<Blob> {
   onProgress?.('fal.ai 큐 제출...')
-  const submitRes = await fetch(`https://queue.fal.run/${model}`, {
+  const submitRes = await fetch(`${FAL_QUEUE_BASE}/${model}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Key ${key}` },
     body: JSON.stringify({ prompt }),
@@ -96,7 +97,7 @@ async function imageFal(prompt: string, model: string, key: string, onProgress?:
     await new Promise((r) => setTimeout(r, 2000))
     const elapsed = Math.round((Date.now() - startTime) / 1000)
     onProgress?.(`처리 중... ${elapsed}s`)
-    const statusRes = await fetch(`https://queue.fal.run/${model}/requests/${request_id}`, {
+    const statusRes = await fetch(`${FAL_QUEUE_BASE}/${model}/requests/${request_id}`, {
       headers: { Authorization: `Key ${key}` },
     })
     if (!statusRes.ok) continue
@@ -112,11 +113,6 @@ async function imageFal(prompt: string, model: string, key: string, onProgress?:
   }
   throw new Error('fal.ai image generation timed out')
 }
-
-// ai.api.nvidia.com/v1/genai/{model} — response: artifacts[0].base64_string
-const NVIDIA_GENAI_BASE = import.meta.env.DEV
-  ? '/nvidia-genai'
-  : 'https://ai.api.nvidia.com'
 
 async function imageNvidia(prompt: string, model: string, key: string, onProgress?: (msg: string) => void): Promise<Blob> {
   onProgress?.('NVIDIA GenAI 요청 전송...')

@@ -1,5 +1,6 @@
 import type { ApiKeys, ModelConfig } from '../types'
 import { isDebugMode, getDummyVideo } from './debug'
+import { FAL_QUEUE_BASE, REPLICATE_BASE, GOOGLE_BASE } from '../config/endpoints'
 
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -16,7 +17,7 @@ async function falPoll(model: string, requestId: string, key: string, onProgress
     await new Promise((r) => setTimeout(r, 3000))
     const elapsed = Math.round((Date.now() - startTime) / 1000)
     onProgress?.(`처리 중... ${elapsed}s`)
-    const res = await fetch(`https://queue.fal.run/${model}/requests/${requestId}`, {
+    const res = await fetch(`${FAL_QUEUE_BASE}/${model}/requests/${requestId}`, {
       headers: { Authorization: `Key ${key}` },
     })
     if (!res.ok) continue
@@ -39,7 +40,7 @@ async function vidFal(imageBlob: Blob, model: string, key: string, imagePrompt: 
   const imageUrl = `data:${mimeType};base64,${b64}`
 
   onProgress?.('fal.ai 큐 제출...')
-  const submitRes = await fetch(`https://queue.fal.run/${model}`, {
+  const submitRes = await fetch(`${FAL_QUEUE_BASE}/${model}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Key ${key}` },
     body: JSON.stringify({
@@ -59,7 +60,7 @@ async function vidReplicate(imageBlob: Blob, model: string, key: string, onProgr
   const imageUrl = `data:${imageBlob.type || 'image/png'};base64,${b64}`
 
   onProgress?.('Replicate 예측 생성...')
-  const res = await fetch('https://api.replicate.com/v1/predictions', {
+  const res = await fetch(`${REPLICATE_BASE}/predictions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
     body: JSON.stringify({
@@ -75,7 +76,7 @@ async function vidReplicate(imageBlob: Blob, model: string, key: string, onProgr
     await new Promise((r) => setTimeout(r, 3000))
     const elapsed = Math.round((Date.now() - startTime) / 1000)
     onProgress?.(`처리 중... ${elapsed}s`)
-    const statusRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+    const statusRes = await fetch(`${REPLICATE_BASE}/predictions/${prediction.id}`, {
       headers: { Authorization: `Bearer ${key}` },
     })
     const result = await statusRes.json()
@@ -94,7 +95,7 @@ async function vidGoogle(imageBlob: Blob, model: string, key: string, imagePromp
 
   onProgress?.('Google Veo 요청 전송...')
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}-generate-preview:generateVideo?key=${key}`,
+    `${GOOGLE_BASE}/models/${model}-generate-preview:generateVideo?key=${key}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -119,7 +120,7 @@ async function vidGoogle(imageBlob: Blob, model: string, key: string, imagePromp
     const elapsed = Math.round((Date.now() - startTime) / 1000)
     onProgress?.(`생성 대기... ${elapsed}s`)
     const opRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/${opName}?key=${key}`
+      `${GOOGLE_BASE}/${opName}?key=${key}`
     )
     const op = await opRes.json()
     if (op.done) {

@@ -1,9 +1,10 @@
 import type { ApiKeys, ModelConfig } from '../types'
+import { FREESOUND_BASE, JAMENDO_BASE } from '../config/endpoints'
 
 async function searchFreesound(keywords: string[], key: string): Promise<Blob> {
   const query = keywords.join(' ')
   const res = await fetch(
-    `https://freesound.org/apiv2/search/text/?query=${encodeURIComponent(query)}&fields=id,name,previews&filter=duration:[10 TO 120]&page_size=5&token=${key}`
+    `${FREESOUND_BASE}/search/text/?query=${encodeURIComponent(query)}&fields=id,name,previews&filter=duration:[10 TO 120]&page_size=5&token=${key}`
   )
   if (!res.ok) throw new Error(`Freesound search error: ${res.status}`)
   const data = await res.json()
@@ -22,7 +23,7 @@ async function searchFreesound(keywords: string[], key: string): Promise<Blob> {
 async function searchJamendo(keywords: string[], key: string): Promise<Blob> {
   const tags = keywords.join('+')
   const res = await fetch(
-    `https://api.jamendo.com/v3.0/tracks/?client_id=${key}&format=json&limit=5&tags=${encodeURIComponent(tags)}&audioformat=mp32&include=musicinfo&groupby=artist_id`
+    `${JAMENDO_BASE}/tracks/?client_id=${key}&format=json&limit=5&tags=${encodeURIComponent(tags)}&audioformat=mp32&include=musicinfo&groupby=artist_id`
   )
   if (!res.ok) throw new Error(`Jamendo search error: ${res.status}`)
   const data = await res.json()
