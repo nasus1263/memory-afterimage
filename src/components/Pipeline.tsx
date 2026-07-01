@@ -150,20 +150,22 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
   }, [])
 
   return (
-    <div className="pipeline">
-      <div className="stages">
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1.5">
         {STAGES.map((s) => (
           <StageCard key={s} stage={s} status={state[s]} message={state.messages[s]} durationMs={state.durations[s]} />
         ))}
       </div>
       {state.compose === 'running' && composeProgress > 0 && (
-        <div className="progress-bar">
-          <div className="progress-fill" style={{ width: `${composeProgress}%` }} />
-          <span className="progress-label">{composeProgress}%</span>
+        <div className="flex flex-col gap-1">
+          <div className="h-1 bg-border rounded-full overflow-hidden">
+            <div className="h-full bg-gold rounded-full transition-[width] duration-300 ease-out" style={{ width: `${composeProgress}%` }} />
+          </div>
+          <span className="block text-[11px] text-text-dim text-right">{composeProgress}%</span>
         </div>
       )}
       {state.error && (
-        <p className="error-msg">오류: {state.error}</p>
+        <p className="text-error text-[13px] py-2.5 px-3.5 bg-error/10 border border-error/30 rounded">오류: {state.error}</p>
       )}
     </div>
   )

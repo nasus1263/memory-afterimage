@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import { copyFileSync } from 'fs'
 
 export default defineConfig({
@@ -7,6 +8,7 @@ export default defineConfig({
   base: process.env.BASE_URL ?? '/',
   plugins: [
     react(),
+    tailwindcss(),
     {
       name: 'copy-coi-sw',
       buildStart() {

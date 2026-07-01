@@ -32,6 +32,13 @@ const STATUS_ICON: Record<TestStatus, string> = {
   idle: '○', running: '◌', done: '●', error: '✕',
 }
 
+const STATUS_STYLE: Record<TestStatus, string> = {
+  idle: 'border-border opacity-60',
+  running: 'border-running',
+  done: 'border-success',
+  error: 'border-error text-error',
+}
+
 function TestRow({
   label,
   state,
@@ -42,30 +49,32 @@ function TestRow({
   onRun: () => void
 }) {
   return (
-    <div className={`test-row test-${state.status}`}>
-      <div className="test-row-left">
-        <span className="test-icon">{STATUS_ICON[state.status]}</span>
-        <span className="test-label">{label}</span>
-        {state.msg && <span className="test-msg">{state.msg}</span>}
+    <div className={`border rounded py-2.5 px-3 flex flex-col gap-1.5 text-sm ${STATUS_STYLE[state.status]}`}>
+      <div className="flex items-center gap-2.5 flex-wrap">
+        <span className={`w-4 text-center shrink-0 ${state.status === 'running' ? 'inline-block animate-spin' : ''}`}>
+          {STATUS_ICON[state.status]}
+        </span>
+        <span className="font-medium">{label}</span>
+        {state.msg && <span className="text-[11px] text-text-dim ml-1">{state.msg}</span>}
       </div>
       <button
-        className="test-btn"
+        className="ml-auto bg-transparent border border-gold-dim text-gold-dim rounded-sm py-1 px-3 text-xs whitespace-nowrap cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed enabled:hover:border-gold enabled:hover:text-gold"
         onClick={onRun}
         disabled={state.status === 'running'}
       >
         {state.status === 'running' ? '실행 중...' : '테스트'}
       </button>
       {state.text && (
-        <pre className="test-result-text">{state.text}</pre>
+        <pre className="text-[11px] text-text-dim bg-white/[0.04] rounded-sm p-2 overflow-x-auto whitespace-pre-wrap break-all m-0 max-h-40 overflow-y-auto">{state.text}</pre>
       )}
       {state.url && state.mime?.startsWith('image') && (
-        <img className="test-result-media" src={state.url} alt="test result" />
+        <img className="w-full max-h-[200px] rounded-sm object-contain bg-black" src={state.url} alt="test result" />
       )}
       {state.url && state.mime?.startsWith('audio') && (
-        <audio className="test-result-media" src={state.url} controls />
+        <audio className="w-full max-h-[200px] rounded-sm" src={state.url} controls />
       )}
       {state.url && state.mime?.startsWith('video') && (
-        <video className="test-result-media" src={state.url} controls loop />
+        <video className="w-full max-h-[200px] rounded-sm object-contain bg-black" src={state.url} controls loop />
       )}
     </div>
   )
@@ -99,7 +108,7 @@ export function ApiTest({ keys, config }: Props) {
   }
 
   return (
-    <div className="api-test">
+    <div className="flex flex-col gap-2">
       <TestRow
         label="LLM — 본문 다듬기"
         state={llm}

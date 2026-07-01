@@ -16,6 +16,13 @@ const ICON: Record<StageStatus, string> = {
   error: '✕',
 }
 
+const STATUS_STYLE: Record<StageStatus, string> = {
+  idle: 'border-border opacity-50',
+  running: 'border-running text-running',
+  done: 'border-success',
+  error: 'border-error text-error',
+}
+
 function formatDuration(ms: number): string {
   const totalSec = ms / 1000
   if (totalSec < 60) return `${totalSec.toFixed(1)}초`
@@ -33,13 +40,15 @@ interface Props {
 
 export function StageCard({ stage, status, message, durationMs }: Props) {
   return (
-    <div className={`stage-card stage-${status}`}>
-      <span className="stage-icon">{ICON[status]}</span>
-      <div className="stage-info">
-        <span className="stage-label">{LABEL[stage] ?? stage}</span>
-        {message && <span className="stage-msg">{message}</span>}
+    <div className={`flex items-center gap-3 py-2.5 px-3.5 rounded border bg-surface text-sm transition-colors ${STATUS_STYLE[status]}`}>
+      <span className={`text-base w-5 text-center shrink-0 ${status === 'running' ? 'inline-block animate-spin' : ''}`}>
+        {ICON[status]}
+      </span>
+      <div className="flex flex-col gap-0.5 flex-1">
+        <span className="text-sm">{LABEL[stage] ?? stage}</span>
+        {message && <span className="text-[11px] text-text-dim opacity-85">{message}</span>}
       </div>
-      {durationMs != null && <span className="stage-duration">{formatDuration(durationMs)}</span>}
+      {durationMs != null && <span className="text-[11px] text-text-dim whitespace-nowrap ml-auto">{formatDuration(durationMs)}</span>}
     </div>
   )
 }

@@ -14,25 +14,32 @@ interface Props {
   onConfig: (c: ModelConfig) => void
 }
 
+const selectCls = 'bg-surface2 border border-border text-text py-1.5 px-2.5 rounded text-sm mr-1.5 mb-1 cursor-pointer focus:outline-none focus:border-gold-dim'
+const groupLabelCls = 'block text-xs text-text-dim mb-1'
+
 function KeyInput({
   label, value, onChange, hint,
 }: { label: string; value: string; onChange: (v: string) => void; hint?: string }) {
   const [show, setShow] = useState(false)
   return (
-    <div className="key-row">
-      <label>{label}</label>
-      <div className="key-input-wrap">
+    <div className="mb-2.5">
+      <label className={groupLabelCls}>{label}</label>
+      <div className="flex gap-1.5">
         <input
+          className="flex-1 bg-surface2 border border-border text-text py-1.5 px-2.5 rounded text-sm font-mono focus:outline-none focus:border-gold-dim"
           type={show ? 'text' : 'password'}
           value={value}
           placeholder="sk-..."
           onChange={(e) => onChange(e.target.value)}
         />
-        <button className="show-btn" onClick={() => setShow((s) => !s)}>
+        <button
+          className="bg-transparent border border-border text-text-dim py-1.5 px-2.5 rounded text-xs whitespace-nowrap cursor-pointer"
+          onClick={() => setShow((s) => !s)}
+        >
           {show ? '숨김' : '표시'}
         </button>
       </div>
-      {hint && <span className="hint">{hint}</span>}
+      {hint && <span className="block text-[11px] text-text-dim mt-0.5">{hint}</span>}
     </div>
   )
 }
@@ -47,22 +54,23 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
   }
 
   return (
-    <div className="settings">
+    <div className="flex flex-col gap-6">
       <section>
-        <h3>디버그</h3>
-        <label className="debug-toggle">
+        <h3 className="text-gold-dim text-[11px] tracking-wider uppercase mb-3.5">디버그</h3>
+        <label className="flex items-start gap-2.5 cursor-pointer">
           <input
+            className="mt-0.5 accent-running cursor-pointer shrink-0"
             type="checkbox"
             checked={debug}
             onChange={(e) => toggleDebug(e.target.checked)}
           />
-          <span>디버그 모드</span>
-          <span className="hint">이미지·동영상 API 호출 건너뜀 → 더미 파일 반환</span>
+          <span className="text-running text-sm font-medium">디버그 모드</span>
+          <span className="inline text-[11px] text-text-dim ml-2">이미지·동영상 API 호출 건너뜀 → 더미 파일 반환</span>
         </label>
       </section>
 
       <section>
-        <h3>API 키</h3>
+        <h3 className="text-gold-dim text-[11px] tracking-wider uppercase mb-3.5">API 키</h3>
         <KeyInput label="OpenAI" value={keys.openai} onChange={(v) => onKeys({ ...keys, openai: v })} />
         <KeyInput label="Anthropic" value={keys.anthropic} onChange={(v) => onKeys({ ...keys, anthropic: v })} hint="※ 브라우저 CORS 제한 있을 수 있음" />
         <KeyInput label="Google AI Studio" value={keys.google} onChange={(v) => onKeys({ ...keys, google: v })} hint="무료 티어 사용 가능" />
@@ -76,17 +84,19 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
       </section>
 
       <section>
-        <h3>모델 선택</h3>
+        <h3 className="text-gold-dim text-[11px] tracking-wider uppercase mb-3.5">모델 선택</h3>
 
-        <div className="model-group">
-          <label>LLM (본문 다듬기)</label>
+        <div className="mb-3">
+          <label className={groupLabelCls}>LLM (본문 다듬기)</label>
           <select
+            className={selectCls}
             value={config.llm.provider}
             onChange={(e) => onConfig({ ...config, llm: { ...config.llm, provider: e.target.value as any, model: LLM_MODELS[e.target.value as keyof typeof LLM_MODELS][0].id } })}
           >
             {Object.keys(LLM_MODELS).map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
           <select
+            className={selectCls}
             value={config.llm.model}
             onChange={(e) => onConfig({ ...config, llm: { ...config.llm, model: e.target.value } })}
           >
@@ -96,9 +106,10 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
           </select>
         </div>
 
-        <div className="model-group">
-          <label>TTS</label>
+        <div className="mb-3">
+          <label className={groupLabelCls}>TTS</label>
           <select
+            className={selectCls}
             value={config.tts.provider}
             onChange={(e) => {
               const p = e.target.value as any
@@ -108,6 +119,7 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
             {Object.keys(TTS_MODELS).map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
           <select
+            className={selectCls}
             value={config.tts.model}
             onChange={(e) => onConfig({ ...config, tts: { ...config.tts, model: e.target.value } })}
           >
@@ -117,6 +129,7 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
           </select>
           {ttsVoices.length > 0 && (
             <select
+              className={selectCls}
               value={config.tts.voice}
               onChange={(e) => onConfig({ ...config, tts: { ...config.tts, voice: e.target.value } })}
             >
@@ -125,9 +138,10 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
           )}
         </div>
 
-        <div className="model-group">
-          <label>이미지 생성</label>
+        <div className="mb-3">
+          <label className={groupLabelCls}>이미지 생성</label>
           <select
+            className={selectCls}
             value={config.image.provider}
             onChange={(e) => {
               const p = e.target.value as any
@@ -137,6 +151,7 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
             {Object.keys(IMAGE_MODELS).map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
           <select
+            className={selectCls}
             value={config.image.model}
             onChange={(e) => onConfig({ ...config, image: { ...config.image, model: e.target.value } })}
           >
@@ -146,9 +161,10 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
           </select>
         </div>
 
-        <div className="model-group">
-          <label>이미지 → 동영상</label>
+        <div className="mb-3">
+          <label className={groupLabelCls}>이미지 → 동영상</label>
           <select
+            className={selectCls}
             value={config.video.provider}
             onChange={(e) => {
               const p = e.target.value as any
@@ -158,6 +174,7 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
             {Object.keys(VIDEO_MODELS).map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
           <select
+            className={selectCls}
             value={config.video.model}
             onChange={(e) => onConfig({ ...config, video: { ...config.video, model: e.target.value } })}
           >
@@ -167,9 +184,10 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
           </select>
         </div>
 
-        <div className="model-group">
-          <label>앰비언트 오디오 출처</label>
+        <div className="mb-3">
+          <label className={groupLabelCls}>앰비언트 오디오 출처</label>
           <select
+            className={selectCls}
             value={config.audio.provider}
             onChange={(e) => onConfig({ ...config, audio: { provider: e.target.value as any } })}
           >
@@ -180,7 +198,7 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
       </section>
 
       <section>
-        <h3>API 테스트</h3>
+        <h3 className="text-gold-dim text-[11px] tracking-wider uppercase mb-3.5">API 테스트</h3>
         <ApiTest keys={keys} config={config} />
       </section>
     </div>

@@ -113,23 +113,31 @@ export function VoiceInput({ onComplete }: Props) {
   }
 
   return (
-    <div className="voice-section">
-      <p className="voice-guide">헤드폰을 끼고, 마이크 버튼을 누른 뒤 여행의 한 장면을 들려주세요</p>
+    <div className="flex flex-col items-center text-center gap-2 pt-10 pb-2">
+      <p className="text-text-dim text-sm max-w-[420px]">헤드폰을 끼고, 마이크 버튼을 누른 뒤 여행의 한 장면을 들려주세요</p>
 
       <button
-        className={`mic-btn${listening ? ' mic-btn--listening' : ''}`}
+        className={`w-[140px] h-[140px] rounded-full border-2 text-5xl mt-8 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+          listening
+            ? 'border-error bg-error/15 text-error animate-pulse-red'
+            : 'border-border bg-surface2 text-text hover:border-gold-dim'
+        }`}
         onClick={handleToggle}
         disabled={unsupported || processing}
       >
         🎙
       </button>
 
-      {listening && <p className="listening-label">듣고 있어요...</p>}
-      {processing && <p className="listening-label">처리 중...</p>}
-      {listening && <canvas ref={canvasRef} className="waveform" width={320} height={80} />}
+      {listening && <p className="text-error text-sm font-medium mt-1">듣고 있어요...</p>}
+      {processing && <p className="text-error text-sm font-medium mt-1">처리 중...</p>}
+      {listening && <canvas ref={canvasRef} className="mt-3" width={320} height={80} />}
 
-      {unsupported && <p className="voice-error">이 브라우저는 음성 인식을 지원하지 않습니다. 아래 텍스트 입력을 이용해주세요.</p>}
-      {micError && <p className="voice-error">{micError}</p>}
+      {unsupported && (
+        <p className="text-error text-xs mt-2.5 max-w-[360px]">
+          이 브라우저는 음성 인식을 지원하지 않습니다. 아래 텍스트 입력을 이용해주세요.
+        </p>
+      )}
+      {micError && <p className="text-error text-xs mt-2.5 max-w-[360px]">{micError}</p>}
     </div>
   )
 }
