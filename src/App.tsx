@@ -15,17 +15,25 @@ const IDLE_PIPELINE: PipelineState = {
   durations: {},
 }
 
+// Vite's base (e.g. "/memory-afterimage/" on GitHub Pages, "/" in dev), without trailing slash.
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, '')
+
+function stripBase(pathname: string) {
+  if (BASE && pathname.startsWith(BASE)) return pathname.slice(BASE.length) || '/'
+  return pathname
+}
+
 function useRoute() {
-  const [path, setPath] = useState(() => window.location.pathname)
+  const [path, setPath] = useState(() => stripBase(window.location.pathname))
 
   useEffect(() => {
-    const onPopState = () => setPath(window.location.pathname)
+    const onPopState = () => setPath(stripBase(window.location.pathname))
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
   const navigate = useCallback((to: string) => {
-    window.history.pushState({}, '', to)
+    window.history.pushState({}, '', BASE + to)
     setPath(to)
   }, [])
 

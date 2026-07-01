@@ -29,7 +29,7 @@ export function Memories() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 py-8">
       {items.map((item, i) => (
-        <div key={item.id} className="bg-surface border border-border rounded-md overflow-hidden flex flex-col">
+        <div key={item.id} className="bg-surface border border-border rounded-3xl overflow-hidden flex flex-col shadow-paper">
           <video className="w-full aspect-video bg-black object-contain" src={urls[i]} controls loop />
           <div className="p-3.5 flex flex-col gap-1.5">
             <div className="flex items-center justify-between gap-2">
