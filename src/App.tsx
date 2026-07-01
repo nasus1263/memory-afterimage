@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import type { ApiKeys, ModelConfig, PipelineState } from './types'
 import { loadKeys, saveKeys, loadConfig, saveConfig } from './store/settings'
 import { isDebugMode } from './services/debug'
@@ -87,7 +87,8 @@ export default function App() {
   }
 
   const finalBlob = pipelineState.finalBlob
-  const finalUrl = finalBlob ? URL.createObjectURL(finalBlob) : null
+  const finalUrl = useMemo(() => (finalBlob ? URL.createObjectURL(finalBlob) : null), [finalBlob])
+  useEffect(() => () => { if (finalUrl) URL.revokeObjectURL(finalUrl) }, [finalUrl])
 
   return (
     <div className="max-w-[860px] mx-auto px-5">
