@@ -114,8 +114,9 @@ async function imageFal(prompt: string, model: string, key: string, onProgress?:
   throw new Error('fal.ai image generation timed out')
 }
 
-async function imageNvidia(prompt: string, model: string, key: string, onProgress?: (msg: string) => void): Promise<Blob> {
-  // hosted NIM visual-genai endpoint (model is a third-party model — e.g. black-forest-labs/flux.1-dev — NIM just hosts it)
+async function imageNvidia(prompt: string, _model: string, key: string, onProgress?: (msg: string) => void): Promise<Blob> {
+  // 확인된 hosted 엔드포인트로 고정 — 다른 모델(qwen/qwen-image 등)은 이 경로에서 404
+  const model = 'black-forest-labs/flux.1-dev'
   onProgress?.('NVIDIA NIM 이미지 생성 요청...')
   const res = await fetch(`${NVIDIA_GENAI_BASE}/v1/genai/${model}`, {
     method: 'POST',
