@@ -3,7 +3,6 @@ import type { ApiKeys, ModelConfig, PipelineState, StageStatus } from '../types'
 import { refineMemo } from '../services/llm'
 import { generateTTS } from '../services/tts'
 import { generateImage } from '../services/image'
-import { generateVideo } from '../services/imgToVid'
 import { fetchAmbientAudioWithRetry } from '../services/audio'
 import { composeVideo } from '../services/composer'
 import { StageCard } from './StageCard'
@@ -20,7 +19,7 @@ interface Props {
   composeProgress: number
 }
 
-const STAGES = ['refine', 'tts', 'image', 'audio', 'imgToVid', 'compose'] as const
+const STAGES = ['refine', 'tts', 'image', 'audio', 'compose'] as const
 type Stage = typeof STAGES[number]
 
 function set(setState: SetState, patch: Partial<PipelineState>) {
@@ -111,26 +110,13 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
         })
         if (!ambBlob) setMsg('audio', '오디오 없음 (건너뜀)')
 
-        // ── 3. img → vid ──────────────────────────────
-        currentStage = 'imgToVid'
-        markRunning('imgToVid')
-        set(setState, stageStatus({ imgToVid: 'running' }))
-        setMsg('imgToVid', '비디오 생성 요청...')
-        const videoBlob = await generateVideo(
-          imgBlob, llmResult.imagePrompt, config, keys,
-          (msg) => setMsg('imgToVid', msg)
-        )
-        setMsg('imgToVid', '완료')
-        set(setState, { ...stageStatus({ imgToVid: 'done' }), videoBlob })
-        markDone('imgToVid')
-
-        // ── 4. ffmpeg 합성 ────────────────────────────
+        // ── 3. ffmpeg 합성 ────────────────────────────
         currentStage = 'compose'
         markRunning('compose')
         set(setState, stageStatus({ compose: 'running' }))
         setMsg('compose', 'ffmpeg.wasm 로드 중...')
         const finalBlob = await composeVideo(
-          videoBlob, ttsData.blob, ambBlob, ttsData.duration,
+          imgBlob, ttsData.blob, ambBlob, ttsData.duration,
           onProgress,
           (msg) => setMsg('compose', msg)
         )
@@ -165,7 +151,7 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
         </div>
       )}
       {state.error && (
-        <p className="text-error text-[13px] py-2.5 px-3.5 bg-error/10 border border-error/30 rounded">오류: {state.error}</p>
+        <p className="notice error">오류: {state.error}</p>
       )}
     </div>
   )

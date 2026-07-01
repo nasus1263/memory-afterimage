@@ -5,7 +5,6 @@ const LABEL: Record<string, string> = {
   tts: 'TTS 생성',
   image: '이미지 생성',
   audio: '앰비언트 오디오 탐색',
-  imgToVid: '이미지 → 동영상',
   compose: '최종 합성',
 }
 
@@ -40,7 +39,7 @@ interface Props {
 
 export function StageCard({ stage, status, message, durationMs }: Props) {
   return (
-    <div className={`flex items-center gap-3 py-2.5 px-3.5 rounded border bg-surface text-sm transition-colors ${STATUS_STYLE[status]}`}>
+    <div className={`flex items-center gap-3 py-2.5 px-3.5 rounded-2xl border bg-surface text-sm transition-colors ${STATUS_STYLE[status]}`}>
       <span className={`text-base w-5 text-center shrink-0 ${status === 'running' ? 'inline-block animate-spin' : ''}`}>
         {ICON[status]}
       </span>

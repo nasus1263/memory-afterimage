@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { ApiKeys, ModelConfig } from '../types'
 import {
   LLM_MODELS, TTS_MODELS, TTS_VOICES,
-  IMAGE_MODELS, VIDEO_MODELS,
+  IMAGE_MODELS,
 } from '../config/models'
 import { isDebugMode, setDebugMode } from '../services/debug'
 import { ApiTest } from './ApiTest'
@@ -65,7 +65,7 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
             onChange={(e) => toggleDebug(e.target.checked)}
           />
           <span className="text-running text-sm font-medium">디버그 모드</span>
-          <span className="inline text-[11px] text-text-dim ml-2">이미지·동영상 API 호출 건너뜀 → 더미 파일 반환</span>
+          <span className="inline text-[11px] text-text-dim ml-2">이미지 API 호출 건너뜀 → 더미 파일 반환</span>
         </label>
       </section>
 
@@ -77,7 +77,6 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
         <KeyInput label="NVIDIA NIM (nvapi-...)" value={keys.nvidia} onChange={(v) => onKeys({ ...keys, nvidia: v })} hint="✓ 무료 1000크레딧 — build.nvidia.com 무료 계정 후 API Keys 탭" />
         <KeyInput label="ElevenLabs" value={keys.elevenlabs} onChange={(v) => onKeys({ ...keys, elevenlabs: v })} hint="✓ 무료 10K chars/월 — elevenlabs.io → Profile → API Key" />
         <KeyInput label="fal.ai" value={keys.fal} onChange={(v) => onKeys({ ...keys, fal: v })} hint="$20 가입 크레딧 (비즈니스 이메일)" />
-        <KeyInput label="Replicate" value={keys.replicate} onChange={(v) => onKeys({ ...keys, replicate: v })} hint="신규 계정 무료 predictions 한도" />
         <KeyInput label="HuggingFace" value={keys.huggingface} onChange={(v) => onKeys({ ...keys, huggingface: v })} hint="✓ 무료 Serverless Inference API (계정 없이도 가능)" />
         <KeyInput label="Freesound" value={keys.freesound} onChange={(v) => onKeys({ ...keys, freesound: v })} hint="✓ 무료 — freesound.org 계정 후 /apiv2/apply 에서 키 발급" />
         <KeyInput label="Jamendo" value={keys.jamendo} onChange={(v) => onKeys({ ...keys, jamendo: v })} hint="✓ 무료 — developers.jamendo.com 에서 client_id 발급" />
@@ -156,29 +155,6 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
             onChange={(e) => onConfig({ ...config, image: { ...config.image, model: e.target.value } })}
           >
             {IMAGE_MODELS[config.image.provider as keyof typeof IMAGE_MODELS]?.map((m) => (
-              <option key={m.id} value={m.id}>{m.label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="mb-3">
-          <label className={groupLabelCls}>이미지 → 동영상</label>
-          <select
-            className={selectCls}
-            value={config.video.provider}
-            onChange={(e) => {
-              const p = e.target.value as any
-              onConfig({ ...config, video: { provider: p, model: VIDEO_MODELS[p as keyof typeof VIDEO_MODELS][0].id } })
-            }}
-          >
-            {Object.keys(VIDEO_MODELS).map((p) => <option key={p} value={p}>{p}</option>)}
-          </select>
-          <select
-            className={selectCls}
-            value={config.video.model}
-            onChange={(e) => onConfig({ ...config, video: { ...config.video, model: e.target.value } })}
-          >
-            {VIDEO_MODELS[config.video.provider as keyof typeof VIDEO_MODELS]?.map((m) => (
               <option key={m.id} value={m.id}>{m.label}</option>
             ))}
           </select>

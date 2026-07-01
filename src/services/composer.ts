@@ -10,8 +10,14 @@ function extOf(blob: Blob): string {
   return 'mp4'
 }
 
+function imgExtOf(blob: Blob): string {
+  if (blob.type.includes('jpeg') || blob.type.includes('jpg')) return 'jpg'
+  if (blob.type.includes('webp')) return 'webp'
+  return 'png'
+}
+
 export async function composeVideo(
-  videoBlob: Blob,
+  imageBlob: Blob,
   ttsBlob: Blob,
   ambientBlob: Blob | null,
   ttsDuration: number,
@@ -27,25 +33,27 @@ export async function composeVideo(
   })
 
   const total = ttsDuration + 2
-  const vidExt = extOf(videoBlob)
+  const imgExt = imgExtOf(imageBlob)
   const ttsExt = extOf(ttsBlob)
-  const srcVid = `src_video.${vidExt}`
+  const srcImg = `src_image.${imgExt}`
   const srcTts = `tts.${ttsExt}`
 
   onMessage?.('파일 기록 중...')
-  await ff.writeFile(srcVid, await fetchFile(videoBlob))
+  await ff.writeFile(srcImg, await fetchFile(imageBlob))
   await ff.writeFile(srcTts, await fetchFile(ttsBlob))
   if (ambientBlob) await ff.writeFile('ambient.mp3', await fetchFile(ambientBlob))
 
-  // Step 1: loop source video — use large finite count so -t can cut it cleanly
+  // Step 1: loop still image into a video of the required duration
   onMessage?.('비디오 루프 생성...')
   await ff.exec([
     '-y',
-    '-stream_loop', '99',
-    '-i', srcVid,
+    '-loop', '1',
+    '-i', srcImg,
     '-t', String(total),
+    '-r', '24',
+    '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
     '-c:v', 'libx264', '-preset', 'ultrafast',
-    '-an',
+    '-pix_fmt', 'yuv420p',
     'looped.mp4',
   ])
 

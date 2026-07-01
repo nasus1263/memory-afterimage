@@ -4,10 +4,9 @@ import { refineMemo } from '../services/llm'
 import { generateTTS } from '../services/tts'
 import { generateImage } from '../services/image'
 import { fetchAmbientAudio } from '../services/audio'
-import { generateVideo } from '../services/imgToVid'
 import { composeVideo } from '../services/composer'
 import {
-  getDummyImage, getDummyVideo, getDummyAudio,
+  getDummyImage, getDummyAudio,
   DUMMY_TEXT, DUMMY_TTS_TEXT, DUMMY_IMAGE_PROMPT, DUMMY_AUDIO_KEYWORD,
 } from '../services/debug'
 
@@ -85,7 +84,6 @@ export function ApiTest({ keys, config }: Props) {
   const [tts, setTts] = useState<StageState>(INIT)
   const [image, setImage] = useState<StageState>(INIT)
   const [audio, setAudio] = useState<StageState>(INIT)
-  const [video, setVideo] = useState<StageState>(INIT)
   const [compose, setCompose] = useState<StageState>(INIT)
 
   async function run<T>(
@@ -184,35 +182,15 @@ export function ApiTest({ keys, config }: Props) {
       />
 
       <TestRow
-        label="img→vid (더미 이미지 입력)"
-        state={video}
-        onRun={() =>
-          run(setVideo, async (setMsg) => {
-            setMsg('더미 이미지 생성...')
-            const imgBlob = await getDummyImage()
-            setMsg('비디오 생성 요청...')
-            return generateVideo(imgBlob, DUMMY_IMAGE_PROMPT, config, keys, setMsg)
-          }, (blob, set) => {
-            set({
-              status: 'done',
-              msg: `완료 (${(blob.size / 1024).toFixed(0)} KB)`,
-              url: blobUrl(blob),
-              mime: blob.type || 'video/mp4',
-            })
-          })
-        }
-      />
-
-      <TestRow
-        label="최종 합성 (더미 비디오·오디오)"
+        label="최종 합성 (더미 이미지·오디오)"
         state={compose}
         onRun={() =>
           run(setCompose, async (setMsg) => {
             setMsg('더미 소스 생성...')
-            const [vidBlob] = await Promise.all([getDummyVideo()])
+            const imgBlob = await getDummyImage()
             const ttsBlob = getDummyAudio(5)
             setMsg('ffmpeg 합성...')
-            return composeVideo(vidBlob, ttsBlob, null, 5, undefined, setMsg)
+            return composeVideo(imgBlob, ttsBlob, null, 5, undefined, setMsg)
           }, (blob, set) => {
             set({
               status: 'done',

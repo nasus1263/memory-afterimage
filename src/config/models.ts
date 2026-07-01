@@ -86,27 +86,10 @@ export const IMAGE_MODELS = {
   ],
 }
 
-export const VIDEO_MODELS = {
-  google: [
-    { id: 'veo-3.1', label: 'Veo 3.1 유료 ~$0.50/5s' },
-    { id: 'veo-3.1-lite', label: 'Veo 3.1 Lite 유료 (저렴)' },
-    { id: 'veo-3', label: 'Veo 3 유료' },
-  ],
-  fal: [
-    { id: 'fal-ai/wan/i2v-14b', label: 'Wan 2.2 I2V ($20 크레딧·Apache 2.0)' },
-    { id: 'fal-ai/ltx-video/image-to-video', label: 'LTX-Video ($20 크레딧·빠름)' },
-  ],
-  replicate: [
-    { id: 'stability-ai/stable-video-diffusion', label: 'SVD on Replicate (신규계정 무료예측 한도)' },
-    { id: 'lightricks/ltx-video', label: 'LTX-Video on Replicate' },
-  ],
-}
-
 // Default: 무료 경로만 사용
 export const DEFAULT_CONFIG = {
   llm: { provider: 'google' as const, model: 'gemini-2.5-flash-lite' },
   tts: { provider: 'elevenlabs' as const, model: 'eleven_multilingual_v2', voice: 'pNInz6obpgDQGcFmaJgB' },
   image: { provider: 'nvidia' as const, model: 'black-forest-labs/flux.1-dev' },
-  video: { provider: 'fal' as const, model: 'fal-ai/ltx-video/image-to-video' },
   audio: { provider: 'freesound' as const },
 }
