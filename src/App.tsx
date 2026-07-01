@@ -108,7 +108,7 @@ export default function App() {
                 ? 'border-gold-dim text-gold'
                 : 'border-border text-text-dim hover:border-gold-dim hover:text-gold'
             }`}
-            onClick={() => navigate('/memories')}
+            onClick={() => navigate(path === '/memories' ? '/' : '/memories')}
           >
             보관함
           </button>
