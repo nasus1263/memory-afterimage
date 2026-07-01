@@ -32,11 +32,6 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/nvidia-nim/, ''),
       },
-      '/nvidia-genai': {
-        target: 'https://ai.api.nvidia.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/nvidia-genai/, ''),
-      },
     },
   },
   optimizeDeps: {
