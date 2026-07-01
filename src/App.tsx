@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import type { ApiKeys, ModelConfig, PipelineState } from './types'
 import { loadKeys, saveKeys, loadConfig, saveConfig } from './store/settings'
 import { isDebugMode } from './services/debug'
@@ -45,6 +45,9 @@ export default function App() {
   const [keys, setKeys] = useState<ApiKeys>(loadKeys)
   const [config, setConfig] = useState<ModelConfig>(loadConfig)
   const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice')
+  const [voiceListening, setVoiceListening] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
+  const resultVideoRef = useRef<HTMLVideoElement>(null)
   const [userText, setUserText] = useState('')
   const [pipelineState, setPipelineState] = useState<PipelineState>(IDLE_PIPELINE)
   const [composeProgress, setComposeProgress] = useState(0)
@@ -89,6 +92,8 @@ export default function App() {
   function handleReset() {
     setUserText('')
     setInputMode('voice')
+    setVoiceListening(false)
+    setShowPreview(false)
     setPipelineState(IDLE_PIPELINE)
     setComposeProgress(0)
     navigate('/')
@@ -99,7 +104,7 @@ export default function App() {
   useEffect(() => () => { if (finalUrl) URL.revokeObjectURL(finalUrl) }, [finalUrl])
 
   return (
-    <div className="max-w-[1000px] mx-auto px-5">
+    <>
       {debugActive && (
         <div className="demo-badge" role="status">
           <span className="dot" />
@@ -107,40 +112,52 @@ export default function App() {
         </div>
       )}
 
-      <header className="grid grid-cols-1 md:grid-cols-[1.15fr_0.85fr] gap-6 items-end py-10">
-        <section>
-          <button className="bg-transparent border-none p-0 cursor-pointer text-left" onClick={() => navigate('/')}>
-            <p className="brand-kicker">Memory Afterimage</p>
-            <h1 className="hero-title">기억의 잔상</h1>
+      <header className="topbar">
+        <div className="topbar-inner">
+          <button className="brand" onClick={() => navigate('/')} aria-label="기억의 잔상 홈">
+            <svg className="logo" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+              <path d="M10 47L27.5 24.5L38 38L44 30L56 47" stroke="#6F4631" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M21 24.5C21 16.5 27.5 10 35.5 10C41.1 10 46 13.2 48.4 17.9" stroke="#D28A38" strokeWidth="2.2" strokeLinecap="round" />
+              <path d="M16 51H57" stroke="#6F4631" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+            <div>
+              <h2 className="brand-title">Memory Canvas</h2>
+              <div className="brand-subtitle">여행의 순간을, 하나의 장면으로</div>
+            </div>
           </button>
-          <p className="hero-copy">당신의 여행 기억을 듣고,<br />하나의 장면으로 남겨드립니다.</p>
-        </section>
-        <aside className="album-strip hidden md:block" aria-label="현대적인 사진앨범 콘셉트 이미지" />
+
+          <nav className="nav" aria-label="주요 메뉴">
+            <button className={path === '/' || path === '/process' ? 'active' : ''} onClick={() => navigate('/')}>
+              기억 남기기
+            </button>
+            <button className={path === '/memories' ? 'active' : ''} onClick={() => navigate(path === '/memories' ? '/' : '/memories')}>
+              보관함
+            </button>
+            <button className={path === '/settings' ? 'active' : ''} onClick={() => navigate('/settings')}>
+              설정
+            </button>
+          </nav>
+
+          <div className="user-area" />
+        </div>
       </header>
 
-      <nav className="stage-nav grid-cols-3 mb-8">
-        <button className={`stage-pill ${path === '/' || path === '/process' ? 'active' : ''}`} onClick={() => navigate('/')}>
-          기억 남기기
-        </button>
-        <button className={`stage-pill ${path === '/memories' ? 'active' : ''}`} onClick={() => navigate(path === '/memories' ? '/' : '/memories')}>
-          보관함
-        </button>
-        <button className={`stage-pill ${path === '/settings' ? 'active' : ''}`} onClick={() => navigate('/settings')}>
-          ⚙ 설정
-        </button>
-      </nav>
+      <main>
+        <section className="hero" aria-labelledby="hero-title">
+          <h1 id="hero-title">여행의 순간을 하나의 장면으로 남기세요</h1>
+          <p>기억하고 싶은 여행의 순간을 음성으로 들려주세요. AI가 당신의 감정을 담아 하나의 장면으로 그려드립니다.</p>
+        </section>
 
-      {path === '/settings' && (
-        <div className="pane my-3">
-          <Settings keys={keys} config={config} onKeys={handleKeys} onConfig={handleConfig} />
-        </div>
-      )}
+        {path === '/settings' && (
+          <div className="pane my-3">
+            <Settings keys={keys} config={config} onKeys={handleKeys} onConfig={handleConfig} />
+          </div>
+        )}
 
-      {path === '/memories' && <Memories />}
+        {path === '/memories' && <Memories />}
 
-      {path === '/process' && (
-        <main className="py-4 pb-10">
-          <div className="flex flex-col gap-5">
+        {path === '/process' && (
+          <div className="flex flex-col gap-5 mt-9">
             <div className="pane !p-5">
               <span className="mini-label !mb-2 !text-[11px]">입력한 기억</span>
               <p className="text-text-dim text-[13px]">{userText}</p>
@@ -154,42 +171,66 @@ export default function App() {
             )}
 
             {!finalUrl && !pipelineState.error && (
-              <div className="pane center">
-                <p className="mini-label">Generating</p>
-                <h2 className="pane-title">당신의 기억을<br />그리는 중입니다...</h2>
-                <div className="loader-orb" />
-                <p className="pane-desc">장소, 장면, 감정, 분위기를 분석해<br />하나의 장면으로 정리하고 있어요.</p>
-              </div>
-            )}
+              <section className="input-card" aria-label="기억을 그리는 중" aria-live="polite">
+                <p className="step-label">03 CREATING</p>
+                <div className="memory-orb" aria-hidden="true">
+                  <span className="loading-core" />
+                </div>
+                <h2 className="pane-title text-center">당신의 기억을<br />그리는 중입니다...</h2>
+                <p className="loading-desc text-center">장소, 장면, 감정, 분위기를 분석해<br />하나의 장면으로 정리하고 있어요.</p>
 
-            <Pipeline
-              userText={userText}
-              keys={keys}
-              config={config}
-              state={pipelineState}
-              setState={setPipelineState}
-              onProgress={handleProgress}
-              composeProgress={composeProgress}
-            />
-
-            {finalUrl && (
-              <div className="flex flex-col gap-4">
-                <div className="big-photo">
-                  <video
-                    className="w-full max-h-[480px] block"
-                    src={finalUrl}
-                    controls
-                    autoPlay
-                    loop
+                <div className="flex flex-col gap-3 w-full max-w-[480px] mx-auto mt-8">
+                  <Pipeline
+                    userText={userText}
+                    keys={keys}
+                    config={config}
+                    state={pipelineState}
+                    setState={setPipelineState}
+                    onProgress={handleProgress}
+                    composeProgress={composeProgress}
                   />
                 </div>
-                <div className="action-row">
-                  <a className="primary-btn" href={finalUrl} download="기억의_잔상.mp4">
+              </section>
+            )}
+
+            {finalUrl && (
+              <section className="input-card" aria-label="생성된 기억" aria-live="polite">
+                <p className="step-label">04 RESULT</p>
+                <h2 className="pane-title text-center mt-3">당신의 기억이<br />완성되었습니다</h2>
+                <div className="result-image-window" aria-label="생성된 영상 미리보기">
+                  <video ref={resultVideoRef} src={finalUrl} controls autoPlay loop />
+                  <button
+                    className="fullscreen-image-button"
+                    type="button"
+                    aria-label="생성된 영상 전체화면 보기"
+                    onClick={() => { resultVideoRef.current?.pause(); setShowPreview(true) }}
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M14 4h6v6" />
+                      <path d="M20 4l-7 7" />
+                      <path d="M10 20H4v-6" />
+                      <path d="M4 20l7-7" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="result-action-row">
+                  <a className="image-save-button" href={finalUrl} download="기억의_잔상.mp4">
                     ↓ 다운로드 (MP4)
                   </a>
-                  <button className="secondary-btn" onClick={handleReset}>
-                    새 기억 입력
+                  <button className="result-reset-button" onClick={handleReset}>
+                    처음으로 돌아가기
                   </button>
+                </div>
+              </section>
+            )}
+
+            {finalUrl && showPreview && (
+              <div className="image-preview-modal" onClick={(e) => { if (e.target === e.currentTarget) setShowPreview(false) }}>
+                <button className="image-preview-close" type="button" aria-label="영상 크게 보기 닫기" onClick={() => setShowPreview(false)}>
+                  ×
+                </button>
+                <div className="image-preview-frame" aria-label="생성된 영상 크게 보기">
+                  <video src={finalUrl} controls autoPlay loop />
                 </div>
               </div>
             )}
@@ -200,50 +241,70 @@ export default function App() {
               </button>
             )}
           </div>
-        </main>
-      )}
+        )}
 
-      {path === '/' && (
-        <main className="py-4 pb-10">
-          <div className="pane center">
-            <p className="mini-label">Waiting</p>
-            <h2 className="pane-title">말하면 되살아나는<br />내 여행의 기억</h2>
-            <p className="pane-desc">헤드폰을 끼고, 마이크 버튼을 눌러<br />여행의 한 장면을 들려주세요.</p>
+        {path === '/' && (
+          <section className="input-card" aria-label="기억 입력 영역">
+            {inputMode === 'voice' && !voiceListening && (
+              <div className="input-title">
+                <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />
+                </svg>
+                기억 입력하기
+              </div>
+            )}
 
             {inputMode === 'voice' ? (
               <>
-                <VoiceInput onComplete={startProcess} />
-                <button className="ghost-link" onClick={() => setInputMode('text')}>
-                  텍스트로 입력하기
-                </button>
+                <VoiceInput onComplete={startProcess} onListeningChange={setVoiceListening} />
+                {!voiceListening && (
+                  <>
+                    <div className="divider">또는</div>
+                    <button className="ghost-link mx-auto block" onClick={() => setInputMode('text')}>
+                      텍스트로 입력하기
+                    </button>
+                  </>
+                )}
               </>
             ) : (
-              <div className="w-full max-w-[440px] mt-6 flex flex-col gap-3">
-                <textarea
-                  className="w-full min-h-[138px] resize-y border border-border rounded-[22px] bg-white/55 p-4.5 text-text leading-loose focus:outline-none"
-                  placeholder={
-                    '예: 노을 지던 다낭 바다에서 친구들과 천천히 걸었던 순간이 기억나요. 따뜻하고 자유로운 기분이었어요.'
-                  }
-                  value={userText}
-                  onChange={(e) => setUserText(e.target.value)}
-                  rows={6}
-                />
-                <button className="primary-btn" onClick={handleSubmit} disabled={!userText.trim()}>
-                  이 기억으로 시작하기 →
-                </button>
-                <button className="ghost-link" onClick={() => setInputMode('voice')}>
+              <>
+                <div className="input-title">
+                  <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />
+                  </svg>
+                  기억 입력하기
+                </div>
+                <form
+                  className="text-input"
+                  onSubmit={(e) => { e.preventDefault(); handleSubmit() }}
+                >
+                  <textarea
+                    className="memory-text-field"
+                    maxLength={500}
+                    placeholder="예: 노을 지던 다낭 바다에서 친구들과 천천히 걸었던 순간이 기억나요. 따뜻하고 자유로운 기분이었어요."
+                    value={userText}
+                    onChange={(e) => setUserText(e.target.value)}
+                    rows={4}
+                  />
+                  <div className="text-input-foot">
+                    <span className="counter">{userText.length} / 500</span>
+                    <button className="text-submit-button" type="submit" disabled={!userText.trim()}>
+                      시작하기
+                    </button>
+                  </div>
+                </form>
+                <button className="ghost-link mx-auto block mt-3" onClick={() => setInputMode('voice')}>
                   또는 음성으로 입력
                 </button>
-              </div>
+              </>
             )}
-          </div>
-        </main>
-      )}
+          </section>
+        )}
 
-      <footer className="foot py-6">
-        <span>기억의 잔상 | Memory Afterimage</span>
-        <span>Listen · Remember · Scene</span>
-      </footer>
-    </div>
+        <footer className="foot">기억의 잔상 | Memory Afterimage · Listen · Remember · Scene</footer>
+      </main>
+    </>
   )
 }
