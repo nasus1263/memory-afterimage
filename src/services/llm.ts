@@ -11,9 +11,12 @@ The user will describe a travel memory. You must output JSON with exactly these 
 Output ONLY the JSON, no markdown, no explanation.`
 
 function keywordSystemPrompt(maxWords: number): string {
+  const lengthRule = maxWords === 1
+    ? 'each keyword must be exactly 1 English word — a single word, no phrases (e.g. "waves", "rain", "cicadas")'
+    : `each keyword at most ${maxWords} English words long`
   return `You are a creative AI for an immersive memory art installation.
 The user will describe a travel memory. Suggest 3 alternative English ambient sound search
-keywords for it, each at most ${maxWords} word${maxWords > 1 ? 's' : ''} long.
+keywords for it. ${lengthRule}.
 Output ONLY JSON: { "audioKeywords": ["keyword1", "keyword2", "keyword3"] }
 No markdown, no explanation.`
 }
