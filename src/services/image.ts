@@ -158,15 +158,14 @@ export async function generateImage(
 }
 
 export async function generateImages(
-  prompt: string,
-  count: number,
+  prompts: string[],
   config: ModelConfig,
   keys: ApiKeys,
   onProgress?: (msg: string) => void
 ): Promise<Blob[]> {
   const blobs: Blob[] = []
-  for (let i = 0; i < count; i++) {
-    const blob = await generateImage(prompt, config, keys, (msg) => onProgress?.(`(${i + 1}/${count}) ${msg}`))
+  for (let i = 0; i < prompts.length; i++) {
+    const blob = await generateImage(prompts[i], config, keys, (msg) => onProgress?.(`(${i + 1}/${prompts.length}) ${msg}`))
     blobs.push(blob)
   }
   return blobs

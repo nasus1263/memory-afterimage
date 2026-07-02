@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { ApiKeys, ModelConfig, PipelineState, StageStatus } from '../types'
-import { refineMemo } from '../services/llm'
+import { refineMemo, generateImagePrompts } from '../services/llm'
 import { generateTTS } from '../services/tts'
 import { generateImages } from '../services/image'
 import { fetchAmbientAudioWithRetry } from '../services/audio'
@@ -100,8 +100,10 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
         const imageCount = computeImageCount(ttsData.duration)
         markRunning('image')
         set(setState, stageStatus({ image: 'running' }))
+        setMsg('image', '장면 프롬프트 구성 중...')
+        const imagePrompts = await generateImagePrompts(llmResult.imagePrompt, imageCount, config, keys)
         setMsg('image', `이미지 생성 준비 중... (0/${imageCount})`)
-        const imageBlobs = await generateImages(llmResult.imagePrompt, imageCount, config, keys, (msg) => setMsg('image', msg))
+        const imageBlobs = await generateImages(imagePrompts, config, keys, (msg) => setMsg('image', msg))
           .finally(() => markDone('image'))
         set(setState, { ...stageStatus({ image: 'done' }), imageBlobs })
 

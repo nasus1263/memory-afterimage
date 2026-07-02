@@ -16,6 +16,14 @@ The keyword must be exactly 1 single English word — no phrases (e.g. "waves", 
 Output ONLY JSON: { "audioKeyword": "waves" }
 No markdown, no explanation.`
 
+const IMAGE_VARIANTS_SYSTEM_PROMPT = `You are a creative AI for an immersive memory art installation.
+You will be given a base English image prompt describing a travel memory scene, and a count N.
+Generate exactly N distinct English image prompts (cinematic, painterly, detailed, evocative, 100-150 words each) that share
+the same mood, color palette, and style as the base prompt, but each depicts a clearly different moment, angle, or detail of
+the same memory (e.g. different framing, time of moment, focal subject) — like consecutive frames from the same scene, not
+unrelated images.
+Output ONLY JSON: { "prompts": ["...", "...", ...] } with exactly N items, no markdown, no explanation.`
+
 const TIMEOUT_MS = 60_000
 
 function makeSignal(): AbortSignal {
@@ -152,4 +160,22 @@ export async function refineAudioKeyword(
   const raw = await callProvider(KEYWORD_SYSTEM_PROMPT, userText, config, keys)
   const { audioKeyword } = extractJSON<{ audioKeyword: string }>(raw)
   return audioKeyword
+}
+
+export async function generateImagePrompts(
+  basePrompt: string,
+  count: number,
+  config: ModelConfig,
+  keys: ApiKeys
+): Promise<string[]> {
+  if (count <= 1) return [basePrompt]
+  const raw = await callProvider(
+    IMAGE_VARIANTS_SYSTEM_PROMPT,
+    `Base prompt: ${basePrompt}\nN = ${count}`,
+    config,
+    keys
+  )
+  const { prompts } = extractJSON<{ prompts: string[] }>(raw)
+  if (!Array.isArray(prompts) || prompts.length !== count) throw new Error(`Expected ${count} image prompts, got ${prompts?.length}`)
+  return prompts
 }
