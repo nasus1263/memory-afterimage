@@ -2,9 +2,9 @@ import { useEffect, useRef } from 'react'
 import type { ApiKeys, ModelConfig, PipelineState, StageStatus } from '../types'
 import { refineMemo } from '../services/llm'
 import { generateTTS } from '../services/tts'
-import { generateImage } from '../services/image'
+import { generateImages } from '../services/image'
 import { fetchAmbientAudioWithRetry } from '../services/audio'
-import { composeVideo } from '../services/composer'
+import { composeVideo, computeImageCount } from '../services/composer'
 import { StageCard } from './StageCard'
 
 type SetState = React.Dispatch<React.SetStateAction<PipelineState>>
@@ -77,46 +77,46 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
         set(setState, { ...stageStatus({ refine: 'done' }), llmResult })
         markDone('refine')
 
-        // ── 2. TTS / 이미지 / 오디오 병렬 ──────────────
+        // ── 2. TTS / 오디오 병렬 (이미지 개수는 TTS 길이에 의존) ──
         currentStage = 'tts'
-        markRunning('tts', 'image', 'audio')
-        set(setState, stageStatus({ tts: 'running', image: 'running', audio: 'running' }))
+        markRunning('tts', 'audio')
+        set(setState, stageStatus({ tts: 'running', audio: 'running' }))
         setMsg('tts', '음성 합성 요청...')
-        setMsg('image', '이미지 생성 요청...')
         setMsg('audio', `키워드: ${llmResult.audioKeyword}`)
 
-        const [ttsSettled, imgSettled, ambSettled] = await Promise.allSettled([
-          generateTTS(llmResult.refinedText, config, keys).then((r) => {
+        const ambientPromise = fetchAmbientAudioWithRetry(userText, llmResult.audioKeyword, config, keys, (msg) => setMsg('audio', msg))
+          .finally(() => markDone('audio'))
+        const ambBlobSafe = ambientPromise.then((v) => v, () => null)
+
+        const ttsData = await generateTTS(llmResult.refinedText, config, keys)
+          .then((r) => {
             setMsg('tts', `오디오 수신 완료 (${r.duration.toFixed(1)}s)`)
             return r
-          }).finally(() => markDone('tts')),
-          generateImage(llmResult.imagePrompt, config, keys, (msg) => setMsg('image', msg)).finally(() => markDone('image')),
-          fetchAmbientAudioWithRetry(userText, llmResult.audioKeyword, config, keys, (msg) => setMsg('audio', msg)).finally(() => markDone('audio')),
-        ])
+          }).finally(() => markDone('tts'))
+        set(setState, { ...stageStatus({ tts: 'done' }), ttsBlob: ttsData.blob, ttsDuration: ttsData.duration })
 
-        if (ttsSettled.status === 'rejected') throw new Error(`TTS: ${ttsSettled.reason}`)
-        if (imgSettled.status === 'rejected') throw new Error(`Image: ${imgSettled.reason}`)
+        // ── 3. 이미지 N장 생성 ──────────────────────────
+        currentStage = 'image'
+        const imageCount = computeImageCount(ttsData.duration)
+        markRunning('image')
+        set(setState, stageStatus({ image: 'running' }))
+        setMsg('image', `이미지 생성 준비 중... (0/${imageCount})`)
+        const imageBlobs = await generateImages(llmResult.imagePrompt, imageCount, config, keys, (msg) => setMsg('image', msg))
+          .finally(() => markDone('image'))
+        set(setState, { ...stageStatus({ image: 'done' }), imageBlobs })
 
-        const ttsData = ttsSettled.value
-        const imgBlob = imgSettled.value
-        const ambBlob = ambSettled.status === 'fulfilled' ? ambSettled.value : null
-
-        set(setState, {
-          ...stageStatus({ tts: 'done', image: 'done', audio: ambBlob ? 'done' : 'error' }),
-          ttsBlob: ttsData.blob,
-          ttsDuration: ttsData.duration,
-          imageBlob: imgBlob,
-          ambientBlob: ambBlob ?? undefined,
-        })
+        currentStage = 'audio'
+        const ambBlob = await ambBlobSafe
+        set(setState, { ...stageStatus({ audio: ambBlob ? 'done' : 'error' }), ambientBlob: ambBlob ?? undefined })
         if (!ambBlob) setMsg('audio', '오디오 없음 (건너뜀)')
 
-        // ── 3. ffmpeg 합성 ────────────────────────────
+        // ── 4. ffmpeg 합성 ────────────────────────────
         currentStage = 'compose'
         markRunning('compose')
         set(setState, stageStatus({ compose: 'running' }))
         setMsg('compose', 'ffmpeg.wasm 로드 중...')
         const finalBlob = await composeVideo(
-          imgBlob, ttsData.blob, ambBlob, ttsData.duration,
+          imageBlobs, ttsData.blob, ambBlob, ttsData.duration,
           onProgress,
           (msg) => setMsg('compose', msg)
         )

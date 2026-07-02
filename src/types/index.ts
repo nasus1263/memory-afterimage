@@ -57,7 +57,7 @@ export interface PipelineState {
   error?: string
   ttsBlob?: Blob
   ttsDuration?: number
-  imageBlob?: Blob
+  imageBlobs?: Blob[]
   ambientBlob?: Blob
   finalBlob?: Blob
   llmResult?: LLMResult

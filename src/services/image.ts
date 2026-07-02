@@ -156,3 +156,18 @@ export async function generateImage(
   if (provider === 'nvidia') return imageNvidia(prompt, model, keys.nvidia, onProgress)
   throw new Error(`Unknown image provider: ${provider}`)
 }
+
+export async function generateImages(
+  prompt: string,
+  count: number,
+  config: ModelConfig,
+  keys: ApiKeys,
+  onProgress?: (msg: string) => void
+): Promise<Blob[]> {
+  const blobs: Blob[] = []
+  for (let i = 0; i < count; i++) {
+    const blob = await generateImage(prompt, config, keys, (msg) => onProgress?.(`(${i + 1}/${count}) ${msg}`))
+    blobs.push(blob)
+  }
+  return blobs
+}

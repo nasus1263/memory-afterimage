@@ -4,7 +4,7 @@ import { refineMemo } from '../services/llm'
 import { generateTTS } from '../services/tts'
 import { generateImage } from '../services/image'
 import { fetchAmbientAudio } from '../services/audio'
-import { composeVideo } from '../services/composer'
+import { composeVideo, computeImageCount } from '../services/composer'
 import {
   getDummyImage, getDummyAudio,
   DUMMY_TEXT, DUMMY_TTS_TEXT, DUMMY_IMAGE_PROMPT, DUMMY_AUDIO_KEYWORD,
@@ -187,10 +187,11 @@ export function ApiTest({ keys, config }: Props) {
         onRun={() =>
           run(setCompose, async (setMsg) => {
             setMsg('더미 소스 생성...')
-            const imgBlob = await getDummyImage()
+            const imageCount = computeImageCount(5)
+            const imgBlobs = await Promise.all(Array.from({ length: imageCount }, () => getDummyImage()))
             const ttsBlob = getDummyAudio(5)
             setMsg('ffmpeg 합성...')
-            return composeVideo(imgBlob, ttsBlob, null, 5, undefined, setMsg)
+            return composeVideo(imgBlobs, ttsBlob, null, 5, undefined, setMsg)
           }, (blob, set) => {
             set({
               status: 'done',
