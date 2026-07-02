@@ -114,6 +114,7 @@ export async function composeVideo(
     await ff.exec([
       '-y',
       '-i', srcTts,
+      '-stream_loop', '-1',
       '-i', 'ambient.mp3',
       '-filter_complex',
       `[0:a]adelay=1000:all=1[a1];[1:a]volume=2.0,atrim=duration=${total}[a2];[a1][a2]amix=inputs=2:duration=first[aout]`,
