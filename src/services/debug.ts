@@ -1,3 +1,5 @@
+import sampleImg from '../assets/sample.jpg'
+
 export const DUMMY_TEXT = '다낭 해변에서 노을을 봤다'
 export const DUMMY_TTS_TEXT = '황금빛 노을이 물드는 다낭의 바다, 그 순간 나는 세상의 끝에 서 있는 것 같았다.'
 export const DUMMY_IMAGE_PROMPT =
@@ -25,46 +27,32 @@ export function getDummyAudio(durationSec = 5): Blob {
   return new Blob([buf], { type: 'audio/wav' })
 }
 
-const KEY = 'memory_debug_mode'
+const AUTO_ANSWER_KEY = 'memory_debug_auto_answer'
+const DUMMY_IMAGE_KEY = 'memory_debug_dummy_image'
 
-export function isDebugMode(): boolean {
-  const v = localStorage.getItem(KEY)
+function readFlag(key: string): boolean {
+  const v = localStorage.getItem(key)
   return v === null ? false : v === 'true' // default OFF
 }
 
-export function setDebugMode(on: boolean) {
-  localStorage.setItem(KEY, on ? 'true' : 'false')
+export function isAutoAnswerMode(): boolean {
+  return readFlag(AUTO_ANSWER_KEY)
 }
 
-export function getDummyImage(): Promise<Blob> {
-  return new Promise((resolve) => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 1024; canvas.height = 576
-    const ctx = canvas.getContext('2d')!
+export function setAutoAnswerMode(on: boolean) {
+  localStorage.setItem(AUTO_ANSWER_KEY, on ? 'true' : 'false')
+}
 
-    const g = ctx.createLinearGradient(0, 0, 1024, 576)
-    g.addColorStop(0, '#1a0a2e')
-    g.addColorStop(0.5, '#2d1b4e')
-    g.addColorStop(1, '#0d1a2e')
-    ctx.fillStyle = g
-    ctx.fillRect(0, 0, 1024, 576)
+export function isDummyImageMode(): boolean {
+  return readFlag(DUMMY_IMAGE_KEY)
+}
 
-    // Subtle radial glow
-    const radial = ctx.createRadialGradient(512, 288, 0, 512, 288, 400)
-    radial.addColorStop(0, 'rgba(200, 169, 110, 0.25)')
-    radial.addColorStop(1, 'transparent')
-    ctx.fillStyle = radial
-    ctx.fillRect(0, 0, 1024, 576)
+export function setDummyImageMode(on: boolean) {
+  localStorage.setItem(DUMMY_IMAGE_KEY, on ? 'true' : 'false')
+}
 
-    ctx.fillStyle = 'rgba(200, 169, 110, 0.85)'
-    ctx.font = 'bold 40px sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText('[DEBUG] 더미 이미지', 512, 268)
-    ctx.font = '22px sans-serif'
-    ctx.fillStyle = 'rgba(255,255,255,0.35)'
-    ctx.fillText('실제 API 호출 없음', 512, 316)
-
-    canvas.toBlob((blob) => resolve(blob!), 'image/png')
-  })
+export async function getDummyImage(): Promise<Blob> {
+  const res = await fetch(sampleImg)
+  return res.blob()
 }
 

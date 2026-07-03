@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ApiKeys, ModelConfig } from '../types'
 import { BASE_QUESTIONS } from '../config/questions'
 import { generateQuestions, generateQuestionsWithAnswers, summarizeChat } from '../services/llm'
-import { isDebugMode } from '../services/debug'
+import { isAutoAnswerMode } from '../services/debug'
 
 interface Props {
   userText: string
@@ -24,7 +24,7 @@ export function Chat({ userText, keys, config, onComplete }: Props) {
     if (ran.current) return
     ran.current = true
 
-    if (isDebugMode()) {
+    if (isAutoAnswerMode()) {
       generateQuestionsWithAnswers(userText, BASE_QUESTIONS, config, keys)
         .then(({ questions: qs, answers: ans }) => { setQuestions(qs); setAnswers(ans) })
         .catch((e) => setError(e?.message ?? String(e)))

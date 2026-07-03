@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import type { ApiKeys, AspectRatio, ModelConfig, PipelineState, SessionImage } from './types'
 import { loadKeys, saveKeys, loadConfig, saveConfig } from './store/settings'
-import { isDebugMode } from './services/debug'
+import { isAutoAnswerMode, isDummyImageMode } from './services/debug'
 import { Settings } from './components/Settings'
 import { Pipeline } from './components/Pipeline'
 import { VoiceInput } from './components/VoiceInput'
@@ -62,7 +62,9 @@ export default function App() {
   const [captionBgColor, setCaptionBgColor] = useState('#000000')
   const [captionTextColor, setCaptionTextColor] = useState('#ffffff')
   const [secondsPerImage, setSecondsPerImage] = useState(SECONDS_PER_IMAGE)
-  const debugActive = isDebugMode()
+  const autoAnswerActive = isAutoAnswerMode()
+  const dummyImageActive = isDummyImageMode()
+  const debugActive = autoAnswerActive || dummyImageActive
 
   function applyProgress(p: SessionProgress) {
     setAspectRatio(p.aspectRatio)
@@ -187,7 +189,9 @@ export default function App() {
       {debugActive && (
         <div className="demo-badge" role="status">
           <span className="dot" />
-          <span>디버그 모드 · 더미 파일 반환</span>
+          <span>
+            디버그 모드 · {[autoAnswerActive && '답변 자동 생성', dummyImageActive && '더미 이미지'].filter(Boolean).join(' · ')}
+          </span>
         </div>
       )}
 

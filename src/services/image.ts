@@ -1,5 +1,5 @@
 import type { ApiKeys, ModelConfig } from '../types'
-import { isDebugMode, getDummyImage } from './debug'
+import { isDummyImageMode, getDummyImage } from './debug'
 import { OPENAI_BASE, GOOGLE_BASE, HUGGINGFACE_BASE, FAL_QUEUE_BASE, NVIDIA_GENAI_BASE } from '../config/endpoints'
 
 async function imageOpenAI(prompt: string, key: string, onProgress?: (msg: string) => void): Promise<Blob> {
@@ -147,7 +147,7 @@ export async function generateImage(
   keys: ApiKeys,
   onProgress?: (msg: string) => void
 ): Promise<Blob> {
-  if (isDebugMode()) return getDummyImage()
+  if (isDummyImageMode()) return getDummyImage()
   const { provider, model } = config.image
   if (provider === 'openai') return imageOpenAI(prompt, keys.openai, onProgress)
   if (provider === 'google') return imageGoogle(prompt, model, keys.google, onProgress)

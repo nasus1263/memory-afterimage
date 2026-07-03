@@ -4,7 +4,7 @@ import {
   LLM_MODELS, TTS_MODELS, TTS_VOICES,
   IMAGE_MODELS,
 } from '../config/models'
-import { isDebugMode, setDebugMode } from '../services/debug'
+import { isAutoAnswerMode, setAutoAnswerMode, isDummyImageMode, setDummyImageMode } from '../services/debug'
 import { ApiTest } from './ApiTest'
 
 interface Props {
@@ -46,26 +46,42 @@ function KeyInput({
 
 export function Settings({ keys, config, onKeys, onConfig }: Props) {
   const ttsVoices = TTS_VOICES[config.tts.provider] ?? []
-  const [debug, setDebug] = useState(isDebugMode())
+  const [autoAnswer, setAutoAnswer] = useState(isAutoAnswerMode())
+  const [dummyImage, setDummyImage] = useState(isDummyImageMode())
 
-  function toggleDebug(on: boolean) {
-    setDebugMode(on)
-    setDebug(on)
+  function toggleAutoAnswer(on: boolean) {
+    setAutoAnswerMode(on)
+    setAutoAnswer(on)
+  }
+
+  function toggleDummyImage(on: boolean) {
+    setDummyImageMode(on)
+    setDummyImage(on)
   }
 
   return (
     <div className="flex flex-col gap-6">
       <section>
         <h3 className="text-gold-dim text-[11px] tracking-wider uppercase mb-3.5">디버그</h3>
+        <label className="flex items-start gap-2.5 cursor-pointer mb-2">
+          <input
+            className="mt-0.5 accent-running cursor-pointer shrink-0"
+            type="checkbox"
+            checked={autoAnswer}
+            onChange={(e) => toggleAutoAnswer(e.target.checked)}
+          />
+          <span className="text-running text-sm font-medium">답변 자동 생성</span>
+          <span className="inline text-[11px] text-text-dim ml-2">추가 질문에 LLM이 자동으로 답변 채움</span>
+        </label>
         <label className="flex items-start gap-2.5 cursor-pointer">
           <input
             className="mt-0.5 accent-running cursor-pointer shrink-0"
             type="checkbox"
-            checked={debug}
-            onChange={(e) => toggleDebug(e.target.checked)}
+            checked={dummyImage}
+            onChange={(e) => toggleDummyImage(e.target.checked)}
           />
-          <span className="text-running text-sm font-medium">디버그 모드</span>
-          <span className="inline text-[11px] text-text-dim ml-2">이미지 API 호출 건너뜀 → 더미 파일 반환</span>
+          <span className="text-running text-sm font-medium">더미 이미지 사용</span>
+          <span className="inline text-[11px] text-text-dim ml-2">이미지 API 호출 건너뜀 → sample 이미지 반환</span>
         </label>
       </section>
 
