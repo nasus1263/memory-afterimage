@@ -29,7 +29,11 @@ You will be given a base list of Korean interview questions and the user's initi
 Personalize and refine each question so it naturally follows from what the user already said, digging for
 concrete sensory and emotional detail without repeating information the user already gave.
 Keep exactly the same number of questions as the base list, in Korean, each a single short question (≤40 chars).
-Output ONLY JSON: { "questions": ["...", ...] } with exactly N items matching the base list length, no markdown, no explanation.`
+For each question, ALSO generate exactly 4 short, distinct, plausible Korean answer choices (each ≤20 chars) the
+user could quickly pick instead of typing, relevant to that question and the user's memory context.
+Output ONLY JSON: { "questions": ["...", ...], "choices": [["...","...","...","..."], ...] } — "questions" and
+"choices" must each have exactly N items matching the base list length, and each "choices" entry must have exactly
+4 strings, no markdown, no explanation.`
 
 const QUESTIONS_WITH_ANSWERS_SYSTEM_PROMPT = `You are a creative interviewer AI for an immersive memory art installation, currently in a debug/testing mode.
 You will be given a base list of Korean interview questions and the user's initial travel-memory description.
@@ -207,18 +211,21 @@ export async function generateQuestions(
   baseQuestions: string[],
   config: ModelConfig,
   keys: ApiKeys
-): Promise<string[]> {
+): Promise<{ questions: string[]; choices: string[][] }> {
   const raw = await callProvider(
     QUESTIONS_SYSTEM_PROMPT,
     `Base questions:\n${baseQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\nUser's memory:\n${userText}`,
     config,
     keys
   )
-  const { questions } = extractJSON<{ questions: string[] }>(raw)
+  const { questions, choices } = extractJSON<{ questions: string[]; choices: string[][] }>(raw)
   if (!Array.isArray(questions) || questions.length !== baseQuestions.length) {
     throw new Error(`Expected ${baseQuestions.length} questions, got ${questions?.length}`)
   }
-  return questions
+  if (!Array.isArray(choices) || choices.length !== baseQuestions.length || choices.some((c) => !Array.isArray(c) || c.length !== 4)) {
+    throw new Error(`Expected ${baseQuestions.length} choice groups of 4, got ${JSON.stringify(choices)}`)
+  }
+  return { questions, choices }
 }
 
 export async function generateQuestionsWithAnswers(

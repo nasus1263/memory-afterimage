@@ -11,9 +11,13 @@ interface Props {
   onComplete: (summary: string) => void
 }
 
+type Selection = number | 'custom' | null
+
 export function Chat({ userText, keys, config, onComplete }: Props) {
   const [questions, setQuestions] = useState<string[] | null>(null)
+  const [choices, setChoices] = useState<string[][]>([])
   const [answers, setAnswers] = useState<string[]>([])
+  const [selected, setSelected] = useState<Selection[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -26,11 +30,21 @@ export function Chat({ userText, keys, config, onComplete }: Props) {
 
     if (isAutoAnswerMode()) {
       generateQuestionsWithAnswers(userText, BASE_QUESTIONS, config, keys)
-        .then(({ questions: qs, answers: ans }) => { setQuestions(qs); setAnswers(ans) })
+        .then(({ questions: qs, answers: ans }) => {
+          setQuestions(qs)
+          setChoices(qs.map(() => []))
+          setAnswers(ans)
+          setSelected(ans.map(() => 'custom'))
+        })
         .catch((e) => setError(e?.message ?? String(e)))
     } else {
       generateQuestions(userText, BASE_QUESTIONS, config, keys)
-        .then((qs) => { setQuestions(qs); setAnswers(new Array(qs.length).fill('')) })
+        .then(({ questions: qs, choices: chs }) => {
+          setQuestions(qs)
+          setChoices(chs)
+          setAnswers(new Array(qs.length).fill(''))
+          setSelected(new Array(qs.length).fill(null))
+        })
         .catch((e) => setError(e?.message ?? String(e)))
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -38,6 +52,18 @@ export function Chat({ userText, keys, config, onComplete }: Props) {
 
   function handleAnswerChange(i: number, value: string) {
     setAnswers((prev) => { const next = [...prev]; next[i] = value; return next })
+  }
+
+  function selectChoice(i: number, choiceIndex: number) {
+    setAnswers((prev) => { const next = [...prev]; next[i] = choices[i][choiceIndex]; return next })
+    setSelected((prev) => { const next = [...prev]; next[i] = choiceIndex; return next })
+    setCurrentIndex(i)
+  }
+
+  function selectCustom(i: number) {
+    setSelected((prev) => { const next = [...prev]; next[i] = 'custom'; return next })
+    setCurrentIndex(i)
+    inputRefs.current[i]?.focus()
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>, i: number) {
@@ -93,13 +119,38 @@ export function Chat({ userText, keys, config, onComplete }: Props) {
         {questions.map((q, i) => (
           <div className={`chat-question${i === currentIndex ? ' current' : ''}`} key={i}>
             <span className="chat-question-label">{q}</span>
+            {choices[i]?.length > 0 && (
+              <div className="chat-choice-row" role="radiogroup" aria-label="답변 선택지">
+                {choices[i].map((choice, choiceIndex) => (
+                  <button
+                    key={choiceIndex}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected[i] === choiceIndex}
+                    className={`chat-choice-pill${selected[i] === choiceIndex ? ' active' : ''}`}
+                    onClick={() => selectChoice(i, choiceIndex)}
+                  >
+                    {choice}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={selected[i] === 'custom'}
+                  className={`chat-choice-pill custom-pill${selected[i] === 'custom' ? ' active' : ''}`}
+                  onClick={() => selectCustom(i)}
+                >
+                  직접입력
+                </button>
+              </div>
+            )}
             <input
               ref={(el) => { inputRefs.current[i] = el }}
               className="chat-answer-input"
               type="text"
               value={answers[i] ?? ''}
               onChange={(e) => handleAnswerChange(i, e.target.value)}
-              onFocus={() => setCurrentIndex(i)}
+              onFocus={() => { setCurrentIndex(i); setSelected((prev) => { const next = [...prev]; next[i] = 'custom'; return next }) }}
               onKeyDown={(e) => handleKeyDown(e, i)}
               placeholder="답변을 입력하세요"
             />
