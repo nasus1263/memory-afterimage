@@ -228,11 +228,9 @@ export default function App() {
         </section>
 
         {['/new', '/input', '/chat', '/process'].includes(path) && !(path === '/process' && finalUrl) && (
-          <div className="flex justify-end mb-2">
-            <button type="button" className="ghost-link" onClick={handleReset}>
-              처음부터 진행하기
-            </button>
-          </div>
+          <button type="button" className="restart-button" onClick={handleReset}>
+            처음부터 진행하기
+          </button>
         )}
 
         {path === '/settings' && (
