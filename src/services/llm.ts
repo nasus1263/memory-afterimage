@@ -31,6 +31,7 @@ concrete sensory and emotional detail without repeating information the user alr
 Keep exactly the same number of questions as the base list, in Korean, each a single short question (≤40 chars).
 For each question, ALSO generate exactly 4 short, distinct, plausible Korean answer choices (each ≤20 chars) the
 user could quickly pick instead of typing, relevant to that question and the user's memory context.
+Prepend each question and each choice with one relevant emoji followed by a space (e.g. "🌅 노을이 예뻤나요?").
 Output ONLY JSON: { "questions": ["...", ...], "choices": [["...","...","...","..."], ...] } — "questions" and
 "choices" must each have exactly N items matching the base list length, and each "choices" entry must have exactly
 4 strings, no markdown, no explanation.`
@@ -41,6 +42,7 @@ Personalize and refine each question the same way you normally would, but ALSO w
 sample answer for each question, as if the user had answered it, consistent with the user's memory description.
 Keep exactly the same number of questions as the base list, in Korean, each question a single short line (≤40 chars)
 and each answer a short natural sentence (≤60 chars).
+Prepend each question with one relevant emoji followed by a space (e.g. "🌅 노을이 예뻤나요?").
 Output ONLY JSON: { "questions": ["...", ...], "answers": ["...", ...] } with exactly N items each, matching the base list length, no markdown, no explanation.`
 
 const CHAT_SUMMARY_SYSTEM_PROMPT = `You are a summarizer AI for an immersive memory art installation.
