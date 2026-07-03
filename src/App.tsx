@@ -228,6 +228,9 @@ export default function App() {
                     composeProgress={composeProgress}
                     secondsPerImage={secondsPerImage}
                     userImages={sessionImages.map((img) => img.file)}
+                    showCaptions={showCaptions}
+                    captionBgColor={captionBgColor}
+                    captionTextColor={captionTextColor}
                   />
                 </div>
               </section>

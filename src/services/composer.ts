@@ -89,13 +89,82 @@ function imgExtOf(blob: Blob): string {
   return 'png'
 }
 
+export interface CaptionOptions {
+  text: string
+  bgColor: string
+  textColor: string
+}
+
+// 10자 초과 또는 5단어 단위로 자막을 끊는다.
+export function splitCaptionChunks(text: string): string[] {
+  const words = text.trim().split(/\s+/).filter(Boolean)
+  const chunks: string[] = []
+  let current: string[] = []
+  for (const word of words) {
+    current.push(word)
+    const joined = current.join(' ')
+    if (current.length >= 5 || joined.length > 10) {
+      chunks.push(joined)
+      current = []
+    }
+  }
+  if (current.length) chunks.push(current.join(' '))
+  return chunks
+}
+
+// 각 자막 청크에 글자 수 비례 시간 구간을 배정 (0..total)
+function captionTimeRanges(chunks: string[], total: number): { start: number; end: number }[] {
+  const lengths = chunks.map((c) => c.length)
+  const sum = lengths.reduce((a, b) => a + b, 0) || 1
+  const ranges: { start: number; end: number }[] = []
+  let t = 0
+  for (const len of lengths) {
+    const dur = (len / sum) * total
+    ranges.push({ start: t, end: t + dur })
+    t += dur
+  }
+  return ranges
+}
+
+// 자막 청크 하나를 영상 프레임 크기의 투명 PNG로 렌더링. 자막 하단이 영상 하단으로부터 10% 위치에 오도록 배치.
+function renderCaptionPNG(text: string, bgColor: string, textColor: string): Promise<Blob> {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas')
+    canvas.width = OUT_W
+    canvas.height = OUT_H
+    const ctx = canvas.getContext('2d')!
+    ctx.clearRect(0, 0, OUT_W, OUT_H)
+
+    const fontSize = 34
+    ctx.font = `600 ${fontSize}px "Malgun Gothic", sans-serif`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+
+    const paddingX = 24
+    const paddingY = 14
+    const boxW = ctx.measureText(text).width + paddingX * 2
+    const boxH = fontSize + paddingY * 2
+    const boxBottom = OUT_H * 0.9
+    const boxTop = boxBottom - boxH
+    const boxX = (OUT_W - boxW) / 2
+
+    ctx.fillStyle = bgColor
+    ctx.fillRect(boxX, boxTop, boxW, boxH)
+    ctx.fillStyle = textColor
+    ctx.fillText(text, OUT_W / 2, boxTop + boxH / 2)
+
+    canvas.toBlob((blob) => resolve(blob!), 'image/png')
+  })
+}
+
 export async function composeVideo(
   imageBlobs: Blob[],
   ttsBlob: Blob,
   ambientBlob: Blob | null,
   ttsDuration: number,
   onProgress?: (p: number) => void,
-  onMessage?: (msg: string) => void
+  onMessage?: (msg: string) => void,
+  caption?: CaptionOptions | null
 ): Promise<Blob> {
   onMessage?.('ffmpeg.wasm 로드 중...')
   const ff = new FFmpeg()
@@ -171,6 +240,39 @@ export async function composeVideo(
       'looped.mp4',
     ])
     videoFile = 'looped.mp4'
+  }
+
+  // Step 2.5: burn in captions, timed proportionally across the total runtime
+  const captionChunks = caption ? splitCaptionChunks(caption.text) : []
+  if (caption && captionChunks.length) {
+    onMessage?.('자막 합성...')
+    const ranges = captionTimeRanges(captionChunks, total)
+    const inputArgs: string[] = ['-i', videoFile]
+    for (let i = 0; i < captionChunks.length; i++) {
+      const png = await renderCaptionPNG(captionChunks[i], caption.bgColor, caption.textColor)
+      await ff.writeFile(`caption${i}.png`, await fetchFile(png))
+      inputArgs.push('-i', `caption${i}.png`)
+    }
+
+    let filter = ''
+    let prevLabel = '0:v'
+    for (let i = 0; i < captionChunks.length; i++) {
+      const outLabel = i === captionChunks.length - 1 ? 'vcap' : `vc${i}`
+      filter += `[${prevLabel}][${i + 1}:v]overlay=0:0:enable='between(t,${ranges[i].start.toFixed(2)},${ranges[i].end.toFixed(2)})'[${outLabel}];`
+      prevLabel = outLabel
+    }
+    filter = filter.slice(0, -1)
+
+    await ff.exec([
+      '-y', ...inputArgs,
+      '-filter_complex', filter,
+      '-map', '[vcap]',
+      '-r', String(OUT_FPS),
+      '-c:v', 'libx264', '-preset', 'ultrafast',
+      '-pix_fmt', 'yuv420p',
+      'captioned.mp4',
+    ])
+    videoFile = 'captioned.mp4'
   }
 
   // Step 3: build audio mix

@@ -19,6 +19,9 @@ interface Props {
   composeProgress: number
   secondsPerImage: number
   userImages: Blob[]
+  showCaptions: boolean
+  captionBgColor: string
+  captionTextColor: string
 }
 
 // 사용자 입력 이미지 우선, 생성 이미지와 교차 배치. 한쪽이 먼저 소진되면 남은 쪽을 그대로 이어붙임.
@@ -49,7 +52,10 @@ function makeSetMsg(setState: SetState) {
   }
 }
 
-export function Pipeline({ userText, keys, config, state, setState, onProgress, composeProgress, secondsPerImage, userImages }: Props) {
+export function Pipeline({
+  userText, keys, config, state, setState, onProgress, composeProgress,
+  secondsPerImage, userImages, showCaptions, captionBgColor, captionTextColor,
+}: Props) {
   const ran = useRef(false)
   const startTimes = useRef<Partial<Record<Stage, number>>>({})
 
@@ -141,7 +147,8 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
         const finalBlob = await composeVideo(
           imageBlobs, ttsData.blob, ambBlob, ttsData.duration,
           onProgress,
-          (msg) => setMsg('compose', msg)
+          (msg) => setMsg('compose', msg),
+          showCaptions ? { text: llmResult.refinedText, bgColor: captionBgColor, textColor: captionTextColor } : null
         )
         setMsg('compose', '완료')
         set(setState, { ...stageStatus({ compose: 'done' }), finalBlob })
