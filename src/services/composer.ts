@@ -4,7 +4,71 @@ import { FFMPEG_CORE_BASE } from '../config/endpoints'
 
 export const SECONDS_PER_IMAGE = 7
 const FADE_DURATION = 1
-const SCALE_VF = 'scale=1024:576:force_original_aspect_ratio=decrease,pad=1024:576:(ow-iw)/2:(oh-ih)/2,setsar=1'
+const OUT_W = 1024
+const OUT_H = 576
+const OUT_FPS = 24
+const WORK_W = OUT_W * 1.5
+const WORK_H = OUT_H * 1.5
+const ZOOM_MAX = 1.15
+
+// Ken Burns 효과 pool — 배열 셔플 후 pop, 소진되면 재충전 (shuffle bag)
+const EFFECTS = [
+  'zoom-in', 'zoom-out',
+  'pan-left-right', 'pan-right-left',
+  'pan-top-bottom', 'pan-bottom-top',
+  'diagonal',
+] as const
+type Effect = typeof EFFECTS[number]
+
+function shuffle<T>(arr: readonly T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+function makeEffectPicker(): () => Effect {
+  let bag: Effect[] = []
+  return () => {
+    if (bag.length === 0) bag = shuffle(EFFECTS)
+    return bag.pop()!
+  }
+}
+
+// t: 클립 내 진행률 0→1 (on = zoompan 출력 프레임 번호)
+function zoompanFilter(effect: Effect, frames: number): string {
+  const t = `(on/${Math.max(frames - 1, 1)})`
+  const cx = 'iw/2-(iw/zoom/2)'
+  const cy = 'ih/2-(ih/zoom/2)'
+  switch (effect) {
+    case 'zoom-in':
+      return `z='1+${ZOOM_MAX - 1}*${t}':x='${cx}':y='${cy}'`
+    case 'zoom-out':
+      return `z='${ZOOM_MAX}-${ZOOM_MAX - 1}*${t}':x='${cx}':y='${cy}'`
+    case 'pan-left-right':
+      return `z=${ZOOM_MAX}:x='${t}*(iw-iw/zoom)':y='${cy}'`
+    case 'pan-right-left':
+      return `z=${ZOOM_MAX}:x='(1-${t})*(iw-iw/zoom)':y='${cy}'`
+    case 'pan-top-bottom':
+      return `z=${ZOOM_MAX}:x='${cx}':y='${t}*(ih-ih/zoom)'`
+    case 'pan-bottom-top':
+      return `z=${ZOOM_MAX}:x='${cx}':y='(1-${t})*(ih-ih/zoom)'`
+    case 'diagonal':
+      return `z='1+${ZOOM_MAX - 1}*${t}':x='${t}*(iw-iw/zoom)':y='${t}*(ih-ih/zoom)'`
+  }
+}
+
+function kenBurnsVF(effect: Effect, frames: number): string {
+  return [
+    `scale=${OUT_W}:${OUT_H}:force_original_aspect_ratio=increase`,
+    `crop=${OUT_W}:${OUT_H}`,
+    `scale=${WORK_W}:${WORK_H}`,
+    `zoompan=${zoompanFilter(effect, frames)}:d=1:s=${OUT_W}x${OUT_H}:fps=${OUT_FPS}`,
+    'setsar=1',
+  ].join(',')
+}
 
 export function computeImageCount(ttsDuration: number): number {
   const total = ttsDuration + 2
@@ -56,21 +120,24 @@ export async function composeVideo(
   await ff.writeFile(srcTts, await fetchFile(ttsBlob))
   if (ambientBlob) await ff.writeFile('ambient.mp3', await fetchFile(ambientBlob))
 
-  // Step 1: turn each still image into a clip of its visible duration
-  // (the last clip is padded so transitions don't shorten total runtime)
+  // Step 1: turn each still image into a clip of its visible duration,
+  // with a randomly assigned Ken Burns zoom/pan effect (last clip padded
+  // so transitions don't shorten total runtime)
+  const nextEffect = makeEffectPicker()
   for (let i = 0; i < n; i++) {
     onMessage?.(`이미지 ${i + 1}/${n} 클립 생성...`)
     const imgExt = imgExtOf(imageBlobs[i])
     const srcImg = `src_image${i}.${imgExt}`
     await ff.writeFile(srcImg, await fetchFile(imageBlobs[i]))
     const clipDur = i === n - 1 ? segDur[i] + (n - 1) * fade : segDur[i]
+    const frames = Math.max(1, Math.round(clipDur * OUT_FPS))
     await ff.exec([
       '-y',
       '-loop', '1',
       '-i', srcImg,
       '-t', String(clipDur),
-      '-r', '24',
-      '-vf', SCALE_VF,
+      '-r', String(OUT_FPS),
+      '-vf', kenBurnsVF(nextEffect(), frames),
       '-c:v', 'libx264', '-preset', 'ultrafast',
       '-pix_fmt', 'yuv420p',
       `clip${i}.mp4`,
