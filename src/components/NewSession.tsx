@@ -95,7 +95,7 @@ export function NewSession({ aspectRatio, images, onAspectRatioChange, onAddImag
         )}
       </div>
 
-      <button type="button" className="session-start-button" onClick={onStart}>
+      <button type="button" className="primary-wide-button" onClick={onStart}>
         세션 시작
       </button>
     </section>

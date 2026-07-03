@@ -1,4 +1,4 @@
-import type { ApiKeys, LLMResult, ModelConfig } from '../types'
+import type { ApiKeys, ChatQA, LLMResult, ModelConfig } from '../types'
 import { OPENAI_BASE, ANTHROPIC_BASE, GOOGLE_BASE, NVIDIA_LLM_BASE } from '../config/endpoints'
 
 const SYSTEM_PROMPT = `You are a creative AI for an immersive memory art installation.
@@ -23,6 +23,20 @@ the same mood, color palette, and style as the base prompt, but each depicts a c
 the same memory (e.g. different framing, time of moment, focal subject) — like consecutive frames from the same scene, not
 unrelated images.
 Output ONLY JSON: { "prompts": ["...", "...", ...] } with exactly N items, no markdown, no explanation.`
+
+const QUESTIONS_SYSTEM_PROMPT = `You are a creative interviewer AI for an immersive memory art installation.
+You will be given a base list of Korean interview questions and the user's initial travel-memory description.
+Personalize and refine each question so it naturally follows from what the user already said, digging for
+concrete sensory and emotional detail without repeating information the user already gave.
+Keep exactly the same number of questions as the base list, in Korean, each a single short question (≤40 chars).
+Output ONLY JSON: { "questions": ["...", ...] } with exactly N items matching the base list length, no markdown, no explanation.`
+
+const CHAT_SUMMARY_SYSTEM_PROMPT = `You are a summarizer AI for an immersive memory art installation.
+You will be given a user's initial travel-memory description and a list of follow-up question/answer pairs.
+Combine all of this into one concise Korean paragraph describing the memory. Preserve every concrete detail
+(place, people, time, sensory details, emotions) mentioned across the original description and all answers —
+do not drop any information — but remove redundancy and keep it tight (≤400 chars).
+Output ONLY JSON: { "summary": "..." } no markdown, no explanation.`
 
 const TIMEOUT_MS = 60_000
 
@@ -178,4 +192,43 @@ export async function generateImagePrompts(
   const { prompts } = extractJSON<{ prompts: string[] }>(raw)
   if (!Array.isArray(prompts) || prompts.length !== count) throw new Error(`Expected ${count} image prompts, got ${prompts?.length}`)
   return prompts
+}
+
+export async function generateQuestions(
+  userText: string,
+  baseQuestions: string[],
+  config: ModelConfig,
+  keys: ApiKeys
+): Promise<string[]> {
+  const raw = await callProvider(
+    QUESTIONS_SYSTEM_PROMPT,
+    `Base questions:\n${baseQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\nUser's memory:\n${userText}`,
+    config,
+    keys
+  )
+  const { questions } = extractJSON<{ questions: string[] }>(raw)
+  if (!Array.isArray(questions) || questions.length !== baseQuestions.length) {
+    throw new Error(`Expected ${baseQuestions.length} questions, got ${questions?.length}`)
+  }
+  return questions
+}
+
+export async function summarizeChat(
+  userText: string,
+  qa: ChatQA[],
+  config: ModelConfig,
+  keys: ApiKeys
+): Promise<string> {
+  const qaText = qa
+    .filter((x) => x.answer.trim())
+    .map((x) => `Q: ${x.question}\nA: ${x.answer}`)
+    .join('\n\n')
+  const raw = await callProvider(
+    CHAT_SUMMARY_SYSTEM_PROMPT,
+    `Initial memory:\n${userText}\n\n${qaText}`,
+    config,
+    keys
+  )
+  const { summary } = extractJSON<{ summary: string }>(raw)
+  return summary
 }

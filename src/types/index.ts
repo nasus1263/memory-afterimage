@@ -6,6 +6,11 @@ export interface SessionImage {
   url: string
 }
 
+export interface ChatQA {
+  question: string
+  answer: string
+}
+
 export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'nvidia'
 export type TTSProvider = 'local-kokoro' | 'openai' | 'google' | 'elevenlabs'
 export type ImageProvider = 'openai' | 'google' | 'huggingface' | 'fal' | 'nvidia'

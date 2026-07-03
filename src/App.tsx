@@ -7,6 +7,7 @@ import { Pipeline } from './components/Pipeline'
 import { VoiceInput } from './components/VoiceInput'
 import { Memories } from './components/Memories'
 import { NewSession } from './components/NewSession'
+import { Chat } from './components/Chat'
 import { saveMemory } from './services/memories'
 
 const IDLE_PIPELINE: PipelineState = {
@@ -70,6 +71,10 @@ export default function App() {
   }, [navigate])
 
   useEffect(() => {
+    if (path === '/chat' && !userText.trim()) navigate('/input')
+  }, [path, userText, navigate])
+
+  useEffect(() => {
     if (path === '/process' && !userText.trim()) navigate('/input')
   }, [path, userText, navigate])
 
@@ -100,16 +105,21 @@ export default function App() {
 
   const handleProgress = useCallback((p: number) => setComposeProgress(p), [])
 
-  function startProcess(text: string) {
+  function goToChat(text: string) {
     setUserText(text)
-    setComposeProgress(0)
-    setPipelineState(IDLE_PIPELINE)
-    navigate('/process')
+    navigate('/chat')
   }
 
   function handleSubmit() {
     if (!userText.trim()) return
-    startProcess(userText)
+    goToChat(userText)
+  }
+
+  function handleChatComplete(summary: string) {
+    setUserText(summary)
+    setComposeProgress(0)
+    setPipelineState(IDLE_PIPELINE)
+    navigate('/process')
   }
 
   function handleReset() {
@@ -150,7 +160,7 @@ export default function App() {
           </button>
 
           <nav className="nav" aria-label="주요 메뉴">
-            <button className={path === '/' || path === '/new' || path === '/input' || path === '/process' ? 'active' : ''} onClick={() => navigate('/new')}>
+            <button className={['/', '/new', '/input', '/chat', '/process'].includes(path) ? 'active' : ''} onClick={() => navigate('/new')}>
               기억 남기기
             </button>
             <button className={path === '/memories' ? 'active' : ''} onClick={() => navigate(path === '/memories' ? '/new' : '/memories')}>
@@ -277,6 +287,10 @@ export default function App() {
           />
         )}
 
+        {path === '/chat' && (
+          <Chat userText={userText} keys={keys} config={config} onComplete={handleChatComplete} />
+        )}
+
         {path === '/input' && (
           <section className="input-card" aria-label="기억 입력 영역">
             {inputMode === 'voice' && !voiceListening && (
@@ -291,7 +305,7 @@ export default function App() {
 
             {inputMode === 'voice' ? (
               <>
-                <VoiceInput onComplete={startProcess} onListeningChange={setVoiceListening} />
+                <VoiceInput onComplete={goToChat} onListeningChange={setVoiceListening} />
                 {!voiceListening && (
                   <>
                     <div className="divider">또는</div>
