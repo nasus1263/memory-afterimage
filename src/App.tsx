@@ -56,6 +56,9 @@ export default function App() {
   const [composeProgress, setComposeProgress] = useState(0)
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9')
   const [sessionImages, setSessionImages] = useState<SessionImage[]>([])
+  const [showCaptions, setShowCaptions] = useState(false)
+  const [captionBgColor, setCaptionBgColor] = useState('#000000')
+  const [captionTextColor, setCaptionTextColor] = useState('#ffffff')
   const debugActive = isDebugMode()
 
   useEffect(() => {
@@ -280,9 +283,15 @@ export default function App() {
           <NewSession
             aspectRatio={aspectRatio}
             images={sessionImages}
+            showCaptions={showCaptions}
+            captionBgColor={captionBgColor}
+            captionTextColor={captionTextColor}
             onAspectRatioChange={setAspectRatio}
             onAddImages={addSessionImages}
             onRemoveImage={removeSessionImage}
+            onShowCaptionsChange={setShowCaptions}
+            onCaptionBgColorChange={setCaptionBgColor}
+            onCaptionTextColorChange={setCaptionTextColor}
             onStart={() => navigate('/input')}
           />
         )}

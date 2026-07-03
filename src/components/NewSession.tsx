@@ -34,13 +34,32 @@ const PREVIEW_DIMS: Record<AspectRatio, { w: number; h: number }> = {
 interface Props {
   aspectRatio: AspectRatio
   images: SessionImage[]
+  showCaptions: boolean
+  captionBgColor: string
+  captionTextColor: string
   onAspectRatioChange: (r: AspectRatio) => void
   onAddImages: (files: FileList) => void
   onRemoveImage: (id: string) => void
+  onShowCaptionsChange: (v: boolean) => void
+  onCaptionBgColorChange: (v: string) => void
+  onCaptionTextColorChange: (v: string) => void
   onStart: () => void
 }
 
-export function NewSession({ aspectRatio, images, onAspectRatioChange, onAddImages, onRemoveImage, onStart }: Props) {
+export function NewSession({
+  aspectRatio,
+  images,
+  showCaptions,
+  captionBgColor,
+  captionTextColor,
+  onAspectRatioChange,
+  onAddImages,
+  onRemoveImage,
+  onShowCaptionsChange,
+  onCaptionBgColorChange,
+  onCaptionTextColorChange,
+  onStart,
+}: Props) {
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const previewDims = PREVIEW_DIMS[aspectRatio]
@@ -83,15 +102,54 @@ export function NewSession({ aspectRatio, images, onAspectRatioChange, onAddImag
           ))}
         </div>
 
-        <div className="ratio-preview-frame">
-          <div className="ratio-preview-box" style={{ width: previewDims.w, height: previewDims.h }}>
-            <img src={images[0]?.url ?? sampleImg} alt="" className="ratio-preview-image" />
+      </div>
+
+      <div className="session-field">
+        <span className="mini-label">자막</span>
+        <label className="caption-toggle">
+          <input
+            type="checkbox"
+            checked={showCaptions}
+            onChange={(e) => onShowCaptionsChange(e.target.checked)}
+          />
+          자막 표시하기
+        </label>
+
+        {showCaptions && (
+          <div className="caption-colors">
+            <label className="caption-color-field">
+              배경색
+              <input
+                type="color"
+                value={captionBgColor}
+                onChange={(e) => onCaptionBgColorChange(e.target.value)}
+              />
+            </label>
+            <label className="caption-color-field">
+              텍스트색
+              <input
+                type="color"
+                value={captionTextColor}
+                onChange={(e) => onCaptionTextColorChange(e.target.value)}
+              />
+            </label>
           </div>
+        )}
+      </div>
+
+      <div className="ratio-preview-frame">
+        <div className="ratio-preview-box" style={{ width: previewDims.w, height: previewDims.h }}>
+          <img src={images[0]?.url ?? sampleImg} alt="" className="ratio-preview-image" />
+          {showCaptions && (
+            <span className="caption-chip" style={{ backgroundColor: captionBgColor, color: captionTextColor }}>
+              기억하고 싶은 순간
+            </span>
+          )}
         </div>
       </div>
 
       <div className="session-field">
-        <span className="mini-label">참고 이미지 업로드</span>
+        <span className="mini-label">이미지 업로드 (선택)</span>
         <div
           className={`upload-dropzone${dragOver ? ' drag-over' : ''}`}
           onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
