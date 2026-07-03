@@ -227,7 +227,7 @@ export default function App() {
           <p>기억하고 싶은 여행의 순간을 음성으로 들려주세요. AI가 당신의 감정을 담아 하나의 장면으로 그려드립니다.</p>
         </section>
 
-        {['/new', '/input', '/chat', '/process'].includes(path) && !(path === '/process' && finalUrl) && (
+        {['/input', '/chat', '/process'].includes(path) && !(path === '/process' && finalUrl) && (
           <button type="button" className="restart-button" onClick={handleReset}>
             처음부터 진행하기
           </button>
