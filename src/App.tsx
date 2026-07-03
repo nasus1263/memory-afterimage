@@ -68,7 +68,7 @@ export default function App() {
   const [composeProgress, setComposeProgress] = useState(0)
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9')
   const [sessionImages, setSessionImages] = useState<SessionImage[]>([])
-  const [showCaptions, setShowCaptions] = useState(false)
+  const [showCaptions, setShowCaptions] = useState(true)
   const [captionBgColor, setCaptionBgColor] = useState('#000000')
   const [captionTextColor, setCaptionTextColor] = useState('#ffffff')
   const [secondsPerImage, setSecondsPerImage] = useState(SECONDS_PER_IMAGE)
@@ -130,7 +130,15 @@ export default function App() {
 
   useEffect(() => {
     if (pipelineState.finalBlob) {
-      saveMemory({ text: userText, video: pipelineState.finalBlob, createdAt: Date.now() })
+      console.log('[App] finalBlob 생성됨', { size: pipelineState.finalBlob.size, type: pipelineState.finalBlob.type })
+      if (pipelineState.finalBlob.size === 0) {
+        console.error('[App] finalBlob 크기가 0입니다 (compose 결과물이 비어있음)')
+        alert('영상 생성 실패: 결과 파일 크기가 0입니다. 콘솔을 확인하세요.')
+      }
+      saveMemory({ text: userText, video: pipelineState.finalBlob, createdAt: Date.now() }).catch((e) => {
+        console.error('[App] saveMemory 실패', e)
+        alert(`영상 저장(IndexedDB) 실패: ${e?.message ?? e}`)
+      })
       clearProgress()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -311,7 +319,18 @@ export default function App() {
                 <p className="step-label">04 RESULT</p>
                 <h2 className="pane-title text-center mt-3">당신의 기억이<br />완성되었습니다</h2>
                 <div className="result-image-window" aria-label="생성된 영상 미리보기">
-                  <video ref={resultVideoRef} src={finalUrl} controls autoPlay loop />
+                  <video
+                    ref={resultVideoRef}
+                    src={finalUrl}
+                    controls
+                    autoPlay
+                    loop
+                    onError={(e) => {
+                      const err = (e.target as HTMLVideoElement).error
+                      console.error('[App] 결과 영상 재생 오류', err)
+                      alert(`영상 재생 오류 (code ${err?.code}): ${err?.message || '알 수 없는 오류'}`)
+                    }}
+                  />
                   <button
                     className="fullscreen-image-button"
                     type="button"
@@ -343,7 +362,17 @@ export default function App() {
                   ×
                 </button>
                 <div className="image-preview-frame" aria-label="생성된 영상 크게 보기">
-                  <video src={finalUrl} controls autoPlay loop />
+                  <video
+                    src={finalUrl}
+                    controls
+                    autoPlay
+                    loop
+                    onError={(e) => {
+                      const err = (e.target as HTMLVideoElement).error
+                      console.error('[App] 미리보기 영상 재생 오류', err)
+                      alert(`영상 재생 오류 (code ${err?.code}): ${err?.message || '알 수 없는 오류'}`)
+                    }}
+                  />
                 </div>
               </div>
             )}

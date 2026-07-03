@@ -157,6 +157,8 @@ export function Pipeline({
         markDone('compose')
       } catch (e: any) {
         const msg = e?.message ?? String(e)
+        console.error(`[Pipeline] ${currentStage} 단계 오류`, e)
+        alert(`파이프라인 오류 (${currentStage}): ${msg}`)
         set(setState, { [currentStage]: 'error' as StageStatus, error: msg })
         setMsg(currentStage, `오류: ${msg}`)
         markDone(currentStage)

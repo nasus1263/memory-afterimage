@@ -160,6 +160,15 @@ function renderCaptionPNG(text: string, bgColor: string, textColor: string, w: n
   })
 }
 
+async function execChecked(ff: FFmpeg, args: string[], label: string): Promise<void> {
+  console.log(`[composer] ffmpeg exec (${label})`, args)
+  const code = await ff.exec(args)
+  if (code !== 0) {
+    console.error(`[composer] ffmpeg 실패 (${label}), exit code ${code}`, args)
+    throw new Error(`ffmpeg 실행 실패 (${label}, exit ${code})`)
+  }
+}
+
 export async function composeVideo(
   imageBlobs: Blob[],
   ttsBlob: Blob,
@@ -223,7 +232,7 @@ export async function composeVideo(
     const clipDur = i === n - 1 ? segDur[i] + (n - 1) * fade : segDur[i]
     const frames = Math.max(1, Math.round(clipDur * OUT_FPS))
     beginStep()
-    await ff.exec([
+    await execChecked(ff, [
       '-y',
       '-loop', '1',
       '-i', srcImg,
@@ -233,7 +242,7 @@ export async function composeVideo(
       '-c:v', 'libx264', '-preset', 'ultrafast',
       '-pix_fmt', 'yuv420p',
       `clip${i}.mp4`,
-    ])
+    ], `clip${i}`)
   }
 
   // Step 2: crossfade the clips together
@@ -256,7 +265,7 @@ export async function composeVideo(
     filter = filter.slice(0, -1)
 
     beginStep()
-    await ff.exec([
+    await execChecked(ff, [
       '-y', ...inputArgs,
       '-filter_complex', filter,
       '-map', '[vout]',
@@ -264,7 +273,7 @@ export async function composeVideo(
       '-c:v', 'libx264', '-preset', 'ultrafast',
       '-pix_fmt', 'yuv420p',
       'looped.mp4',
-    ])
+    ], 'crossfade')
     videoFile = 'looped.mp4'
   }
 
@@ -289,7 +298,7 @@ export async function composeVideo(
     filter = filter.slice(0, -1)
 
     beginStep()
-    await ff.exec([
+    await execChecked(ff, [
       '-y', ...inputArgs,
       '-filter_complex', filter,
       '-map', '[vcap]',
@@ -297,7 +306,7 @@ export async function composeVideo(
       '-c:v', 'libx264', '-preset', 'ultrafast',
       '-pix_fmt', 'yuv420p',
       'captioned.mp4',
-    ])
+    ], 'caption')
     videoFile = 'captioned.mp4'
   }
 
@@ -305,7 +314,7 @@ export async function composeVideo(
   onMessage?.('오디오 믹싱...')
   beginStep()
   if (ambientBlob) {
-    await ff.exec([
+    await execChecked(ff, [
       '-y',
       '-i', srcTts,
       '-stream_loop', '-1',
@@ -315,22 +324,22 @@ export async function composeVideo(
       '-map', '[aout]',
       '-t', String(total),
       'mixed.mp3',
-    ])
+    ], 'audio-mix')
   } else {
-    await ff.exec([
+    await execChecked(ff, [
       '-y',
       '-i', srcTts,
       '-filter_complex', '[0:a]adelay=1000:all=1[aout]',
       '-map', '[aout]',
       '-t', String(total),
       'mixed.mp3',
-    ])
+    ], 'audio-mix-solo')
   }
 
   // Step 4: mux video + audio → mp4
   onMessage?.('최종 인코딩...')
   beginStep()
-  await ff.exec([
+  await execChecked(ff, [
     '-y',
     '-i', videoFile,
     '-i', 'mixed.mp3',
@@ -341,9 +350,14 @@ export async function composeVideo(
     '-t', String(total),
     '-movflags', '+faststart',
     'output.mp4',
-  ])
+  ], 'mux')
 
   const data = await ff.readFile('output.mp4') as Uint8Array
+  console.log('[composer] output.mp4 크기', data.byteLength)
+  if (data.byteLength === 0) {
+    console.error('[composer] output.mp4가 비어있음')
+    throw new Error('최종 영상 파일이 비어있습니다 (output.mp4 size 0)')
+  }
   const copy = new Uint8Array(data.byteLength)
   copy.set(data)
   return new Blob([copy], { type: 'video/mp4' })
