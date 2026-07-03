@@ -9,6 +9,7 @@ import { Memories } from './components/Memories'
 import { NewSession } from './components/NewSession'
 import { Chat } from './components/Chat'
 import { saveMemory } from './services/memories'
+import { SECONDS_PER_IMAGE } from './services/composer'
 
 const IDLE_PIPELINE: PipelineState = {
   refine: 'idle', tts: 'idle', image: 'idle',
@@ -59,6 +60,7 @@ export default function App() {
   const [showCaptions, setShowCaptions] = useState(false)
   const [captionBgColor, setCaptionBgColor] = useState('#000000')
   const [captionTextColor, setCaptionTextColor] = useState('#ffffff')
+  const [secondsPerImage, setSecondsPerImage] = useState(SECONDS_PER_IMAGE)
   const debugActive = isDebugMode()
 
   useEffect(() => {
@@ -224,6 +226,7 @@ export default function App() {
                     setState={setPipelineState}
                     onProgress={handleProgress}
                     composeProgress={composeProgress}
+                    secondsPerImage={secondsPerImage}
                   />
                 </div>
               </section>
@@ -286,12 +289,14 @@ export default function App() {
             showCaptions={showCaptions}
             captionBgColor={captionBgColor}
             captionTextColor={captionTextColor}
+            secondsPerImage={secondsPerImage}
             onAspectRatioChange={setAspectRatio}
             onAddImages={addSessionImages}
             onRemoveImage={removeSessionImage}
             onShowCaptionsChange={setShowCaptions}
             onCaptionBgColorChange={setCaptionBgColor}
             onCaptionTextColorChange={setCaptionTextColor}
+            onSecondsPerImageChange={setSecondsPerImage}
             onStart={() => navigate('/input')}
           />
         )}

@@ -798,6 +798,17 @@ main {
   cursor: pointer;
 }
 
+.seconds-per-image-input {
+  width: 88px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px solid rgba(91, 76, 62, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.64);
+  color: var(--color-text);
+  font-size: 14px;
+}
+
 .caption-colors {
   display: flex;
   gap: 22px;

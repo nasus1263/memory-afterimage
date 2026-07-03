@@ -37,12 +37,14 @@ interface Props {
   showCaptions: boolean
   captionBgColor: string
   captionTextColor: string
+  secondsPerImage: number
   onAspectRatioChange: (r: AspectRatio) => void
   onAddImages: (files: FileList) => void
   onRemoveImage: (id: string) => void
   onShowCaptionsChange: (v: boolean) => void
   onCaptionBgColorChange: (v: string) => void
   onCaptionTextColorChange: (v: string) => void
+  onSecondsPerImageChange: (v: number) => void
   onStart: () => void
 }
 
@@ -52,12 +54,14 @@ export function NewSession({
   showCaptions,
   captionBgColor,
   captionTextColor,
+  secondsPerImage,
   onAspectRatioChange,
   onAddImages,
   onRemoveImage,
   onShowCaptionsChange,
   onCaptionBgColorChange,
   onCaptionTextColorChange,
+  onSecondsPerImageChange,
   onStart,
 }: Props) {
   const [dragOver, setDragOver] = useState(false)
@@ -135,6 +139,19 @@ export function NewSession({
             </label>
           </div>
         )}
+      </div>
+
+      <div className="session-field">
+        <span className="mini-label">이미지 표시 간격 (초)</span>
+        <input
+          type="number"
+          min={1}
+          step={1}
+          value={secondsPerImage}
+          onChange={(e) => onSecondsPerImageChange(Math.max(1, Number(e.target.value) || 1))}
+          className="seconds-per-image-input"
+          aria-label="이미지 한 장당 표시할 초"
+        />
       </div>
 
       <div className="ratio-preview-frame">

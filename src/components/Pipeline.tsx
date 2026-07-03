@@ -17,6 +17,7 @@ interface Props {
   setState: SetState
   onProgress: (p: number) => void
   composeProgress: number
+  secondsPerImage: number
 }
 
 const STAGES = ['refine', 'tts', 'image', 'audio', 'compose'] as const
@@ -36,7 +37,7 @@ function makeSetMsg(setState: SetState) {
   }
 }
 
-export function Pipeline({ userText, keys, config, state, setState, onProgress, composeProgress }: Props) {
+export function Pipeline({ userText, keys, config, state, setState, onProgress, composeProgress, secondsPerImage }: Props) {
   const ran = useRef(false)
   const startTimes = useRef<Partial<Record<Stage, number>>>({})
 
@@ -97,7 +98,7 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
 
         // ── 3. 이미지 N장 생성 ──────────────────────────
         currentStage = 'image'
-        const imageCount = computeImageCount(ttsData.duration)
+        const imageCount = computeImageCount(ttsData.duration, secondsPerImage)
         markRunning('image')
         set(setState, stageStatus({ image: 'running' }))
         setMsg('image', '장면 프롬프트 구성 중...')

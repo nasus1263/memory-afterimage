@@ -70,9 +70,9 @@ function kenBurnsVF(effect: Effect, frames: number): string {
   ].join(',')
 }
 
-export function computeImageCount(ttsDuration: number): number {
+export function computeImageCount(ttsDuration: number, secondsPerImage: number = SECONDS_PER_IMAGE): number {
   const total = ttsDuration + 2
-  return Math.max(1, Math.ceil(total / SECONDS_PER_IMAGE))
+  return Math.max(1, Math.ceil(total / secondsPerImage))
 }
 
 function extOf(blob: Blob): string {
@@ -110,10 +110,8 @@ export async function composeVideo(
   const ttsExt = extOf(ttsBlob)
   const srcTts = `tts.${ttsExt}`
 
-  // per-image visible duration: fixed n seconds each, remainder on the last image
-  const segDur: number[] = []
-  for (let i = 0; i < n - 1; i++) segDur.push(SECONDS_PER_IMAGE)
-  segDur.push(total - SECONDS_PER_IMAGE * (n - 1))
+  // per-image visible duration: split total runtime evenly across all images
+  const segDur: number[] = new Array(n).fill(total / n)
   const fade = n > 1 ? Math.min(FADE_DURATION, segDur[0] / 2, segDur[n - 1] / 2) : 0
 
   onMessage?.('파일 기록 중...')
