@@ -11,6 +11,16 @@ import { Chat } from './components/Chat'
 import { saveMemory } from './services/memories'
 import { SECONDS_PER_IMAGE } from './services/composer'
 import { loadProgress, saveProgress, clearProgress, type SessionProgress } from './store/progress'
+import { NewMark, InputMark, ChatMark, ProcessMark, SettingsMark, MemoriesMark } from './components/watermarks'
+
+const ROUTE_WATERMARKS: Record<string, () => React.JSX.Element> = {
+  '/new': NewMark,
+  '/input': InputMark,
+  '/chat': ChatMark,
+  '/process': ProcessMark,
+  '/settings': SettingsMark,
+  '/memories': MemoriesMark,
+}
 
 const IDLE_PIPELINE: PipelineState = {
   refine: 'idle', tts: 'idle', image: 'idle',
@@ -184,8 +194,16 @@ export default function App() {
   const finalUrl = useMemo(() => (finalBlob ? URL.createObjectURL(finalBlob) : null), [finalBlob])
   useEffect(() => () => { if (finalUrl) URL.revokeObjectURL(finalUrl) }, [finalUrl])
 
+  const WatermarkIcon = ROUTE_WATERMARKS[path]
+
   return (
     <>
+      {WatermarkIcon && (
+        <div className="route-watermark" aria-hidden="true">
+          <WatermarkIcon />
+        </div>
+      )}
+
       {debugActive && (
         <div className="demo-badge" role="status">
           <span className="dot" />
