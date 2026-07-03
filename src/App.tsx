@@ -10,6 +10,7 @@ import { NewSession } from './components/NewSession'
 import { Chat } from './components/Chat'
 import { saveMemory } from './services/memories'
 import { SECONDS_PER_IMAGE } from './services/composer'
+import { loadProgress, saveProgress, clearProgress, type SessionProgress } from './store/progress'
 
 const IDLE_PIPELINE: PipelineState = {
   refine: 'idle', tts: 'idle', image: 'idle',
@@ -63,8 +64,25 @@ export default function App() {
   const [secondsPerImage, setSecondsPerImage] = useState(SECONDS_PER_IMAGE)
   const debugActive = isDebugMode()
 
+  function applyProgress(p: SessionProgress) {
+    setAspectRatio(p.aspectRatio)
+    setShowCaptions(p.showCaptions)
+    setCaptionBgColor(p.captionBgColor)
+    setCaptionTextColor(p.captionTextColor)
+    setSecondsPerImage(p.secondsPerImage)
+    setUserText(p.userText)
+  }
+
   useEffect(() => {
-    if (path === '/') navigate('/new', true)
+    if (path !== '/') return
+    const progress = loadProgress()
+    if (progress) {
+      applyProgress(progress)
+      navigate(progress.route, true)
+    } else {
+      navigate('/new', true)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path, navigate])
 
   useEffect(() => {
@@ -101,6 +119,7 @@ export default function App() {
   useEffect(() => {
     if (pipelineState.finalBlob) {
       saveMemory({ text: userText, video: pipelineState.finalBlob, createdAt: Date.now() })
+      clearProgress()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pipelineState.finalBlob])
@@ -110,8 +129,18 @@ export default function App() {
 
   const handleProgress = useCallback((p: number) => setComposeProgress(p), [])
 
+  function currentProgressBase() {
+    return { aspectRatio, showCaptions, captionBgColor, captionTextColor, secondsPerImage }
+  }
+
+  function handleNewSessionStart() {
+    saveProgress({ ...currentProgressBase(), route: '/input', userText: '' })
+    navigate('/input')
+  }
+
   function goToChat(text: string) {
     setUserText(text)
+    saveProgress({ ...currentProgressBase(), route: '/chat', userText: text })
     navigate('/chat')
   }
 
@@ -124,10 +153,12 @@ export default function App() {
     setUserText(summary)
     setComposeProgress(0)
     setPipelineState(IDLE_PIPELINE)
+    saveProgress({ ...currentProgressBase(), route: '/process', userText: summary })
     navigate('/process')
   }
 
   function handleReset() {
+    clearProgress()
     setUserText('')
     setInputMode('voice')
     setVoiceListening(false)
@@ -135,6 +166,16 @@ export default function App() {
     setPipelineState(IDLE_PIPELINE)
     setComposeProgress(0)
     navigate('/new')
+  }
+
+  function handleMemoryNavClick() {
+    const progress = loadProgress()
+    if (progress) {
+      applyProgress(progress)
+      navigate(progress.route)
+    } else {
+      navigate('/new')
+    }
   }
 
   const finalBlob = pipelineState.finalBlob
@@ -165,7 +206,7 @@ export default function App() {
           </button>
 
           <nav className="nav" aria-label="주요 메뉴">
-            <button className={['/', '/new', '/input', '/chat', '/process'].includes(path) ? 'active' : ''} onClick={() => navigate('/new')}>
+            <button className={['/', '/new', '/input', '/chat', '/process'].includes(path) ? 'active' : ''} onClick={handleMemoryNavClick}>
               기억 남기기
             </button>
             <button className={path === '/memories' ? 'active' : ''} onClick={() => navigate(path === '/memories' ? '/new' : '/memories')}>
@@ -185,6 +226,14 @@ export default function App() {
           <h1 id="hero-title">여행의 순간을 하나의 장면으로 남기세요</h1>
           <p>기억하고 싶은 여행의 순간을 음성으로 들려주세요. AI가 당신의 감정을 담아 하나의 장면으로 그려드립니다.</p>
         </section>
+
+        {['/new', '/input', '/chat', '/process'].includes(path) && !(path === '/process' && finalUrl) && (
+          <div className="flex justify-end mb-2">
+            <button type="button" className="ghost-link" onClick={handleReset}>
+              처음부터 진행하기
+            </button>
+          </div>
+        )}
 
         {path === '/settings' && (
           <div className="pane my-3">
@@ -302,7 +351,7 @@ export default function App() {
             onCaptionBgColorChange={setCaptionBgColor}
             onCaptionTextColorChange={setCaptionTextColor}
             onSecondsPerImageChange={setSecondsPerImage}
-            onStart={() => navigate('/input')}
+            onStart={handleNewSessionStart}
           />
         )}
 
