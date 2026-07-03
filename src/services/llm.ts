@@ -31,6 +31,14 @@ concrete sensory and emotional detail without repeating information the user alr
 Keep exactly the same number of questions as the base list, in Korean, each a single short question (≤40 chars).
 Output ONLY JSON: { "questions": ["...", ...] } with exactly N items matching the base list length, no markdown, no explanation.`
 
+const QUESTIONS_WITH_ANSWERS_SYSTEM_PROMPT = `You are a creative interviewer AI for an immersive memory art installation, currently in a debug/testing mode.
+You will be given a base list of Korean interview questions and the user's initial travel-memory description.
+Personalize and refine each question the same way you normally would, but ALSO write a short plausible Korean
+sample answer for each question, as if the user had answered it, consistent with the user's memory description.
+Keep exactly the same number of questions as the base list, in Korean, each question a single short line (≤40 chars)
+and each answer a short natural sentence (≤60 chars).
+Output ONLY JSON: { "questions": ["...", ...], "answers": ["...", ...] } with exactly N items each, matching the base list length, no markdown, no explanation.`
+
 const CHAT_SUMMARY_SYSTEM_PROMPT = `You are a summarizer AI for an immersive memory art installation.
 You will be given a user's initial travel-memory description and a list of follow-up question/answer pairs.
 Combine all of this into one concise Korean paragraph describing the memory. Preserve every concrete detail
@@ -211,6 +219,28 @@ export async function generateQuestions(
     throw new Error(`Expected ${baseQuestions.length} questions, got ${questions?.length}`)
   }
   return questions
+}
+
+export async function generateQuestionsWithAnswers(
+  userText: string,
+  baseQuestions: string[],
+  config: ModelConfig,
+  keys: ApiKeys
+): Promise<{ questions: string[]; answers: string[] }> {
+  const raw = await callProvider(
+    QUESTIONS_WITH_ANSWERS_SYSTEM_PROMPT,
+    `Base questions:\n${baseQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\nUser's memory:\n${userText}`,
+    config,
+    keys
+  )
+  const { questions, answers } = extractJSON<{ questions: string[]; answers: string[] }>(raw)
+  if (!Array.isArray(questions) || questions.length !== baseQuestions.length) {
+    throw new Error(`Expected ${baseQuestions.length} questions, got ${questions?.length}`)
+  }
+  if (!Array.isArray(answers) || answers.length !== baseQuestions.length) {
+    throw new Error(`Expected ${baseQuestions.length} answers, got ${answers?.length}`)
+  }
+  return { questions, answers }
 }
 
 export async function summarizeChat(
