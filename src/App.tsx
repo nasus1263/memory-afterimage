@@ -231,6 +231,7 @@ export default function App() {
                     showCaptions={showCaptions}
                     captionBgColor={captionBgColor}
                     captionTextColor={captionTextColor}
+                    aspectRatio={aspectRatio}
                   />
                 </div>
               </section>

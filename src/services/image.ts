@@ -163,10 +163,16 @@ export async function generateImages(
   keys: ApiKeys,
   onProgress?: (msg: string) => void
 ): Promise<Blob[]> {
-  const blobs: Blob[] = []
-  for (let i = 0; i < prompts.length; i++) {
-    const blob = await generateImage(prompts[i], config, keys, (msg) => onProgress?.(`(${i + 1}/${prompts.length}) ${msg}`))
-    blobs.push(blob)
-  }
-  return blobs
+  let completed = 0
+  const total = prompts.length
+  return Promise.all(
+    prompts.map((prompt, i) =>
+      generateImage(prompt, config, keys, (msg) => onProgress?.(`(${i + 1}/${total}) ${msg}`))
+        .then((blob) => {
+          completed++
+          onProgress?.(`이미지 생성 완료 (${completed}/${total})`)
+          return blob
+        })
+    )
+  )
 }

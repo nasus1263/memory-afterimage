@@ -1,15 +1,18 @@
 import { FFmpeg } from '@ffmpeg/ffmpeg'
 import { fetchFile } from '@ffmpeg/util'
 import { FFMPEG_CORE_BASE } from '../config/endpoints'
+import type { AspectRatio } from '../types'
 
 export const SECONDS_PER_IMAGE = 7
 const FADE_DURATION = 1
-const OUT_W = 1024
-const OUT_H = 576
 const OUT_FPS = 24
-const WORK_W = OUT_W * 1.5
-const WORK_H = OUT_H * 1.5
 const ZOOM_MAX = 1.15
+
+function getOutDims(aspectRatio: AspectRatio): { w: number; h: number } {
+  if (aspectRatio === '9:16') return { w: 576, h: 1024 }
+  if (aspectRatio === '1:1') return { w: 1024, h: 1024 }
+  return { w: 1024, h: 576 }
+}
 
 // Ken Burns 효과 pool — 배열 셔플 후 pop, 소진되면 재충전 (shuffle bag)
 const EFFECTS = [
@@ -60,12 +63,12 @@ function zoompanFilter(effect: Effect, frames: number): string {
   }
 }
 
-function kenBurnsVF(effect: Effect, frames: number): string {
+function kenBurnsVF(effect: Effect, frames: number, w: number, h: number): string {
   return [
-    `scale=${OUT_W}:${OUT_H}:force_original_aspect_ratio=increase`,
-    `crop=${OUT_W}:${OUT_H}`,
-    `scale=${WORK_W}:${WORK_H}`,
-    `zoompan=${zoompanFilter(effect, frames)}:d=1:s=${OUT_W}x${OUT_H}:fps=${OUT_FPS}`,
+    `scale=${w}:${h}:force_original_aspect_ratio=increase`,
+    `crop=${w}:${h}`,
+    `scale=${w * 1.5}:${h * 1.5}`,
+    `zoompan=${zoompanFilter(effect, frames)}:d=1:s=${w}x${h}:fps=${OUT_FPS}`,
     'setsar=1',
   ].join(',')
 }
@@ -127,13 +130,13 @@ function captionTimeRanges(chunks: string[], total: number): { start: number; en
 }
 
 // 자막 청크 하나를 영상 프레임 크기의 투명 PNG로 렌더링. 자막 하단이 영상 하단으로부터 10% 위치에 오도록 배치.
-function renderCaptionPNG(text: string, bgColor: string, textColor: string): Promise<Blob> {
+function renderCaptionPNG(text: string, bgColor: string, textColor: string, w: number, h: number): Promise<Blob> {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas')
-    canvas.width = OUT_W
-    canvas.height = OUT_H
+    canvas.width = w
+    canvas.height = h
     const ctx = canvas.getContext('2d')!
-    ctx.clearRect(0, 0, OUT_W, OUT_H)
+    ctx.clearRect(0, 0, w, h)
 
     const fontSize = 34
     ctx.font = `600 ${fontSize}px "Malgun Gothic", sans-serif`
@@ -144,14 +147,14 @@ function renderCaptionPNG(text: string, bgColor: string, textColor: string): Pro
     const paddingY = 14
     const boxW = ctx.measureText(text).width + paddingX * 2
     const boxH = fontSize + paddingY * 2
-    const boxBottom = OUT_H * 0.9
+    const boxBottom = h * 0.9
     const boxTop = boxBottom - boxH
-    const boxX = (OUT_W - boxW) / 2
+    const boxX = (w - boxW) / 2
 
     ctx.fillStyle = bgColor
     ctx.fillRect(boxX, boxTop, boxW, boxH)
     ctx.fillStyle = textColor
-    ctx.fillText(text, OUT_W / 2, boxTop + boxH / 2)
+    ctx.fillText(text, w / 2, boxTop + boxH / 2)
 
     canvas.toBlob((blob) => resolve(blob!), 'image/png')
   })
@@ -164,18 +167,39 @@ export async function composeVideo(
   ttsDuration: number,
   onProgress?: (p: number) => void,
   onMessage?: (msg: string) => void,
-  caption?: CaptionOptions | null
+  caption?: CaptionOptions | null,
+  aspectRatio: AspectRatio = '16:9'
 ): Promise<Blob> {
+  const { w: OUT_W, h: OUT_H } = getOutDims(aspectRatio)
+  const n = imageBlobs.length
+  const captionChunks = caption ? splitCaptionChunks(caption.text) : []
+  const hasCrossfade = n > 1
+  const hasCaptions = captionChunks.length > 0
+  // 최종 단계는 여러 ffmpeg 하위 작업(이미지 클립 n개 + 전환 + 자막 + 오디오 믹싱 + 최종 인코딩)으로 나뉘므로,
+  // 전체 진행도를 하위 작업 개수만큼 균등 분할해 각 하위 작업의 0~100% progress를 해당 구간으로 매핑한다.
+  const totalSteps = n + (hasCrossfade ? 1 : 0) + (hasCaptions ? 1 : 0) + 1 + 1
+  let stepIndex = 0
+  let stepStart = 0
+  let stepEnd = 0
+  function beginStep() {
+    stepStart = stepIndex / totalSteps
+    stepEnd = (stepIndex + 1) / totalSteps
+    stepIndex++
+  }
+
   onMessage?.('ffmpeg.wasm 로드 중...')
   const ff = new FFmpeg()
-  ff.on('progress', ({ progress }: { progress: number }) => onProgress?.(Math.min(100, Math.max(0, Math.round(progress * 100)))))
+  ff.on('progress', ({ progress }: { progress: number }) => {
+    const clamped = Math.min(Math.max(progress, 0), 1)
+    const overall = stepStart + clamped * (stepEnd - stepStart)
+    onProgress?.(Math.min(100, Math.max(0, Math.round(overall * 100))))
+  })
   await ff.load({
     coreURL: `${FFMPEG_CORE_BASE}/ffmpeg-core.js`,
     wasmURL: `${FFMPEG_CORE_BASE}/ffmpeg-core.wasm`,
   })
 
   const total = ttsDuration + 2
-  const n = imageBlobs.length
   const ttsExt = extOf(ttsBlob)
   const srcTts = `tts.${ttsExt}`
 
@@ -198,13 +222,14 @@ export async function composeVideo(
     await ff.writeFile(srcImg, await fetchFile(imageBlobs[i]))
     const clipDur = i === n - 1 ? segDur[i] + (n - 1) * fade : segDur[i]
     const frames = Math.max(1, Math.round(clipDur * OUT_FPS))
+    beginStep()
     await ff.exec([
       '-y',
       '-loop', '1',
       '-i', srcImg,
       '-t', String(clipDur),
       '-r', String(OUT_FPS),
-      '-vf', kenBurnsVF(nextEffect(), frames),
+      '-vf', kenBurnsVF(nextEffect(), frames, OUT_W, OUT_H),
       '-c:v', 'libx264', '-preset', 'ultrafast',
       '-pix_fmt', 'yuv420p',
       `clip${i}.mp4`,
@@ -230,6 +255,7 @@ export async function composeVideo(
     }
     filter = filter.slice(0, -1)
 
+    beginStep()
     await ff.exec([
       '-y', ...inputArgs,
       '-filter_complex', filter,
@@ -243,13 +269,12 @@ export async function composeVideo(
   }
 
   // Step 2.5: burn in captions, timed proportionally across the total runtime
-  const captionChunks = caption ? splitCaptionChunks(caption.text) : []
-  if (caption && captionChunks.length) {
+  if (caption && hasCaptions) {
     onMessage?.('자막 합성...')
     const ranges = captionTimeRanges(captionChunks, total)
     const inputArgs: string[] = ['-i', videoFile]
     for (let i = 0; i < captionChunks.length; i++) {
-      const png = await renderCaptionPNG(captionChunks[i], caption.bgColor, caption.textColor)
+      const png = await renderCaptionPNG(captionChunks[i], caption.bgColor, caption.textColor, OUT_W, OUT_H)
       await ff.writeFile(`caption${i}.png`, await fetchFile(png))
       inputArgs.push('-i', `caption${i}.png`)
     }
@@ -263,6 +288,7 @@ export async function composeVideo(
     }
     filter = filter.slice(0, -1)
 
+    beginStep()
     await ff.exec([
       '-y', ...inputArgs,
       '-filter_complex', filter,
@@ -277,6 +303,7 @@ export async function composeVideo(
 
   // Step 3: build audio mix
   onMessage?.('오디오 믹싱...')
+  beginStep()
   if (ambientBlob) {
     await ff.exec([
       '-y',
@@ -302,6 +329,7 @@ export async function composeVideo(
 
   // Step 4: mux video + audio → mp4
   onMessage?.('최종 인코딩...')
+  beginStep()
   await ff.exec([
     '-y',
     '-i', videoFile,

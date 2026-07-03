@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import type { ApiKeys, ModelConfig, PipelineState, StageStatus } from '../types'
+import type { ApiKeys, AspectRatio, ModelConfig, PipelineState, StageStatus } from '../types'
 import { refineMemo, generateImagePrompts } from '../services/llm'
 import { generateTTS } from '../services/tts'
 import { generateImages } from '../services/image'
@@ -22,6 +22,7 @@ interface Props {
   showCaptions: boolean
   captionBgColor: string
   captionTextColor: string
+  aspectRatio: AspectRatio
 }
 
 // 사용자 입력 이미지 우선, 생성 이미지와 교차 배치. 한쪽이 먼저 소진되면 남은 쪽을 그대로 이어붙임.
@@ -54,7 +55,7 @@ function makeSetMsg(setState: SetState) {
 
 export function Pipeline({
   userText, keys, config, state, setState, onProgress, composeProgress,
-  secondsPerImage, userImages, showCaptions, captionBgColor, captionTextColor,
+  secondsPerImage, userImages, showCaptions, captionBgColor, captionTextColor, aspectRatio,
 }: Props) {
   const ran = useRef(false)
   const startTimes = useRef<Partial<Record<Stage, number>>>({})
@@ -148,7 +149,8 @@ export function Pipeline({
           imageBlobs, ttsData.blob, ambBlob, ttsData.duration,
           onProgress,
           (msg) => setMsg('compose', msg),
-          showCaptions ? { text: llmResult.refinedText, bgColor: captionBgColor, textColor: captionTextColor } : null
+          showCaptions ? { text: llmResult.refinedText, bgColor: captionBgColor, textColor: captionTextColor } : null,
+          aspectRatio
         )
         setMsg('compose', '완료')
         set(setState, { ...stageStatus({ compose: 'done' }), finalBlob })
