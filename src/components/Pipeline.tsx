@@ -18,6 +18,18 @@ interface Props {
   onProgress: (p: number) => void
   composeProgress: number
   secondsPerImage: number
+  userImages: Blob[]
+}
+
+// 사용자 입력 이미지 우선, 생성 이미지와 교차 배치. 한쪽이 먼저 소진되면 남은 쪽을 그대로 이어붙임.
+function interleaveImages(userBlobs: Blob[], generatedBlobs: Blob[]): Blob[] {
+  const result: Blob[] = []
+  const max = Math.max(userBlobs.length, generatedBlobs.length)
+  for (let i = 0; i < max; i++) {
+    if (i < userBlobs.length) result.push(userBlobs[i])
+    if (i < generatedBlobs.length) result.push(generatedBlobs[i])
+  }
+  return result
 }
 
 const STAGES = ['refine', 'tts', 'image', 'audio', 'compose'] as const
@@ -37,7 +49,7 @@ function makeSetMsg(setState: SetState) {
   }
 }
 
-export function Pipeline({ userText, keys, config, state, setState, onProgress, composeProgress, secondsPerImage }: Props) {
+export function Pipeline({ userText, keys, config, state, setState, onProgress, composeProgress, secondsPerImage, userImages }: Props) {
   const ran = useRef(false)
   const startTimes = useRef<Partial<Record<Stage, number>>>({})
 
@@ -96,16 +108,24 @@ export function Pipeline({ userText, keys, config, state, setState, onProgress, 
           }).finally(() => markDone('tts'))
         set(setState, { ...stageStatus({ tts: 'done' }), ttsBlob: ttsData.blob, ttsDuration: ttsData.duration })
 
-        // ── 3. 이미지 N장 생성 ──────────────────────────
+        // ── 3. 이미지 N장 생성 (사용자 입력 이미지가 있으면 부족분만 생성) ──
         currentStage = 'image'
         const imageCount = computeImageCount(ttsData.duration, secondsPerImage)
+        const aiCount = Math.max(0, imageCount - userImages.length)
         markRunning('image')
         set(setState, stageStatus({ image: 'running' }))
-        setMsg('image', '장면 프롬프트 구성 중...')
-        const imagePrompts = await generateImagePrompts(llmResult.imagePrompt, imageCount, config, keys)
-        setMsg('image', `이미지 생성 준비 중... (0/${imageCount})`)
-        const imageBlobs = await generateImages(imagePrompts, config, keys, (msg) => setMsg('image', msg))
-          .finally(() => markDone('image'))
+        let imageBlobs: Blob[]
+        if (aiCount === 0) {
+          setMsg('image', `사용자 입력 이미지 사용 (${userImages.length}장)`)
+          imageBlobs = userImages
+        } else {
+          setMsg('image', '장면 프롬프트 구성 중...')
+          const imagePrompts = await generateImagePrompts(llmResult.imagePrompt, aiCount, config, keys)
+          setMsg('image', `이미지 생성 준비 중... (0/${aiCount})`)
+          const generatedBlobs = await generateImages(imagePrompts, config, keys, (msg) => setMsg('image', msg))
+          imageBlobs = interleaveImages(userImages, generatedBlobs)
+        }
+        markDone('image')
         set(setState, { ...stageStatus({ image: 'done' }), imageBlobs })
 
         currentStage = 'audio'

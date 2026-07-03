@@ -227,6 +227,7 @@ export default function App() {
                     onProgress={handleProgress}
                     composeProgress={composeProgress}
                     secondsPerImage={secondsPerImage}
+                    userImages={sessionImages.map((img) => img.file)}
                   />
                 </div>
               </section>
