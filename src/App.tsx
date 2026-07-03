@@ -1,11 +1,12 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
-import type { ApiKeys, ModelConfig, PipelineState } from './types'
+import type { ApiKeys, AspectRatio, ModelConfig, PipelineState, SessionImage } from './types'
 import { loadKeys, saveKeys, loadConfig, saveConfig } from './store/settings'
 import { isDebugMode } from './services/debug'
 import { Settings } from './components/Settings'
 import { Pipeline } from './components/Pipeline'
 import { VoiceInput } from './components/VoiceInput'
 import { Memories } from './components/Memories'
+import { NewSession } from './components/NewSession'
 import { saveMemory } from './services/memories'
 
 const IDLE_PIPELINE: PipelineState = {
@@ -32,8 +33,9 @@ function useRoute() {
     return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
-  const navigate = useCallback((to: string) => {
-    window.history.pushState({}, '', BASE + to)
+  const navigate = useCallback((to: string, replace = false) => {
+    if (replace) window.history.replaceState({}, '', BASE + to)
+    else window.history.pushState({}, '', BASE + to)
     setPath(to)
   }, [])
 
@@ -51,7 +53,13 @@ export default function App() {
   const [userText, setUserText] = useState('')
   const [pipelineState, setPipelineState] = useState<PipelineState>(IDLE_PIPELINE)
   const [composeProgress, setComposeProgress] = useState(0)
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9')
+  const [sessionImages, setSessionImages] = useState<SessionImage[]>([])
   const debugActive = isDebugMode()
+
+  useEffect(() => {
+    if (path === '/') navigate('/new', true)
+  }, [path, navigate])
 
   useEffect(() => {
     const visited = localStorage.getItem('memory_visited')
@@ -62,8 +70,23 @@ export default function App() {
   }, [navigate])
 
   useEffect(() => {
-    if (path === '/process' && !userText.trim()) navigate('/')
+    if (path === '/process' && !userText.trim()) navigate('/input')
   }, [path, userText, navigate])
+
+  function addSessionImages(files: FileList) {
+    const next = Array.from(files)
+      .filter((f) => f.type.startsWith('image/'))
+      .map((file) => ({ id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, file, url: URL.createObjectURL(file) }))
+    if (next.length) setSessionImages((prev) => [...prev, ...next])
+  }
+
+  function removeSessionImage(id: string) {
+    setSessionImages((prev) => {
+      const target = prev.find((img) => img.id === id)
+      if (target) URL.revokeObjectURL(target.url)
+      return prev.filter((img) => img.id !== id)
+    })
+  }
 
   useEffect(() => {
     if (pipelineState.finalBlob) {
@@ -96,7 +119,7 @@ export default function App() {
     setShowPreview(false)
     setPipelineState(IDLE_PIPELINE)
     setComposeProgress(0)
-    navigate('/')
+    navigate('/new')
   }
 
   const finalBlob = pipelineState.finalBlob
@@ -114,7 +137,7 @@ export default function App() {
 
       <header className="topbar">
         <div className="topbar-inner">
-          <button className="brand" onClick={() => navigate('/')} aria-label="기억의 잔상 홈">
+          <button className="brand" onClick={() => navigate('/new')} aria-label="기억의 잔상 홈">
             <svg className="logo" viewBox="0 0 64 64" fill="none" aria-hidden="true">
               <path d="M10 47L27.5 24.5L38 38L44 30L56 47" stroke="#6F4631" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M21 24.5C21 16.5 27.5 10 35.5 10C41.1 10 46 13.2 48.4 17.9" stroke="#D28A38" strokeWidth="2.2" strokeLinecap="round" />
@@ -127,10 +150,10 @@ export default function App() {
           </button>
 
           <nav className="nav" aria-label="주요 메뉴">
-            <button className={path === '/' || path === '/process' ? 'active' : ''} onClick={() => navigate('/')}>
+            <button className={path === '/' || path === '/new' || path === '/input' || path === '/process' ? 'active' : ''} onClick={() => navigate('/new')}>
               기억 남기기
             </button>
-            <button className={path === '/memories' ? 'active' : ''} onClick={() => navigate(path === '/memories' ? '/' : '/memories')}>
+            <button className={path === '/memories' ? 'active' : ''} onClick={() => navigate(path === '/memories' ? '/new' : '/memories')}>
               보관함
             </button>
             <button className={path === '/settings' ? 'active' : ''} onClick={() => navigate('/settings')}>
@@ -243,7 +266,18 @@ export default function App() {
           </div>
         )}
 
-        {path === '/' && (
+        {path === '/new' && (
+          <NewSession
+            aspectRatio={aspectRatio}
+            images={sessionImages}
+            onAspectRatioChange={setAspectRatio}
+            onAddImages={addSessionImages}
+            onRemoveImage={removeSessionImage}
+            onStart={() => navigate('/input')}
+          />
+        )}
+
+        {path === '/input' && (
           <section className="input-card" aria-label="기억 입력 영역">
             {inputMode === 'voice' && !voiceListening && (
               <div className="input-title">

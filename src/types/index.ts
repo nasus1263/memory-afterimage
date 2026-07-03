@@ -1,3 +1,11 @@
+export type AspectRatio = '16:9' | '9:16' | '1:1'
+
+export interface SessionImage {
+  id: string
+  file: File
+  url: string
+}
+
 export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'nvidia'
 export type TTSProvider = 'local-kokoro' | 'openai' | 'google' | 'elevenlabs'
 export type ImageProvider = 'openai' | 'google' | 'huggingface' | 'fal' | 'nvidia'

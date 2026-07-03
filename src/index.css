@@ -704,6 +704,126 @@ main {
   opacity: .42;
 }
 
+/* ── new session (비율 설정 · 이미지 업로드) ─────────────── */
+
+.session-field {
+  margin-top: 25px;
+}
+
+.ratio-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ratio-options button {
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(91, 76, 62, 0.2);
+  background: rgba(255, 255, 255, 0.64);
+  color: var(--color-text-dim);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+
+.ratio-options button.active {
+  border-color: var(--color-gold-dim);
+  background: var(--color-gold-soft);
+  color: var(--color-gold-dim);
+}
+
+.upload-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 140px;
+  padding: 24px;
+  border: 1.5px dashed rgba(91, 76, 62, 0.28);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  transition: border-color .18s ease, background .18s ease;
+}
+
+.upload-dropzone p {
+  margin: 0;
+  color: var(--color-text-dim);
+  font-size: 14px;
+}
+
+.upload-dropzone.drag-over {
+  border-color: var(--color-gold-dim);
+  background: var(--color-gold-soft);
+}
+
+.upload-thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.upload-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(91, 76, 62, 0.14);
+}
+
+.upload-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.upload-thumb-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(35, 33, 30, 0.72);
+  color: #fff;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.upload-thumb-remove:hover {
+  background: rgba(35, 33, 30, 0.9);
+}
+
+.session-start-button {
+  width: 100%;
+  height: 56px;
+  margin-top: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-gold-dim);
+  color: #fffaf3;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 14px 34px rgba(116, 71, 49, .2);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.session-start-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(116, 71, 49, .26);
+}
+
 /* ── listening / loading / result step screens ──────────── */
 
 .step-label {
