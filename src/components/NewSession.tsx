@@ -1,11 +1,35 @@
 import { useRef, useState } from 'react'
 import type { AspectRatio, SessionImage } from '../types'
+import { YouTubeIcon, YouTubeShortsIcon, InstagramIcon, TikTokIcon } from './icons'
+import sampleImg from '../assets/sample.jpg'
 
-const RATIOS: { value: AspectRatio; label: string }[] = [
-  { value: '16:9', label: '16:9 가로' },
-  { value: '9:16', label: '9:16 세로' },
-  { value: '1:1', label: '1:1 정방형' },
+const RATIOS: { value: AspectRatio; label: string; icons: { Icon: typeof YouTubeIcon; name: string }[] }[] = [
+  {
+    value: '16:9',
+    label: '16:9 가로',
+    icons: [{ Icon: YouTubeIcon, name: 'YouTube' }],
+  },
+  {
+    value: '9:16',
+    label: '9:16 세로',
+    icons: [
+      { Icon: YouTubeShortsIcon, name: 'Shorts' },
+      { Icon: InstagramIcon, name: 'Reels' },
+      { Icon: TikTokIcon, name: 'TikTok' },
+    ],
+  },
+  {
+    value: '1:1',
+    label: '1:1 정방형',
+    icons: [{ Icon: InstagramIcon, name: 'Instagram' }],
+  },
 ]
+
+const PREVIEW_DIMS: Record<AspectRatio, { w: number; h: number }> = {
+  '16:9': { w: 200, h: 113 },
+  '9:16': { w: 113, h: 200 },
+  '1:1': { w: 160, h: 160 },
+}
 
 interface Props {
   aspectRatio: AspectRatio
@@ -19,6 +43,7 @@ interface Props {
 export function NewSession({ aspectRatio, images, onAspectRatioChange, onAddImages, onRemoveImage, onStart }: Props) {
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const previewDims = PREVIEW_DIMS[aspectRatio]
 
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault()
@@ -48,9 +73,20 @@ export function NewSession({ aspectRatio, images, onAspectRatioChange, onAddImag
               className={aspectRatio === r.value ? 'active' : ''}
               onClick={() => onAspectRatioChange(r.value)}
             >
+              <span className="ratio-icon-row">
+                {r.icons.map(({ Icon, name }) => (
+                  <Icon key={name} className="ratio-icon" />
+                ))}
+              </span>
               {r.label}
             </button>
           ))}
+        </div>
+
+        <div className="ratio-preview-frame">
+          <div className="ratio-preview-box" style={{ width: previewDims.w, height: previewDims.h }}>
+            <img src={images[0]?.url ?? sampleImg} alt="" className="ratio-preview-image" />
+          </div>
         </div>
       </div>
 
