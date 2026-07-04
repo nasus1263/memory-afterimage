@@ -151,10 +151,10 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
         />
       )}
 
-      {phase === 'listening' && (
+      {(phase === 'listening' || (phase === 'reviewing' && !rec.unsupported)) && (
         <div className="live-transcript" aria-live="polite">
-          {rec.finalText}
-          <span className="interim">{rec.interimText}</span>
+          {phase === 'listening' ? rec.finalText : pendingTranscript}
+          {phase === 'listening' && <span className="interim">{rec.interimText}</span>}
         </div>
       )}
 
