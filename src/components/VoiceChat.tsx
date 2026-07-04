@@ -13,33 +13,33 @@ interface Props {
   onComplete: (summary: string) => void
 }
 
-type Phase = 'speaking' | 'listening' | 'reviewing' | 'submitting'
+// 'manual' = STT 미지원 브라우저용 텍스트 직접입력 단계
+type Phase = 'speaking' | 'listening' | 'manual' | 'submitting'
+
+const EMOJI_RE = new RegExp('[\\p{Extended_Pictographic}\\u{FE0F}\\u{200D}]', 'gu')
 
 export function VoiceChat({ userText, keys, config, onComplete }: Props) {
   const { questions, choices, initialAnswers, error: fetchError } = useQuestions(userText, config, keys)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [phase, setPhase] = useState<Phase>('speaking')
-  const [pendingTranscript, setPendingTranscript] = useState('')
+  const [manualText, setManualText] = useState('')
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   const answersRef = useRef<string[]>([])
   const startedRef = useRef(false)
-  const suppressRecEndRef = useRef(false)
 
-  const rec = useSpeechRecognition({
-    onEnd: (text) => {
-      if (suppressRecEndRef.current) { suppressRecEndRef.current = false; return }
-      setPendingTranscript(text)
-      setPhase('reviewing')
-    },
-  })
+  const rec = useSpeechRecognition()
 
   useEffect(() => () => { window.speechSynthesis?.cancel() }, [])
+
+  function stripEmoji(text: string): string {
+    return text.replace(EMOJI_RE, '').replace(/\s+/g, ' ').trim()
+  }
 
   function speak(text: string, onEnd: () => void) {
     if (!('speechSynthesis' in window)) { onEnd(); return }
     window.speechSynthesis.cancel()
-    const utter = new SpeechSynthesisUtterance(text)
+    const utter = new SpeechSynthesisUtterance(stripEmoji(text))
     utter.lang = 'ko-KR'
     utter.onend = onEnd
     utter.onerror = onEnd
@@ -50,10 +50,10 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
     if (!questions) return
     if (i >= questions.length) { finalize(); return }
     setCurrentIndex(i)
-    setPendingTranscript('')
+    setManualText('')
     setPhase('speaking')
     speak(questions[i], () => {
-      if (rec.unsupported) { setPhase('reviewing'); return }
+      if (rec.unsupported) { setPhase('manual'); return }
       setPhase('listening')
       rec.start()
     })
@@ -76,27 +76,25 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
   function selectChoice(choiceIndex: number) {
     const answer = choices[currentIndex]?.[choiceIndex] ?? ''
     window.speechSynthesis.cancel()
-    if (rec.listening) { suppressRecEndRef.current = true; rec.stop() }
+    rec.stop()
     commitAnswer(answer)
   }
 
-  function acceptTranscript() {
-    commitAnswer(pendingTranscript)
+  function continueToNext() {
+    const answer = phase === 'manual' ? manualText : rec.finalText
+    rec.stop()
+    commitAnswer(answer.trim())
   }
 
   function retryRecording() {
-    setPendingTranscript('')
-    setPhase('listening')
+    rec.stop()
     rec.start()
   }
 
   function replayQuestion() {
     if (!questions) return
     const resumePhase = phase
-    if (resumePhase === 'listening' && rec.listening) {
-      suppressRecEndRef.current = true
-      rec.stop()
-    }
+    if (resumePhase === 'listening') rec.stop()
     setPhase('speaking')
     speak(questions[currentIndex], () => {
       if (resumePhase === 'listening' && !rec.unsupported) {
@@ -110,6 +108,7 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
 
   async function finalize() {
     if (!questions) return
+    setSubmitError(null)
     setPhase('submitting')
     try {
       const qa = questions.map((q, i) => ({ question: q, answer: answersRef.current[i] ?? '' }))
@@ -117,7 +116,6 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
       onComplete(summary)
     } catch (e: any) {
       setSubmitError(e?.message ?? String(e))
-      setPhase('reviewing')
     }
   }
 
@@ -141,7 +139,6 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
   }
 
   const currentChoices = choices[currentIndex] ?? []
-  const showManualInput = phase === 'reviewing' && rec.unsupported
 
   return (
     <section className="input-card" aria-label="추가 질문 (음성)">
@@ -152,35 +149,33 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
         조금 더 이야기해 주세요
       </div>
 
-      {phase === 'submitting' ? (
+      {phase === 'submitting' && !submitError ? (
         <div className="memory-orb" aria-hidden="true">
           <span className="loading-core" />
         </div>
-      ) : (
+      ) : phase !== 'submitting' ? (
         <VoiceZone
           active={phase === 'listening'}
-          interactive={phase === 'listening'}
-          onToggle={rec.stop}
-          disabled={phase !== 'listening'}
+          interactive={false}
           title={questions[currentIndex]}
           subtitle={
             phase === 'speaking' ? '질문을 듣고 있어요...'
-            : phase === 'listening' ? '말씀해주세요. 끝나면 마이크를 눌러주세요.'
-            : '아래에서 계속하거나 다시 시도해주세요'
+            : phase === 'listening' ? '말씀해주세요. 끝나면 계속하기를 눌러주세요.'
+            : '아래에 답변을 입력해주세요'
           }
         />
-      )}
+      ) : null}
 
-      {(phase === 'listening' || phase === 'reviewing') && (
+      {(phase === 'listening' || phase === 'manual') && (
         <button type="button" className="ghost-link mx-auto block" onClick={replayQuestion}>
           다시 듣기
         </button>
       )}
 
-      {(phase === 'listening' || (phase === 'reviewing' && !rec.unsupported)) && (
+      {phase === 'listening' && (
         <div className="live-transcript" aria-live="polite">
-          {phase === 'listening' ? rec.finalText : pendingTranscript}
-          {phase === 'listening' && <span className="interim">{rec.interimText}</span>}
+          {rec.finalText}
+          <span className="interim">{rec.interimText}</span>
         </div>
       )}
 
@@ -194,31 +189,40 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
         </div>
       )}
 
-      {showManualInput && (
-        <>
-          <input
-            className="chat-answer-input"
-            type="text"
-            value={pendingTranscript}
-            onChange={(e) => setPendingTranscript(e.target.value)}
-            placeholder="답변을 입력하세요"
-            autoFocus
-          />
-          <button type="button" className="primary-wide-button mt-3" onClick={acceptTranscript} disabled={!pendingTranscript.trim()}>
-            다음으로
-          </button>
-        </>
+      {phase === 'manual' && (
+        <input
+          className="chat-answer-input"
+          type="text"
+          value={manualText}
+          onChange={(e) => setManualText(e.target.value)}
+          placeholder="답변을 입력하세요"
+          autoFocus
+        />
       )}
 
-      {phase === 'reviewing' && !rec.unsupported && (
+      {(phase === 'listening' || phase === 'manual') && (
         <div className="retry-popup-actions">
-          <button className="retry-close-button" type="button" onClick={retryRecording}>다시 시도하기</button>
-          <button className="retry-record-button" type="button" onClick={acceptTranscript}>계속하기</button>
+          {phase === 'listening' && (
+            <button className="retry-close-button" type="button" onClick={retryRecording}>다시 시도하기</button>
+          )}
+          <button
+            className="retry-record-button"
+            type="button"
+            onClick={continueToNext}
+            disabled={phase === 'manual' && !manualText.trim()}
+          >
+            계속하기
+          </button>
         </div>
       )}
 
       {rec.micError && <p className="notice error mt-3">{rec.micError}</p>}
-      {submitError && <p className="notice error">오류: {submitError}</p>}
+      {submitError && (
+        <>
+          <p className="notice error">오류: {submitError}</p>
+          <button type="button" className="primary-wide-button" onClick={finalize}>다시 시도</button>
+        </>
+      )}
     </section>
   )
 }

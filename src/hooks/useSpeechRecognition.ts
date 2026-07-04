@@ -15,6 +15,7 @@ export function useSpeechRecognition({ onEnd }: Options = {}) {
   const [seconds, setSeconds] = useState(0)
 
   const recognitionRef = useRef<any>(null)
+  const listeningRef = useRef(false)
   const transcriptRef = useRef('')
   const secondsRef = useRef(0)
   const barRefs = useRef<(HTMLSpanElement | null)[]>([])
@@ -112,7 +113,7 @@ export function useSpeechRecognition({ onEnd }: Options = {}) {
   }
 
   async function start() {
-    if (unsupported || listening) return
+    if (unsupported || listeningRef.current) return
     setMicError(null)
     setFinalText('')
     setInterimText('')
@@ -125,13 +126,20 @@ export function useSpeechRecognition({ onEnd }: Options = {}) {
       setMicError('마이크 권한이 필요합니다')
       return
     }
-    recognitionRef.current?.start()
+    try {
+      recognitionRef.current?.start()
+    } catch {
+      // native recognition may still be finishing a prior stop() — ignore, UI stays consistent via listeningRef
+      return
+    }
     startTimer()
+    listeningRef.current = true
     setListening(true)
   }
 
   function stop() {
-    if (!listening) return
+    if (!listeningRef.current) return
+    listeningRef.current = false
     setListening(false)
     setProcessing(true)
     stopMeter()
