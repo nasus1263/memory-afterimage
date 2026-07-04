@@ -8,6 +8,7 @@ import { VoiceInput } from './components/VoiceInput'
 import { Memories } from './components/Memories'
 import { NewSession } from './components/NewSession'
 import { Chat } from './components/Chat'
+import { VoiceChat } from './components/VoiceChat'
 import { saveMemory } from './services/memories'
 import { SECONDS_PER_IMAGE } from './services/composer'
 import { loadProgress, saveProgress, clearProgress, type SessionProgress } from './store/progress'
@@ -405,7 +406,11 @@ export default function App() {
         )}
 
         {path === '/chat' && (
-          <Chat userText={userText} keys={keys} config={config} onComplete={handleChatComplete} />
+          inputMode === 'text' ? (
+            <Chat userText={userText} keys={keys} config={config} onComplete={handleChatComplete} />
+          ) : (
+            <VoiceChat userText={userText} keys={keys} config={config} onComplete={handleChatComplete} />
+          )
         )}
 
         {path === '/input' && (

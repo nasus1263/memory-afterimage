@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ApiKeys, ModelConfig } from '../types'
-import { BASE_QUESTIONS } from '../config/questions'
-import { generateQuestions, generateQuestionsWithAnswers, summarizeChat } from '../services/llm'
+import { summarizeChat } from '../services/llm'
 import { isAutoAnswerMode } from '../services/debug'
+import { useQuestions } from '../hooks/useQuestions'
 
 interface Props {
   userText: string
@@ -14,41 +14,20 @@ interface Props {
 type Selection = number | 'custom' | null
 
 export function Chat({ userText, keys, config, onComplete }: Props) {
-  const [questions, setQuestions] = useState<string[] | null>(null)
-  const [choices, setChoices] = useState<string[][]>([])
+  const { questions, choices, initialAnswers, error: fetchError } = useQuestions(userText, config, keys)
   const [answers, setAnswers] = useState<string[]>([])
   const [selected, setSelected] = useState<Selection[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [error, setError] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const ran = useRef(false)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   useEffect(() => {
-    if (ran.current) return
-    ran.current = true
-
-    if (isAutoAnswerMode()) {
-      generateQuestionsWithAnswers(userText, BASE_QUESTIONS, config, keys)
-        .then(({ questions: qs, answers: ans }) => {
-          setQuestions(qs)
-          setChoices(qs.map(() => []))
-          setAnswers(ans)
-          setSelected(ans.map(() => 'custom'))
-        })
-        .catch((e) => setError(e?.message ?? String(e)))
-    } else {
-      generateQuestions(userText, BASE_QUESTIONS, config, keys)
-        .then(({ questions: qs, choices: chs }) => {
-          setQuestions(qs)
-          setChoices(chs)
-          setAnswers(new Array(qs.length).fill(''))
-          setSelected(new Array(qs.length).fill(null))
-        })
-        .catch((e) => setError(e?.message ?? String(e)))
-    }
+    if (!questions) return
+    setAnswers(initialAnswers)
+    setSelected(isAutoAnswerMode() ? initialAnswers.map(() => 'custom') : new Array(questions.length).fill(null))
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [questions])
 
   function handleAnswerChange(i: number, value: string) {
     setAnswers((prev) => { const next = [...prev]; next[i] = value; return next })
@@ -76,21 +55,21 @@ export function Chat({ userText, keys, config, onComplete }: Props) {
   async function handleComplete() {
     if (!questions || submitting) return
     setSubmitting(true)
-    setError(null)
+    setSubmitError(null)
     try {
       const qa = questions.map((question, i) => ({ question, answer: answers[i] ?? '' }))
       const summary = await summarizeChat(userText, qa, config, keys)
       onComplete(summary)
     } catch (e: any) {
-      setError(e?.message ?? String(e))
+      setSubmitError(e?.message ?? String(e))
       setSubmitting(false)
     }
   }
 
-  if (error && !questions) {
+  if (fetchError && !questions) {
     return (
       <section className="input-card" aria-label="추가 질문">
-        <p className="notice error">오류: {error}</p>
+        <p className="notice error">오류: {fetchError}</p>
       </section>
     )
   }
@@ -158,7 +137,7 @@ export function Chat({ userText, keys, config, onComplete }: Props) {
         ))}
       </div>
 
-      {error && <p className="notice error">오류: {error}</p>}
+      {submitError && <p className="notice error">오류: {submitError}</p>}
 
       <button type="button" className="primary-wide-button" onClick={handleComplete} disabled={submitting}>
         {submitting ? '정리하는 중...' : '완료'}

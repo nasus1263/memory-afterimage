@@ -1046,6 +1046,11 @@ main {
   font-style: italic;
 }
 
+.voice-choice-row {
+  justify-content: center;
+  margin-top: 22px;
+}
+
 /* ── listening / loading / result step screens ──────────── */
 
 .step-label {
