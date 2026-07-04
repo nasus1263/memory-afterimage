@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ApiKeys, ModelConfig } from '../types'
 import { summarizeChat } from '../services/llm'
+import { isAutoAnswerMode } from '../services/debug'
 import { useQuestions } from '../hooks/useQuestions'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
 import { VoiceZone } from './VoiceZone'
@@ -62,7 +63,8 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
     if (!questions || startedRef.current) return
     startedRef.current = true
     answersRef.current = [...initialAnswers]
-    askQuestion(0)
+    if (isAutoAnswerMode()) finalize()
+    else askQuestion(0)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questions])
 
@@ -127,7 +129,7 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
     )
   }
 
-  if (!questions) {
+  if (!questions || (isAutoAnswerMode() && phase !== 'submitting')) {
     return (
       <section className="input-card" aria-label="추가 질문 준비 중" aria-live="polite">
         <div className="memory-orb" aria-hidden="true">
