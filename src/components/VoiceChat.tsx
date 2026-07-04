@@ -88,6 +88,24 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
     rec.start()
   }
 
+  function replayQuestion() {
+    if (!questions) return
+    const resumePhase = phase
+    if (resumePhase === 'listening' && rec.listening) {
+      suppressRecEndRef.current = true
+      rec.stop()
+    }
+    setPhase('speaking')
+    speak(questions[currentIndex], () => {
+      if (resumePhase === 'listening' && !rec.unsupported) {
+        setPhase('listening')
+        rec.start()
+      } else {
+        setPhase(resumePhase)
+      }
+    })
+  }
+
   async function finalize() {
     if (!questions) return
     setPhase('submitting')
@@ -149,6 +167,12 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
             : '아래에서 계속하거나 다시 시도해주세요'
           }
         />
+      )}
+
+      {(phase === 'listening' || phase === 'reviewing') && (
+        <button type="button" className="ghost-link mx-auto block" onClick={replayQuestion}>
+          다시 듣기
+        </button>
       )}
 
       {(phase === 'listening' || (phase === 'reviewing' && !rec.unsupported)) && (
