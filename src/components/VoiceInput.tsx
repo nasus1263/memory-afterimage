@@ -22,8 +22,6 @@ export function VoiceInput({ onComplete, onListeningChange }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
-  useEffect(() => () => { window.speechSynthesis?.cancel() }, [])
-
   function speak(text: string, onEnd: () => void) {
     if (!('speechSynthesis' in window)) { onEnd(); return }
     window.speechSynthesis.cancel()

@@ -30,8 +30,6 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
 
   const rec = useSpeechRecognition()
 
-  useEffect(() => () => { window.speechSynthesis?.cancel() }, [])
-
   function stripEmoji(text: string): string {
     return text.replace(EMOJI_RE, '').replace(/\s+/g, ' ').trim()
   }
