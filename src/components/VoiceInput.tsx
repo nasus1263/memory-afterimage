@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
 import { VoiceZone } from './VoiceZone'
 
@@ -7,78 +7,102 @@ interface Props {
   onListeningChange?: (listening: boolean) => void
 }
 
-const BAR_COUNT = 56
+type Phase = 'speaking' | 'listening'
 
-function fmt(s: number) {
-  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
-}
+const PROMPT_TEXT = '기억하고 싶은 여행의 순간을 들려주세요'
 
 export function VoiceInput({ onComplete, onListeningChange }: Props) {
-  const [showRetry, setShowRetry] = useState(false)
+  const [phase, setPhase] = useState<Phase>('speaking')
+  const startedRef = useRef(false)
 
-  const rec = useSpeechRecognition({
-    onEnd: (text, tooShort) => {
-      if (tooShort) { setShowRetry(true); return }
-      onComplete(text)
-    },
-  })
+  const rec = useSpeechRecognition()
 
   useEffect(() => {
-    onListeningChange?.(rec.listening)
+    onListeningChange?.(phase === 'listening')
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rec.listening])
+  }, [phase])
 
-  function handleToggle() {
-    if (rec.listening) rec.stop()
-    else rec.start()
+  useEffect(() => () => { window.speechSynthesis?.cancel() }, [])
+
+  function speak(text: string, onEnd: () => void) {
+    if (!('speechSynthesis' in window)) { onEnd(); return }
+    window.speechSynthesis.cancel()
+    const utter = new SpeechSynthesisUtterance(text)
+    utter.lang = 'ko-KR'
+    utter.onend = onEnd
+    utter.onerror = onEnd
+    window.speechSynthesis.speak(utter)
   }
 
-  function closeRetry() {
-    setShowRetry(false)
+  function startFlow() {
+    setPhase('speaking')
+    speak(PROMPT_TEXT, () => {
+      if (rec.unsupported) return
+      setPhase('listening')
+      rec.start()
+    })
   }
 
-  if (rec.listening) {
-    return (
-      <div className="listening-screen" aria-live="polite">
-        <p className="step-label">02 LISTENING</p>
-        <h2>듣고 있어요...</h2>
-        <p className="listening-desc">여행의 한 장면을 자유롭게 들려주세요.</p>
+  useEffect(() => {
+    if (startedRef.current) return
+    startedRef.current = true
+    startFlow()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-        <div className={`wave-wrap ${rec.metered ? 'live' : ''}`} aria-hidden="true">
-          {Array.from({ length: BAR_COUNT }).map((_, i) => (
-            <span
-              key={i}
-              ref={(el) => { rec.barRefs.current[i] = el }}
-              className="bar"
-              style={{ height: `${14 + Math.abs(Math.sin(i * 0.45)) * 50 + (i % 7) * 4}px` }}
-            />
-          ))}
-        </div>
+  function continueToNext() {
+    const text = rec.finalText.trim()
+    rec.stop()
+    onComplete(text)
+  }
 
-        <div className="live-transcript" aria-live="polite">
-          {rec.finalText}
-          <span className="interim">{rec.interimText}</span>
-        </div>
-        <p className="timer">{fmt(rec.seconds)}</p>
+  function retryRecording() {
+    rec.stop()
+    rec.start()
+  }
 
-        <button className="stop-button" aria-label="녹음 종료" onClick={handleToggle}>
-          <span className="stop-square" />
-        </button>
-        <p className="record-help">말씀이 끝나면 정지 버튼을 눌러주세요.</p>
-      </div>
-    )
+  function replayPrompt() {
+    if (phase === 'listening') rec.stop()
+    startFlow()
   }
 
   return (
     <>
       <VoiceZone
-        active={false}
-        interactive={!rec.unsupported && !rec.processing}
-        onToggle={handleToggle}
-        disabled={rec.unsupported || rec.processing}
-        title="음성으로 기억 말하기"
-        subtitle={rec.processing ? <span className="text-gold">처리 중...</span> : '눌러서 오늘의 순간을 들려주세요'}
+        active={phase === 'listening'}
+        interactive={false}
+        title={PROMPT_TEXT}
+        subtitle={
+          phase === 'speaking' ? '질문을 듣고 있어요...' : '말씀해주세요. 끝나면 계속하기를 눌러주세요.'
+        }
       />
+
+      {!rec.unsupported && (
+        <button type="button" className="ghost-link mx-auto block" onClick={replayPrompt}>
+          다시 듣기
+        </button>
+      )}
+
+      {phase === 'listening' && (
+        <div className="live-transcript" aria-live="polite">
+          {rec.finalText}
+          <span className="interim">{rec.interimText}</span>
+        </div>
+      )}
+
+      {phase === 'listening' && (
+        <div className="retry-popup-actions">
+          <button className="retry-close-button" type="button" onClick={retryRecording}>다시 시도하기</button>
+          <button
+            className="retry-record-button"
+            type="button"
+            onClick={continueToNext}
+            disabled={!rec.finalText.trim()}
+          >
+            계속하기
+          </button>
+        </div>
+      )}
 
       {rec.unsupported && (
         <p className="notice error mt-3">
@@ -86,29 +110,6 @@ export function VoiceInput({ onComplete, onListeningChange }: Props) {
         </p>
       )}
       {rec.micError && <p className="notice error mt-3">{rec.micError}</p>}
-
-      {showRetry && (
-        <div className="retry-popup" role="dialog" aria-modal="true" aria-labelledby="retryPopupTitle">
-          <div className="retry-popup-card">
-            <div className="retry-popup-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 14a4 4 0 0 0 4-4V6a4 4 0 0 0-8 0v4a4 4 0 0 0 4 4Z" />
-                <path d="M19 10a7 7 0 0 1-14 0" />
-                <path d="M12 17v4" />
-                <path d="M8 21h8" />
-              </svg>
-            </div>
-            <h3 id="retryPopupTitle">음성 인식이 잘 되지 않았어요</h3>
-            <p>주변 소음을 줄이고, 마이크 가까이에서 다시 말해보세요.</p>
-            <div className="retry-popup-actions">
-              <button className="retry-close-button" type="button" onClick={closeRetry}>닫기</button>
-              <button className="retry-record-button" type="button" onClick={() => { closeRetry(); rec.start() }}>
-                다시 시도하기
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   )
 }
