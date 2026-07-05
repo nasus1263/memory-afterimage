@@ -35,9 +35,10 @@ interface Props {
   status: StageStatus
   message?: string
   durationMs?: number
+  subitems?: string[]
 }
 
-export function StageCard({ stage, status, message, durationMs }: Props) {
+export function StageCard({ stage, status, message, durationMs, subitems }: Props) {
   return (
     <div className={`flex items-center gap-3 py-2.5 px-3.5 rounded-2xl border bg-surface text-sm transition-colors ${STATUS_STYLE[status]}`}>
       <span className={`text-base w-5 text-center shrink-0 ${status === 'running' ? 'inline-block animate-spin' : ''}`}>
@@ -46,6 +47,15 @@ export function StageCard({ stage, status, message, durationMs }: Props) {
       <div className="flex flex-col gap-0.5 flex-1">
         <span className="text-sm">{LABEL[stage] ?? stage}</span>
         {message && <span className="text-[11px] text-text-dim opacity-85">{message}</span>}
+        {subitems && subitems.length > 0 && (
+          <div className="flex flex-col gap-0.5 mt-1">
+            {subitems.map((item, i) => (
+              <span key={i} className="text-[11px] text-text-dim opacity-85">
+                {i + 1}번 이미지: {item}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
       {durationMs != null && <span className="text-[11px] text-text-dim whitespace-nowrap ml-auto">{formatDuration(durationMs)}</span>}
     </div>

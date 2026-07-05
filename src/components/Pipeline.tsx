@@ -113,7 +113,7 @@ export function Pipeline({
             setMsg('tts', `오디오 수신 완료 (${r.duration.toFixed(1)}s)`)
             return r
           }).finally(() => markDone('tts'))
-        set(setState, { ...stageStatus({ tts: 'done' }), ttsBlob: ttsData.blob, ttsDuration: ttsData.duration })
+        set(setState, { ...stageStatus({ tts: 'done' }), ttsBlob: ttsData.blob, ttsDuration: ttsData.duration, ttsAlignment: ttsData.alignment })
 
         // ── 3. 이미지 N장 생성 (사용자 입력 이미지가 있으면 부족분만 생성) ──
         currentStage = 'image'
@@ -126,10 +126,16 @@ export function Pipeline({
           setMsg('image', `사용자 입력 이미지 사용 (${userImages.length}장)`)
           imageBlobs = userImages
         } else {
-          setMsg('image', '장면 프롬프트 구성 중...')
+          setMsg('image', `이미지 ${aiCount}장 병렬 생성 중...`)
           const imagePrompts = await generateImagePrompts(llmResult.imagePrompt, aiCount, config, keys)
-          setMsg('image', `이미지 생성 준비 중... (0/${aiCount})`)
-          const generatedBlobs = await generateImages(imagePrompts, config, keys, (msg) => setMsg('image', msg))
+          set(setState, { imageMessages: new Array(aiCount).fill('대기 중...') })
+          const generatedBlobs = await generateImages(imagePrompts, config, keys, (i, msg) => {
+            setState((prev) => {
+              const next = [...(prev.imageMessages ?? [])]
+              next[i] = msg
+              return { ...prev, imageMessages: next }
+            })
+          })
           imageBlobs = interleaveImages(userImages, generatedBlobs)
         }
         markDone('image')
@@ -150,7 +156,8 @@ export function Pipeline({
           onProgress,
           (msg) => setMsg('compose', msg),
           showCaptions ? { text: llmResult.refinedText, bgColor: captionBgColor, textColor: captionTextColor } : null,
-          aspectRatio
+          aspectRatio,
+          ttsData.alignment
         )
         setMsg('compose', '완료')
         set(setState, { ...stageStatus({ compose: 'done' }), finalBlob })
@@ -173,7 +180,14 @@ export function Pipeline({
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1.5">
         {STAGES.map((s) => (
-          <StageCard key={s} stage={s} status={state[s]} message={state.messages[s]} durationMs={state.durations[s]} />
+          <StageCard
+            key={s}
+            stage={s}
+            status={state[s]}
+            message={state.messages[s]}
+            durationMs={state.durations[s]}
+            subitems={s === 'image' ? state.imageMessages : undefined}
+          />
         ))}
       </div>
       {state.compose === 'running' && composeProgress > 0 && (

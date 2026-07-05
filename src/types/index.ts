@@ -35,6 +35,12 @@ export interface ModelConfig {
   audio: { provider: AudioProvider }
 }
 
+export interface TTSAlignment {
+  characters: string[]
+  characterStartTimesSeconds: number[]
+  characterEndTimesSeconds: number[]
+}
+
 export interface LLMResult {
   refinedText: string
   imagePrompt: string
@@ -67,9 +73,11 @@ export interface PipelineState {
   compose: StageStatus
   messages: StageMessages
   durations: StageDurations
+  imageMessages?: string[]
   error?: string
   ttsBlob?: Blob
   ttsDuration?: number
+  ttsAlignment?: TTSAlignment
   imageBlobs?: Blob[]
   ambientBlob?: Blob
   finalBlob?: Blob
