@@ -51,10 +51,8 @@ export const TTS_VOICES: Record<string, string[]> = {
   // ElevenLabs voice IDs — elevenslabs.io/voice-library 에서 추가 가능
   elevenlabs: [
     'JBFqnCBsd6RMkjVDRZzb',  // George
-    '21m00Tcm4TlvDq8ikWAM',  // Rachel
     'pNInz6obpgDQGcFmaJgB',  // Adam
     'EXAVITQu4vr4xnSDxMaL',  // Bella
-    'yoZ06aMxZJJ28mfd3POQ',  // Sam
   ],
 }
 
@@ -89,7 +87,7 @@ export const IMAGE_MODELS = {
 // Default: 무료 경로만 사용
 export const DEFAULT_CONFIG = {
   llm: { provider: 'google' as const, model: 'gemini-2.5-flash-lite' },
-  tts: { provider: 'elevenlabs' as const, model: 'eleven_multilingual_v2', voice: 'pNInz6obpgDQGcFmaJgB' },
+  tts: { provider: 'elevenlabs' as const, model: 'eleven_multilingual_v2', voice: 'EXAVITQu4vr4xnSDxMaL' },
   image: { provider: 'nvidia' as const, model: 'black-forest-labs/flux.1-dev' },
   audio: { provider: 'freesound' as const },
 }
