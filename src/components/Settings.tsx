@@ -19,8 +19,8 @@ const selectCls = 'bg-surface2 border border-border text-text py-1.5 px-2.5 roun
 const groupLabelCls = 'block text-xs text-text-dim mb-1'
 
 function KeyInput({
-  label, value, onChange, hint,
-}: { label: string; value: string; onChange: (v: string) => void; hint?: string }) {
+  label, value, onChange, hint, placeholder = 'sk-...', secret = true,
+}: { label: string; value: string; onChange: (v: string) => void; hint?: string; placeholder?: string; secret?: boolean }) {
   const [show, setShow] = useState(false)
   return (
     <div className="mb-2.5">
@@ -28,17 +28,19 @@ function KeyInput({
       <div className="flex gap-1.5">
         <input
           className="flex-1 bg-surface2 border border-border text-text py-1.5 px-2.5 rounded text-sm font-mono focus:outline-none focus:border-gold-dim"
-          type={show ? 'text' : 'password'}
+          type={secret && !show ? 'password' : 'text'}
           value={value}
-          placeholder="sk-..."
+          placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
         />
-        <button
-          className="bg-transparent border border-border text-text-dim py-1.5 px-2.5 rounded text-xs whitespace-nowrap cursor-pointer"
-          onClick={() => setShow((s) => !s)}
-        >
-          {show ? '숨김' : '표시'}
-        </button>
+        {secret && (
+          <button
+            className="bg-transparent border border-border text-text-dim py-1.5 px-2.5 rounded text-xs whitespace-nowrap cursor-pointer"
+            onClick={() => setShow((s) => !s)}
+          >
+            {show ? '숨김' : '표시'}
+          </button>
+        )}
       </div>
       {hint && <span className="block text-[11px] text-text-dim mt-0.5">{hint}</span>}
     </div>
@@ -117,6 +119,14 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
         <KeyInput label="HuggingFace" value={keys.huggingface} onChange={(v) => onKeys({ ...keys, huggingface: v })} hint="✓ 무료 Serverless Inference API (계정 없이도 가능)" />
         <KeyInput label="Freesound" value={keys.freesound} onChange={(v) => onKeys({ ...keys, freesound: v })} hint="✓ 무료 — freesound.org 계정 후 /apiv2/apply 에서 키 발급" />
         <KeyInput label="Jamendo" value={keys.jamendo} onChange={(v) => onKeys({ ...keys, jamendo: v })} hint="✓ 무료 — developers.jamendo.com 에서 client_id 발급" />
+        <KeyInput
+          label="REST API 이미지 서버 주소"
+          value={keys.restapi}
+          onChange={(v) => onKeys({ ...keys, restapi: v })}
+          placeholder="http://localhost:8000"
+          secret={false}
+          hint="자체 호스팅 ComfyUI REST API 서버 주소 (이미지 생성 제공자에서 'restapi' 선택 시 사용)"
+        />
       </section>
 
       <section>

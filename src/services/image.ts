@@ -141,6 +141,25 @@ async function imageNvidia(prompt: string, _model: string, key: string, onProgre
   return new Blob([bytes], { type: 'image/png' })
 }
 
+async function imageRestApi(prompt: string, baseUrl: string, onProgress?: (msg: string) => void): Promise<Blob> {
+  if (!baseUrl) throw new Error('REST API 서버 주소가 설정되지 않았습니다')
+  onProgress?.('REST API 이미지 생성 요청...')
+  const res = await fetch(`${baseUrl.replace(/\/$/, '')}/generate`, {
+    method: 'POST',
+    signal: AbortSignal.timeout(130_000),
+    headers: { 'Content-Type': 'application/json', 'X-API-Key': 'changeme' },
+    body: JSON.stringify({ prompt }),
+  })
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('REST API 이미지 서버 인증 실패 (X-API-Key 불일치)')
+    if (res.status === 502) throw new Error('REST API 이미지 서버가 요청을 거부했습니다 (ComfyUI 오류)')
+    if (res.status === 504) throw new Error('REST API 이미지 생성 시간 초과 (120초)')
+    throw new Error(`REST API Image error: ${res.status}`)
+  }
+  onProgress?.('이미지 수신 중...')
+  return res.blob()
+}
+
 export async function generateImage(
   prompt: string,
   config: ModelConfig,
@@ -154,6 +173,7 @@ export async function generateImage(
   if (provider === 'huggingface') return imageHuggingFace(prompt, model, keys.huggingface, onProgress)
   if (provider === 'fal') return imageFal(prompt, model, keys.fal, onProgress)
   if (provider === 'nvidia') return imageNvidia(prompt, model, keys.nvidia, onProgress)
+  if (provider === 'restapi') return imageRestApi(prompt, keys.restapi, onProgress)
   throw new Error(`Unknown image provider: ${provider}`)
 }
 

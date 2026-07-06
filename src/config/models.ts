@@ -82,6 +82,10 @@ export const IMAGE_MODELS = {
     { id: 'black-forest-labs/flux.1-dev', label: 'FLUX.1 Dev ✓무료크레딧·고품질' },
     { id: 'qwen/qwen-image', label: 'Qwen Image 20B ✓무료크레딧·텍스트렌더링강점' },
   ],
+  // 자체 호스팅 ComfyUI REST API 래퍼 — 모델 선택 없음, 서버 주소만 필요
+  restapi: [
+    { id: 'default', label: 'ComfyUI REST API (자체 호스팅)' },
+  ],
 }
 
 // Default: 무료 경로만 사용

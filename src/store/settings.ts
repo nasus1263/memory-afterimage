@@ -8,6 +8,7 @@ const DEFAULT_KEYS: ApiKeys = {
   openai: '', anthropic: '', google: '', nvidia: '', elevenlabs: '',
   fal: '', huggingface: '',
   freesound: '', jamendo: '',
+  restapi: '',
 }
 
 export function loadKeys(): ApiKeys {

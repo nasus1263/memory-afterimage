@@ -13,7 +13,7 @@ export interface ChatQA {
 
 export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'nvidia'
 export type TTSProvider = 'local-kokoro' | 'openai' | 'google' | 'elevenlabs'
-export type ImageProvider = 'openai' | 'google' | 'huggingface' | 'fal' | 'nvidia'
+export type ImageProvider = 'openai' | 'google' | 'huggingface' | 'fal' | 'nvidia' | 'restapi'
 export type AudioProvider = 'freesound' | 'jamendo'
 
 export interface ApiKeys {
@@ -26,6 +26,7 @@ export interface ApiKeys {
   huggingface: string
   freesound: string
   jamendo: string
+  restapi: string
 }
 
 export interface ModelConfig {
