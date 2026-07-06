@@ -4,7 +4,7 @@ import { OPENAI_BASE, ANTHROPIC_BASE, GOOGLE_BASE, NVIDIA_LLM_BASE } from '../co
 const SYSTEM_PROMPT = `You are a creative AI for an immersive memory art installation.
 The user will describe a travel memory. You must output JSON with exactly these fields:
 {
-  "refinedText": "Korean narration text (natural, emotional, 1st person, ≤700 chars)",
+  "refinedText": "Korean narration text (natural, emotional, 1st person, 500-800 chars)",
   "imagePrompt": "English image generation prompt (cinematic, painterly, detailed, evocative — describe the scene as idealized memory, 100-150 words)",
   "audioKeyword": "waves" // exactly 1 single English ambient sound word, no phrases (e.g. "waves", "rain", "cicadas")
 }
