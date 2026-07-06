@@ -590,6 +590,7 @@ main {
 /* ── input card (기억 입력하기) ──────────────────────────── */
 
 .input-card {
+  position: relative;
   margin-top: 38px;
   padding: 38px 35px 27px;
   border-radius: var(--radius-xl);
@@ -598,6 +599,28 @@ main {
     radial-gradient(circle at 48% 32%, rgba(184, 138, 93, 0.045), transparent 32%);
   border: 1px solid rgba(98, 83, 69, 0.12);
   box-shadow: var(--shadow-paper);
+}
+
+.input-card-settings-button {
+  position: absolute;
+  top: 22px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(91, 76, 62, 0.2);
+  background: rgba(255, 255, 255, 0.64);
+  color: var(--color-text-dim);
+  cursor: pointer;
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+
+.input-card-settings-button:hover {
+  border-color: var(--color-gold-dim);
+  color: var(--color-gold-dim);
 }
 
 .input-title {
