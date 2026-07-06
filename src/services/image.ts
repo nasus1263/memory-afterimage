@@ -143,8 +143,9 @@ async function imageNvidia(prompt: string, _model: string, key: string, onProgre
 
 async function imageRestApi(prompt: string, baseUrl: string, onProgress?: (msg: string) => void): Promise<Blob> {
   if (!baseUrl) throw new Error('REST API 서버 주소가 설정되지 않았습니다')
+  const normalizedBase = /^https?:\/\//i.test(baseUrl) ? baseUrl : `http://${baseUrl}`
   onProgress?.('REST API 이미지 생성 요청...')
-  const res = await fetch(`${baseUrl.replace(/\/$/, '')}/generate`, {
+  const res = await fetch(`${normalizedBase.replace(/\/$/, '')}/generate`, {
     method: 'POST',
     signal: AbortSignal.timeout(130_000),
     headers: { 'Content-Type': 'application/json', 'X-API-Key': 'changeme' },
