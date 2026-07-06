@@ -194,7 +194,7 @@ export default function App() {
     setShowPreview(false)
     setPipelineState(IDLE_PIPELINE)
     setComposeProgress(0)
-    navigate('/new')
+    navigate('/input')
   }
 
   function handleMemoryNavClick() {
@@ -269,7 +269,7 @@ export default function App() {
           <p>기억하고 싶은 여행의 순간을 음성으로 들려주세요. AI가 당신의 감정을 담아 하나의 장면으로 그려드립니다.</p>
         </section>
 
-        {['/input', '/chat', '/process'].includes(path) && !(path === '/process' && finalUrl) && (
+        {['/chat', '/process'].includes(path) && !(path === '/process' && finalUrl) && (
           <button type="button" className="restart-button" onClick={handleReset}>
             처음부터 진행하기
           </button>
