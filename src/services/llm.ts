@@ -191,8 +191,10 @@ export async function generateImagePrompts(
       keys
     )
     const { prompts } = extractJSON<{ prompts: string[] }>(raw)
-    if (!Array.isArray(prompts) || prompts.length !== count) throw new Error(`Expected ${count} image prompts, got ${prompts?.length}`)
-    return prompts
+    // LLM이 종종 요청한 개수보다 1~2개 더 반환한다(특히 소형 모델). 초과분은 잘라내고,
+    // 부족할 때만 에러를 던져 재시도를 유발한다.
+    if (!Array.isArray(prompts) || prompts.length < count) throw new Error(`Expected ${count} image prompts, got ${prompts?.length}`)
+    return prompts.slice(0, count)
   })
 }
 

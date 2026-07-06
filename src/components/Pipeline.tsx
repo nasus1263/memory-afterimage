@@ -3,6 +3,7 @@ import type { ApiKeys, AspectRatio, ModelConfig, PipelineState, StageStatus } fr
 import { refineMemo, generateImagePrompts } from '../services/llm'
 import { generateTTS } from '../services/tts'
 import { generateImages } from '../services/image'
+import { isDummyImageMode } from '../services/debug'
 import { fetchAmbientAudioWithRetry } from '../services/audio'
 import { composeVideo, computeImageCount } from '../services/composer'
 import { StageCard } from './StageCard'
@@ -135,7 +136,11 @@ export function Pipeline({
           imageBlobs = userImages
         } else {
           setMsg('image', `이미지 ${aiCount}장 병렬 생성 중...`)
-          const imagePrompts = await generateImagePrompts(llmResult.imagePrompt, aiCount, config, keys)
+          // 더미 이미지 모드에서는 실제 생성이 sample 이미지로 대체되므로 프롬프트 내용이 무의미하다.
+          // LLM 프롬프트 생성(비용·지연·개수 검증 실패 위험)을 건너뛰고 basePrompt로 채운다.
+          const imagePrompts = isDummyImageMode()
+            ? new Array(aiCount).fill(llmResult.imagePrompt)
+            : await generateImagePrompts(llmResult.imagePrompt, aiCount, config, keys)
           set(setState, { imageMessages: new Array(aiCount).fill('대기 중...') })
           const generatedBlobs = await generateImages(imagePrompts, config, keys, (i, msg) => {
             setState((prev) => {
