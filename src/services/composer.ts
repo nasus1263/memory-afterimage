@@ -40,9 +40,11 @@ function makeEffectPicker(): () => Effect {
   }
 }
 
-// t: 클립 내 진행률 0→1 (on = zoompan 출력 프레임 번호)
+// t: 클립 내 진행률 0→1, smoothstep(3t²-2t³)으로 완만하게 가감속 처리.
+// on/(frames-1) 그대로 쓰면 등속 선형이라 확대·이동이 기계적으로 보임 (AA/스케일 필터 문제 아님).
 function zoompanFilter(effect: Effect, frames: number): string {
-  const t = `(on/${Math.max(frames - 1, 1)})`
+  const tLin = `(on/${Math.max(frames - 1, 1)})`
+  const t = `(${tLin}*${tLin}*(3-2*${tLin}))`
   const cx = 'iw/2-(iw/zoom/2)'
   const cy = 'ih/2-(ih/zoom/2)'
   switch (effect) {
