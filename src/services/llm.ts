@@ -137,13 +137,31 @@ async function callProvider(
   throw new Error(`Unknown LLM provider: ${provider}`)
 }
 
+const JSON_RETRIES = 3
+
+// 추론 모델에 JSON 요청 시 파싱 실패·형식 불일치(길이 검증 등)로 던지는 에러를 최대 3회까지 재시도.
+async function withRetry<T>(fn: () => Promise<T>, retries = JSON_RETRIES): Promise<T> {
+  let lastErr: unknown
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await fn()
+    } catch (e) {
+      lastErr = e
+      console.warn(`[llm] JSON 요청 실패, 재시도 ${attempt}/${retries}`, e)
+    }
+  }
+  throw lastErr
+}
+
 export async function refineMemo(
   userText: string,
   config: ModelConfig,
   keys: ApiKeys
 ): Promise<LLMResult> {
-  const raw = await callProvider(SYSTEM_PROMPT, userText, config, keys)
-  return extractJSON<LLMResult>(raw)
+  return withRetry(async () => {
+    const raw = await callProvider(SYSTEM_PROMPT, userText, config, keys)
+    return extractJSON<LLMResult>(raw)
+  })
 }
 
 export async function refineAudioKeyword(
@@ -151,9 +169,11 @@ export async function refineAudioKeyword(
   config: ModelConfig,
   keys: ApiKeys
 ): Promise<string> {
-  const raw = await callProvider(KEYWORD_SYSTEM_PROMPT, userText, config, keys)
-  const { audioKeyword } = extractJSON<{ audioKeyword: string }>(raw)
-  return audioKeyword
+  return withRetry(async () => {
+    const raw = await callProvider(KEYWORD_SYSTEM_PROMPT, userText, config, keys)
+    const { audioKeyword } = extractJSON<{ audioKeyword: string }>(raw)
+    return audioKeyword
+  })
 }
 
 export async function generateImagePrompts(
@@ -163,15 +183,17 @@ export async function generateImagePrompts(
   keys: ApiKeys
 ): Promise<string[]> {
   if (count <= 1) return [basePrompt]
-  const raw = await callProvider(
-    IMAGE_VARIANTS_SYSTEM_PROMPT,
-    `Base prompt: ${basePrompt}\nN = ${count}`,
-    config,
-    keys
-  )
-  const { prompts } = extractJSON<{ prompts: string[] }>(raw)
-  if (!Array.isArray(prompts) || prompts.length !== count) throw new Error(`Expected ${count} image prompts, got ${prompts?.length}`)
-  return prompts
+  return withRetry(async () => {
+    const raw = await callProvider(
+      IMAGE_VARIANTS_SYSTEM_PROMPT,
+      `Base prompt: ${basePrompt}\nN = ${count}`,
+      config,
+      keys
+    )
+    const { prompts } = extractJSON<{ prompts: string[] }>(raw)
+    if (!Array.isArray(prompts) || prompts.length !== count) throw new Error(`Expected ${count} image prompts, got ${prompts?.length}`)
+    return prompts
+  })
 }
 
 export async function generateQuestions(
@@ -180,20 +202,22 @@ export async function generateQuestions(
   config: ModelConfig,
   keys: ApiKeys
 ): Promise<{ questions: string[]; choices: string[][] }> {
-  const raw = await callProvider(
-    QUESTIONS_SYSTEM_PROMPT,
-    `Base questions:\n${baseQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\nUser's memory:\n${userText}`,
-    config,
-    keys
-  )
-  const { questions, choices } = extractJSON<{ questions: string[]; choices: string[][] }>(raw)
-  if (!Array.isArray(questions) || questions.length !== baseQuestions.length) {
-    throw new Error(`Expected ${baseQuestions.length} questions, got ${questions?.length}`)
-  }
-  if (!Array.isArray(choices) || choices.length !== baseQuestions.length || choices.some((c) => !Array.isArray(c) || c.length !== 4)) {
-    throw new Error(`Expected ${baseQuestions.length} choice groups of 4, got ${JSON.stringify(choices)}`)
-  }
-  return { questions, choices }
+  return withRetry(async () => {
+    const raw = await callProvider(
+      QUESTIONS_SYSTEM_PROMPT,
+      `Base questions:\n${baseQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\nUser's memory:\n${userText}`,
+      config,
+      keys
+    )
+    const { questions, choices } = extractJSON<{ questions: string[]; choices: string[][] }>(raw)
+    if (!Array.isArray(questions) || questions.length !== baseQuestions.length) {
+      throw new Error(`Expected ${baseQuestions.length} questions, got ${questions?.length}`)
+    }
+    if (!Array.isArray(choices) || choices.length !== baseQuestions.length || choices.some((c) => !Array.isArray(c) || c.length !== 4)) {
+      throw new Error(`Expected ${baseQuestions.length} choice groups of 4, got ${JSON.stringify(choices)}`)
+    }
+    return { questions, choices }
+  })
 }
 
 export async function generateQuestionsWithAnswers(
@@ -202,20 +226,22 @@ export async function generateQuestionsWithAnswers(
   config: ModelConfig,
   keys: ApiKeys
 ): Promise<{ questions: string[]; answers: string[] }> {
-  const raw = await callProvider(
-    QUESTIONS_WITH_ANSWERS_SYSTEM_PROMPT,
-    `Base questions:\n${baseQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\nUser's memory:\n${userText}`,
-    config,
-    keys
-  )
-  const { questions, answers } = extractJSON<{ questions: string[]; answers: string[] }>(raw)
-  if (!Array.isArray(questions) || questions.length !== baseQuestions.length) {
-    throw new Error(`Expected ${baseQuestions.length} questions, got ${questions?.length}`)
-  }
-  if (!Array.isArray(answers) || answers.length !== baseQuestions.length) {
-    throw new Error(`Expected ${baseQuestions.length} answers, got ${answers?.length}`)
-  }
-  return { questions, answers }
+  return withRetry(async () => {
+    const raw = await callProvider(
+      QUESTIONS_WITH_ANSWERS_SYSTEM_PROMPT,
+      `Base questions:\n${baseQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\nUser's memory:\n${userText}`,
+      config,
+      keys
+    )
+    const { questions, answers } = extractJSON<{ questions: string[]; answers: string[] }>(raw)
+    if (!Array.isArray(questions) || questions.length !== baseQuestions.length) {
+      throw new Error(`Expected ${baseQuestions.length} questions, got ${questions?.length}`)
+    }
+    if (!Array.isArray(answers) || answers.length !== baseQuestions.length) {
+      throw new Error(`Expected ${baseQuestions.length} answers, got ${answers?.length}`)
+    }
+    return { questions, answers }
+  })
 }
 
 export async function generateSingleAnswer(
@@ -224,14 +250,16 @@ export async function generateSingleAnswer(
   config: ModelConfig,
   keys: ApiKeys
 ): Promise<string> {
-  const raw = await callProvider(
-    SINGLE_ANSWER_SYSTEM_PROMPT,
-    `User's memory:\n${userText}\n\nQuestion:\n${question}`,
-    config,
-    keys
-  )
-  const { answer } = extractJSON<{ answer: string }>(raw)
-  return answer
+  return withRetry(async () => {
+    const raw = await callProvider(
+      SINGLE_ANSWER_SYSTEM_PROMPT,
+      `User's memory:\n${userText}\n\nQuestion:\n${question}`,
+      config,
+      keys
+    )
+    const { answer } = extractJSON<{ answer: string }>(raw)
+    return answer
+  })
 }
 
 export async function summarizeChat(
@@ -244,12 +272,14 @@ export async function summarizeChat(
     .filter((x) => x.answer.trim())
     .map((x) => `Q: ${x.question}\nA: ${x.answer}`)
     .join('\n\n')
-  const raw = await callProvider(
-    CHAT_SUMMARY_SYSTEM_PROMPT,
-    `Initial memory:\n${userText}\n\n${qaText}`,
-    config,
-    keys
-  )
-  const { summary } = extractJSON<{ summary: string }>(raw)
-  return summary
+  return withRetry(async () => {
+    const raw = await callProvider(
+      CHAT_SUMMARY_SYSTEM_PROMPT,
+      `Initial memory:\n${userText}\n\n${qaText}`,
+      config,
+      keys
+    )
+    const { summary } = extractJSON<{ summary: string }>(raw)
+    return summary
+  })
 }

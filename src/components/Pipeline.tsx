@@ -150,16 +150,19 @@ export function Pipeline({
         currentStage = 'compose'
         markRunning('compose')
         set(setState, stageStatus({ compose: 'running' }))
-        setMsg('compose', 'ffmpeg.wasm 로드 중...')
+        function pushComposeStep(msg: string) {
+          setMsg('compose', msg)
+          setState((prev) => ({ ...prev, composeMessages: [...(prev.composeMessages ?? []), msg] }))
+        }
         const finalBlob = await composeVideo(
           imageBlobs, ttsData.blob, ambBlob, ttsData.duration,
           onProgress,
-          (msg) => setMsg('compose', msg),
+          pushComposeStep,
           showCaptions ? { text: llmResult.refinedText, bgColor: captionBgColor, textColor: captionTextColor } : null,
           aspectRatio,
           ttsData.alignment
         )
-        setMsg('compose', '완료')
+        pushComposeStep('완료')
         set(setState, { ...stageStatus({ compose: 'done' }), finalBlob })
         markDone('compose')
       } catch (e: any) {
@@ -195,6 +198,18 @@ export function Pipeline({
             <div className="h-full bg-gold rounded-full transition-[width] duration-300 ease-out" style={{ width: `${composeProgress}%` }} />
           </div>
           <span className="block text-base text-text-dim text-right">{composeProgress}%</span>
+        </div>
+      )}
+      {(state.compose === 'running' || state.compose === 'done') && state.composeMessages && state.composeMessages.length > 0 && (
+        <div className="flex flex-col gap-1 pl-2 border-l-2 border-border">
+          {state.composeMessages.map((msg, i) => {
+            const isDone = state.compose === 'done' || i < state.composeMessages!.length - 1
+            return (
+              <span key={i} className={`text-base ${isDone ? 'line-through text-text-dim opacity-60' : 'text-text-dim'}`}>
+                {msg}
+              </span>
+            )
+          })}
         </div>
       )}
       {state.error && (

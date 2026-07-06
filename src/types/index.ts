@@ -70,6 +70,7 @@ export interface PipelineState {
   messages: StageMessages
   durations: StageDurations
   imageMessages?: string[]
+  composeMessages?: string[]
   error?: string
   ttsBlob?: Blob
   ttsDuration?: number
