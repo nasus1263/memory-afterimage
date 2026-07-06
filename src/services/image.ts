@@ -149,7 +149,7 @@ async function imageRestApi(prompt: string, baseUrl: string, onProgress?: (msg: 
     method: 'POST',
     signal: AbortSignal.timeout(130_000),
     headers: { 'Content-Type': 'application/json', 'X-API-Key': 'changeme' },
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify({ prompt, width: 720, height: 480, steps: 10 }),
   })
   if (!res.ok) {
     if (res.status === 401) throw new Error('REST API 이미지 서버 인증 실패 (X-API-Key 불일치)')
