@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ApiKeys, ModelConfig } from '../types'
-import { summarizeChat } from '../services/llm'
+import { summarizeChat, generateSingleAnswer } from '../services/llm'
 import { isAutoAnswerMode } from '../services/debug'
+import { isAnswerAutoFillEnabled } from '../store/settings'
 import { useQuestions } from '../hooks/useQuestions'
+import { useAlert } from '../hooks/useAlert'
+import { SparkleIcon } from './icons'
 
 interface Props {
   userText: string
@@ -20,14 +23,32 @@ export function Chat({ userText, keys, config, onComplete }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [generating, setGenerating] = useState<boolean[]>([])
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+  const { showAlert } = useAlert()
 
   useEffect(() => {
     if (!questions) return
     setAnswers(initialAnswers)
     setSelected(isAutoAnswerMode() ? initialAnswers.map(() => 'custom') : new Array(questions.length).fill(null))
+    setGenerating(new Array(questions.length).fill(false))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questions])
+
+  async function autoFillAnswer(i: number) {
+    if (!questions || generating[i]) return
+    setGenerating((prev) => { const next = [...prev]; next[i] = true; return next })
+    try {
+      const answer = await generateSingleAnswer(userText, questions[i], config, keys)
+      handleAnswerChange(i, answer)
+      setSelected((prev) => { const next = [...prev]; next[i] = 'custom'; return next })
+    } catch (e: any) {
+      showAlert('답변을 자동으로 만들지 못했어요. 다시 시도해주세요.')
+      console.error('[Chat] 답변 자동 생성 실패', e)
+    } finally {
+      setGenerating((prev) => { const next = [...prev]; next[i] = false; return next })
+    }
+  }
 
   function handleAnswerChange(i: number, value: string) {
     setAnswers((prev) => { const next = [...prev]; next[i] = value; return next })
@@ -123,16 +144,30 @@ export function Chat({ userText, keys, config, onComplete }: Props) {
                 </button>
               </div>
             )}
-            <input
-              ref={(el) => { inputRefs.current[i] = el }}
-              className="chat-answer-input"
-              type="text"
-              value={answers[i] ?? ''}
-              onChange={(e) => handleAnswerChange(i, e.target.value)}
-              onFocus={() => { setCurrentIndex(i); setSelected((prev) => { const next = [...prev]; next[i] = 'custom'; return next }) }}
-              onKeyDown={(e) => handleKeyDown(e, i)}
-              placeholder="답변을 입력하세요"
-            />
+            <div className="chat-answer-row">
+              <input
+                ref={(el) => { inputRefs.current[i] = el }}
+                className="chat-answer-input"
+                type="text"
+                value={answers[i] ?? ''}
+                onChange={(e) => handleAnswerChange(i, e.target.value)}
+                onFocus={() => { setCurrentIndex(i); setSelected((prev) => { const next = [...prev]; next[i] = 'custom'; return next }) }}
+                onKeyDown={(e) => handleKeyDown(e, i)}
+                placeholder="답변을 입력하세요"
+              />
+              {isAnswerAutoFillEnabled() && (
+                <button
+                  type="button"
+                  className="answer-autofill-button"
+                  aria-label="답변 자동 생성"
+                  disabled={generating[i]}
+                  onClick={() => autoFillAnswer(i)}
+                >
+                  <SparkleIcon className={generating[i] ? 'animate-spin' : ''} />
+                  자동 생성
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>

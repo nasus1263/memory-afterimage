@@ -5,6 +5,7 @@ import {
   IMAGE_MODELS,
 } from '../config/models'
 import { isAutoAnswerMode, setAutoAnswerMode, isDummyImageMode, setDummyImageMode } from '../services/debug'
+import { isAnswerAutoFillEnabled, setAnswerAutoFillEnabled } from '../store/settings'
 import { ApiTest } from './ApiTest'
 
 interface Props {
@@ -48,10 +49,16 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
   const ttsVoices = TTS_VOICES[config.tts.provider] ?? []
   const [autoAnswer, setAutoAnswer] = useState(isAutoAnswerMode())
   const [dummyImage, setDummyImage] = useState(isDummyImageMode())
+  const [answerAutoFill, setAnswerAutoFill] = useState(isAnswerAutoFillEnabled())
 
   function toggleAutoAnswer(on: boolean) {
     setAutoAnswerMode(on)
     setAutoAnswer(on)
+  }
+
+  function toggleAnswerAutoFill(on: boolean) {
+    setAnswerAutoFillEnabled(on)
+    setAnswerAutoFill(on)
   }
 
   function toggleDummyImage(on: boolean) {
@@ -61,6 +68,20 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
+      <section>
+        <h3 className="text-gold-dim text-[11px] tracking-wider uppercase mb-3.5">답변 자동 생성 버튼</h3>
+        <label className="flex items-start gap-2.5 cursor-pointer">
+          <input
+            className="mt-0.5 accent-gold-dim cursor-pointer shrink-0"
+            type="checkbox"
+            checked={answerAutoFill}
+            onChange={(e) => toggleAnswerAutoFill(e.target.checked)}
+          />
+          <span className="text-text text-sm font-medium">답변 자동 생성 버튼 활성화</span>
+          <span className="inline text-[11px] text-text-dim ml-2">추가 질문 답변 화면마다 추론 모델로 답변 초안을 생성하는 버튼 표시 (음성 답변에서는 답변만 채우고 다음 단계로 자동 진행하지 않음)</span>
+        </label>
+      </section>
+
       <section>
         <h3 className="text-gold-dim text-[11px] tracking-wider uppercase mb-3.5">디버그</h3>
         <label className="flex items-start gap-2.5 cursor-pointer mb-2">

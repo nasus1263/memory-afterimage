@@ -45,6 +45,12 @@ and each answer a short natural sentence (≤60 chars).
 Prepend each question with one relevant emoji followed by a space (e.g. "🌅 노을이 예뻤나요?").
 Output ONLY JSON: { "questions": ["...", ...], "answers": ["...", ...] } with exactly N items each, matching the base list length, no markdown, no explanation.`
 
+const SINGLE_ANSWER_SYSTEM_PROMPT = `You are helping a user recall a travel memory for an immersive memory art installation.
+You will be given the user's initial travel-memory description and one follow-up interview question.
+Write a short, plausible, natural Korean answer to the question, consistent with the user's memory description,
+as if the user were answering it themselves (1st person, ≤60 chars).
+Output ONLY JSON: { "answer": "..." } no markdown, no explanation.`
+
 const CHAT_SUMMARY_SYSTEM_PROMPT = `You are a summarizer AI for an immersive memory art installation.
 You will be given a user's initial travel-memory description and a list of follow-up question/answer pairs.
 Combine all of this into one concise Korean paragraph describing the memory. Preserve every concrete detail
@@ -250,6 +256,22 @@ export async function generateQuestionsWithAnswers(
     throw new Error(`Expected ${baseQuestions.length} answers, got ${answers?.length}`)
   }
   return { questions, answers }
+}
+
+export async function generateSingleAnswer(
+  userText: string,
+  question: string,
+  config: ModelConfig,
+  keys: ApiKeys
+): Promise<string> {
+  const raw = await callProvider(
+    SINGLE_ANSWER_SYSTEM_PROMPT,
+    `User's memory:\n${userText}\n\nQuestion:\n${question}`,
+    config,
+    keys
+  )
+  const { answer } = extractJSON<{ answer: string }>(raw)
+  return answer
 }
 
 export async function summarizeChat(

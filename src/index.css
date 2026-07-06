@@ -1090,6 +1090,50 @@ main {
   border-color: var(--color-gold-dim);
 }
 
+.chat-answer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-answer-row .chat-answer-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.answer-autofill-button,
+.voice-answer-autofill-button {
+  flex: 0 0 auto;
+  height: 46px;
+  min-height: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(91, 76, 62, 0.2);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.64);
+  color: var(--color-gold-dim);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color .18s ease, background .18s ease;
+}
+
+.answer-autofill-button svg,
+.voice-answer-autofill-button svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.answer-autofill-button:hover:not(:disabled),
+.voice-answer-autofill-button:hover:not(:disabled) {
+  border-color: var(--color-gold-dim);
+  background: var(--color-gold-soft);
+}
+
 .chat-choice-row {
   display: flex;
   flex-wrap: wrap;

@@ -35,3 +35,14 @@ export function loadConfig(): ModelConfig {
 export function saveConfig(config: ModelConfig) {
   localStorage.setItem(CONFIG_KEY, JSON.stringify(config))
 }
+
+const ANSWER_AUTOFILL_KEY = 'memory_answer_autofill_enabled'
+
+export function isAnswerAutoFillEnabled(): boolean {
+  const v = localStorage.getItem(ANSWER_AUTOFILL_KEY)
+  return v === null ? true : v === 'true' // default ON
+}
+
+export function setAnswerAutoFillEnabled(on: boolean) {
+  localStorage.setItem(ANSWER_AUTOFILL_KEY, on ? 'true' : 'false')
+}
