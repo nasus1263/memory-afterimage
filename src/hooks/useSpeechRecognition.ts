@@ -123,7 +123,7 @@ export function useSpeechRecognition({ onEnd }: Options = {}) {
       streamRef.current = stream
       startMeter(stream)
     } catch {
-      setMicError('마이크 권한이 필요합니다')
+      setMicError('마이크 권한이 필요해요. 브라우저 주소창의 마이크 아이콘을 눌러 허용해주세요.')
       return
     }
     try {
