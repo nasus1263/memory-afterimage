@@ -279,16 +279,22 @@ export default function App() {
 
         {path === '/process' && (
           <div className="flex flex-col gap-5 mt-9">
-            <div className="pane !p-5">
-              <span className="mini-label !mb-2">입력한 기억</span>
-              <p className="text-text-dim text-base">{userText}</p>
-            </div>
-
-            {pipelineState.llmResult && (
-              <div className="pane !p-5">
-                <span className="mini-label !mb-2">다듬어진 나레이션</span>
-                <p className="text-text text-base leading-loose">{pipelineState.llmResult.refinedText}</p>
-              </div>
+            {!finalUrl && (
+              <details className="advanced-settings pane !p-5 !mt-0">
+                <summary className="advanced-settings-summary">입력한 내용 확인하기</summary>
+                <div className="flex flex-col gap-4 mt-4">
+                  <div>
+                    <span className="mini-label !mb-2">입력한 기억</span>
+                    <p className="text-text-dim text-base">{userText}</p>
+                  </div>
+                  {pipelineState.llmResult && (
+                    <div>
+                      <span className="mini-label !mb-2">다듬어진 나레이션</span>
+                      <p className="text-text text-base leading-loose">{pipelineState.llmResult.refinedText}</p>
+                    </div>
+                  )}
+                </div>
+              </details>
             )}
 
             {!finalUrl && !pipelineState.error && (
