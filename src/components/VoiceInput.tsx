@@ -5,7 +5,7 @@ import { speakText } from '../services/promptSpeech'
 import { generateSingleAnswer } from '../services/llm'
 import { isAnswerAutoFillEnabled } from '../store/settings'
 import { useAlert } from '../hooks/useAlert'
-import { SparkleIcon } from './icons'
+import { SparkleIcon, ReplayIcon, RetryIcon, ContinueIcon } from './icons'
 import { VoiceZone } from './VoiceZone'
 
 interface Props {
@@ -19,33 +19,6 @@ interface Props {
 type Phase = 'speaking' | 'listening'
 
 const PROMPT_TEXT = '기억하고 싶은 여행의 순간을 들려주세요'
-
-function ReplayIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M11 5 6 9H2v6h4l5 4V5Z" />
-      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-    </svg>
-  )
-}
-
-function RetryIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-      <path d="M3 3v5h5" />
-    </svg>
-  )
-}
-
-function ContinueIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M20 6 9 17l-5-5" />
-    </svg>
-  )
-}
 
 export function VoiceInput({ apiKey, keys, config, onComplete, onListeningChange }: Props) {
   const [phase, setPhase] = useState<Phase>('speaking')

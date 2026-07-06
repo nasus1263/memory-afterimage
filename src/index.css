@@ -1479,15 +1479,15 @@ main {
 }
 
 .retry-record-button-large {
-  height: 96px;
-  padding: 0 40px;
-  font-size: 32px;
-  gap: 16px;
+  height: 86px;
+  padding: 0 36px;
+  font-size: 29px;
+  gap: 14px;
 }
 
 .retry-record-button-large svg {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
 }
 
 @media (max-width: 900px) {

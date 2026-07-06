@@ -7,7 +7,7 @@ import { useQuestions } from '../hooks/useQuestions'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
 import { speakText, stopSpeaking } from '../services/promptSpeech'
 import { useAlert } from '../hooks/useAlert'
-import { SparkleIcon } from './icons'
+import { SparkleIcon, ReplayIcon, RetryIcon, ContinueIcon } from './icons'
 import { VoiceZone } from './VoiceZone'
 
 interface Props {
@@ -236,9 +236,15 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
       {phase !== 'submitting' && (
         <div className="retry-popup-actions">
           <div className="retry-popup-actions-row">
-            <button className="retry-close-button" type="button" onClick={replayQuestion}>다시 듣기</button>
+            <button className="retry-close-button" type="button" onClick={replayQuestion}>
+              <ReplayIcon />
+              다시 듣기
+            </button>
             {!rec.unsupported && (
-              <button className="retry-close-button" type="button" onClick={retryRecording} disabled={phase !== 'listening'}>다시 시도하기</button>
+              <button className="retry-close-button" type="button" onClick={retryRecording} disabled={phase !== 'listening'}>
+                <RetryIcon />
+                다시 시도하기
+              </button>
             )}
             {!rec.unsupported && isAnswerAutoFillEnabled() && (
               <button
@@ -258,6 +264,7 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
             onClick={continueToNext}
             disabled={phase === 'manual' ? !manualText.trim() : (phase !== 'listening' || !(answerOverride ?? rec.finalText).trim())}
           >
+            <ContinueIcon />
             계속하기
           </button>
         </div>
