@@ -20,11 +20,11 @@ export function Memories() {
   }
 
   if (items === null) {
-    return <p className="text-text-dim text-sm py-8">불러오는 중...</p>
+    return <p className="text-text-dim text-base py-8">불러오는 중...</p>
   }
 
   if (items.length === 0) {
-    return <p className="text-text-dim text-sm py-8">아직 저장된 기억이 없습니다.</p>
+    return <p className="text-text-dim text-base py-8">아직 저장된 기억이 없습니다.</p>
   }
 
   return (
@@ -34,25 +34,25 @@ export function Memories() {
           <video className="w-full aspect-video bg-black object-contain" src={urls[i]} controls loop />
           <div className="p-3.5 flex flex-col gap-1.5">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] text-text-dim">{new Date(item.createdAt).toLocaleString('ko-KR')}</span>
+              <span className="text-base text-text-dim">{new Date(item.createdAt).toLocaleString('ko-KR')}</span>
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  className="bg-transparent border-none p-0.5 cursor-pointer leading-none"
+                  className="min-w-11 min-h-11 flex items-center justify-center bg-transparent border-none cursor-pointer"
                   aria-label="카카오톡 공유"
                   onClick={() => alert('카카오톡 공유 기능은 준비 중입니다.')}
                 >
-                  <KakaoTalkIcon className="w-[18px] h-[18px]" />
+                  <KakaoTalkIcon className="w-[22px] h-[22px]" />
                 </button>
                 <button
-                  className="bg-transparent border border-border text-text-dim py-1 px-2.5 rounded text-xs cursor-pointer transition-colors hover:border-error hover:text-error"
+                  className="min-h-11 bg-transparent border border-border text-text-dim py-1 px-3 rounded text-base cursor-pointer transition-colors hover:border-error hover:text-error"
                   onClick={() => handleDelete(item.id)}
                 >
                   삭제
                 </button>
               </div>
             </div>
-            <p className="text-sm text-text-dim">{item.text}</p>
+            <p className="text-base text-text-dim">{item.text}</p>
           </div>
         </div>
       ))}

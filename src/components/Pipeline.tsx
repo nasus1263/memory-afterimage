@@ -195,7 +195,7 @@ export function Pipeline({
           <div className="h-1 bg-border rounded-full overflow-hidden">
             <div className="h-full bg-gold rounded-full transition-[width] duration-300 ease-out" style={{ width: `${composeProgress}%` }} />
           </div>
-          <span className="block text-[11px] text-text-dim text-right">{composeProgress}%</span>
+          <span className="block text-base text-text-dim text-right">{composeProgress}%</span>
         </div>
       )}
       {state.error && (

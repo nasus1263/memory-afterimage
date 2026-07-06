@@ -280,14 +280,14 @@ export default function App() {
         {path === '/process' && (
           <div className="flex flex-col gap-5 mt-9">
             <div className="pane !p-5">
-              <span className="mini-label !mb-2 !text-[11px]">입력한 기억</span>
-              <p className="text-text-dim text-[13px]">{userText}</p>
+              <span className="mini-label !mb-2">입력한 기억</span>
+              <p className="text-text-dim text-base">{userText}</p>
             </div>
 
             {pipelineState.llmResult && (
               <div className="pane !p-5">
-                <span className="mini-label !mb-2 !text-[11px]">다듬어진 나레이션</span>
-                <p className="text-text text-sm leading-loose">{pipelineState.llmResult.refinedText}</p>
+                <span className="mini-label !mb-2">다듬어진 나레이션</span>
+                <p className="text-text text-base leading-loose">{pipelineState.llmResult.refinedText}</p>
               </div>
             )}
 
