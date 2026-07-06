@@ -10,6 +10,13 @@ export interface TTSResult {
   alignment?: TTSAlignment
 }
 
+// TTS는 타임아웃이 없으면 서버 크래시(GPT-SoVITS의 IncompleteRead 등)·네트워크 문제 시 무한 대기한다.
+// 긴 대본 합성이 오래 걸릴 수 있으므로 여유있게 120초로 잡되, 넘으면 에러로 드러나게 한다.
+const TTS_TIMEOUT_MS = 120_000
+function ttsSignal(): AbortSignal {
+  return AbortSignal.timeout(TTS_TIMEOUT_MS)
+}
+
 async function getBlobDuration(blob: Blob): Promise<number> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(blob)
@@ -30,6 +37,7 @@ async function ttsGoogle(text: string, model: string, voice: string, key: string
     `${GOOGLE_BASE}/models/${model}:generateContent?key=${key}`,
     {
       method: 'POST',
+      signal: ttsSignal(),
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text }] }],
@@ -88,6 +96,7 @@ function ttsLocal(text: string): TTSResult {
 async function ttsElevenLabs(text: string, model: string, voice: string, key: string): Promise<TTSResult> {
   const res = await fetch(`${ELEVENLABS_BASE}/text-to-speech/${voice}/with-timestamps`, {
     method: 'POST',
+    signal: ttsSignal(),
     headers: { 'Content-Type': 'application/json', 'xi-api-key': key },
     body: JSON.stringify({ text, model_id: model }),
   })
@@ -133,7 +142,7 @@ async function ttsGptSovits(text: string): Promise<TTSResult> {
     temperature: '0.5',
     cut_punc: '.!?。！？…',
   })
-  const res = await fetch(`${GPT_SOVITS_BASE}/?${params.toString()}`)
+  const res = await fetch(`${GPT_SOVITS_BASE}/?${params.toString()}`, { signal: ttsSignal() })
   if (!res.ok) throw new Error(`GPT-SoVITS TTS ${res.status}: ${await res.text()}`)
   const ct = res.headers.get('Content-Type') ?? ''
   if (!ct.includes('audio')) throw new Error(`GPT-SoVITS TTS non-audio response: ${await res.text()}`)
