@@ -1368,6 +1368,7 @@ main {
 
 .retry-popup-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
   margin-top: 24px;
@@ -1381,6 +1382,16 @@ main {
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.retry-close-button svg,
+.retry-record-button svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
 }
 
 .retry-close-button {
