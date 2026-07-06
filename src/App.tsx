@@ -184,6 +184,7 @@ export default function App() {
   }
 
   function handleReset() {
+    if (!window.confirm('지금까지 입력한 내용이 사라져요. 처음부터 다시 시작할까요?')) return
     clearProgress()
     setUserText('')
     setInputMode('voice')
@@ -243,12 +244,15 @@ export default function App() {
 
           <nav className="nav" aria-label="주요 메뉴">
             <button className={['/', '/new', '/input', '/chat', '/process'].includes(path) ? 'active' : ''} onClick={handleMemoryNavClick}>
+              <InputMark className="nav-icon" strokeWidth={1.8} />
               기억 남기기
             </button>
             <button className={path === '/memories' ? 'active' : ''} onClick={() => navigate(path === '/memories' ? '/new' : '/memories')}>
+              <MemoriesMark className="nav-icon" strokeWidth={1.8} />
               보관함
             </button>
             <button className={path === '/settings' ? 'active' : ''} onClick={() => navigate('/settings')}>
+              <SettingsMark className="nav-icon" strokeWidth={1.8} />
               설정
             </button>
           </nav>

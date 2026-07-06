@@ -169,12 +169,22 @@ button:disabled {
 
 .nav button {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: #26221f;
   padding: 39px 0 34px;
   background: transparent;
   border: none;
   cursor: pointer;
   font: inherit;
+}
+
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  color: var(--color-gold-dim);
 }
 
 .nav button.active {
