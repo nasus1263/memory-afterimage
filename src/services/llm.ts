@@ -1,5 +1,5 @@
 import type { ApiKeys, ChatQA, LLMResult, ModelConfig } from '../types'
-import { GOOGLE_BASE, NVIDIA_LLM_BASE } from '../config/endpoints'
+import { GOOGLE_BASE, NVIDIA_LLM_BASE, OLLAMA_BASE } from '../config/endpoints'
 
 const SYSTEM_PROMPT = `You are a creative AI for an immersive memory art installation.
 The user will describe a travel memory. You must output JSON with exactly these fields:
@@ -128,6 +128,27 @@ async function callGoogle(systemPrompt: string, text: string, model: string, key
   return data.candidates[0].content.parts[0].text
 }
 
+async function callOllama(systemPrompt: string, text: string, model: string, baseUrl: string): Promise<string> {
+  // Ollama OpenAI 호환 엔드포인트. 로컬이라 인증 없음.
+  // response_format json_object로 소형 모델의 JSON 이탈을 억제(extractJSON/withRetry가 백업).
+  // num_ctx는 이 경로에서 지원되지 않아, 긴 refinedText는 max_tokens로 출력 여유를 확보.
+  const res = await fetch(`${baseUrl}/chat/completions`, {
+    method: 'POST',
+    signal: makeSignal(),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }],
+      max_tokens: 2048,
+      temperature: 0.7,
+      response_format: { type: 'json_object' },
+    }),
+  })
+  if (!res.ok) throw new Error(`Ollama LLM ${res.status}: ${await res.text()}`)
+  const data = await res.json()
+  return data.choices[0].message.content
+}
+
 async function callProvider(
   systemPrompt: string,
   userText: string,
@@ -137,6 +158,7 @@ async function callProvider(
   const { provider, model } = config.llm
   if (provider === 'nvidia') return callNvidia(systemPrompt, userText, model, keys.nvidia, NVIDIA_LLM_BASE)
   if (provider === 'google') return callGoogle(systemPrompt, userText, model, keys.google)
+  if (provider === 'ollama') return callOllama(systemPrompt, userText, model, OLLAMA_BASE)
   throw new Error(`Unknown LLM provider: ${provider}`)
 }
 

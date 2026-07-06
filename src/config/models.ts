@@ -14,6 +14,13 @@ export const LLM_MODELS = {
     { id: 'meta/llama-3.1-8b-instruct', label: 'Llama 3.1 8B Instruct ✓무료크레딧·최속' },
     { id: 'deepseek-ai/deepseek-r1', label: 'DeepSeek R1 ✓무료크레딧·추론특화(크레딧 소모大)' },
   ],
+  // Ollama: localhost:11434, OpenAI-compatible /v1/chat/completions, 인증 없음.
+  // 무료·오프라인·API장애 무관. dev 전용(로컬 서버 필요). 모델은 미리 `ollama pull` 필요.
+  ollama: [
+    { id: 'exaone3.5:7.8b', label: 'EXAONE 3.5 7.8B ✓로컬·한국어특화 (Ollama :11434 필요)' },
+    { id: 'qwen3:8b', label: 'Qwen3 8B ✓로컬·빠름·다국어 (Ollama :11434 필요)' },
+    { id: 'qwen3-8b-16k:latest', label: 'Qwen3 8B (16k) ⚠느림·8GB VRAM 초과시 스왑 (Ollama :11434 필요)' },
+  ],
 }
 
 export const TTS_MODELS = {

@@ -37,6 +37,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/nvidia-genai/, ''),
       },
+      // Ollama 로컬 LLM 서버(:11434) — CORS 헤더 미제공이라 프록시 경유
+      '/ollama': {
+        target: 'http://127.0.0.1:11434',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/ollama/, ''),
+      },
       // GPT-SoVITS 로컬 보이스 클로닝 서버(api.py, :9880) — CORS 헤더 미제공이라 프록시 경유
       '/gpt-sovits': {
         target: 'http://127.0.0.1:9880',

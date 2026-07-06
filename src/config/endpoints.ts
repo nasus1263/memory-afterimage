@@ -10,6 +10,10 @@ const NIM_PROXY_ORIGIN = import.meta.env.DEV ? '' : 'https://nim-proxy.dlsehf126
 export const NVIDIA_LLM_BASE = `${NIM_PROXY_ORIGIN}/nvidia-nim/v1`
 export const NVIDIA_GENAI_BASE = `${NIM_PROXY_ORIGIN}/nvidia-genai`
 
+// Ollama 로컬 LLM 서버(:11434). OpenAI 호환 /v1/chat/completions.
+// dev는 Vite 프록시(/ollama) 경유. prod(GitHub Pages)에는 로컬 서버가 없으므로 dev 전용 기능.
+export const OLLAMA_BASE = '/ollama/v1'
+
 // GPT-SoVITS 로컬 보이스 클로닝 서버(api.py, :9880). dev는 Vite 프록시(/gpt-sovits) 경유.
 // prod(GitHub Pages)에는 로컬 서버가 없으므로 dev 전용 기능.
 export const GPT_SOVITS_BASE = '/gpt-sovits'
