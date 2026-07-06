@@ -190,14 +190,11 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
 
       {(phase === 'speaking' || phase === 'listening') && (
         <div className={`live-transcript${phase !== 'listening' ? ' is-disabled' : ''}`} aria-live="polite">
-          {phase === 'listening' && (
-            answerOverride ?? (
-              <>
-                {rec.finalText}
-                <span className="interim">{rec.interimText}</span>
-              </>
-            )
+          {phase === 'listening' && answerOverride == null && rec.finalText}
+          {phase === 'listening' && answerOverride == null && rec.interimText && (
+            <span className="interim">{rec.interimText}</span>
           )}
+          {phase === 'listening' && answerOverride}
         </div>
       )}
 
