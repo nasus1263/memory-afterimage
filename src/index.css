@@ -741,6 +741,34 @@ main {
 
 /* ── new session (비율 설정 · 이미지 업로드) ─────────────── */
 
+.advanced-settings {
+  margin-top: 25px;
+}
+
+.advanced-settings-summary {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-dim);
+  list-style: none;
+}
+
+.advanced-settings-summary::-webkit-details-marker {
+  display: none;
+}
+
+.advanced-settings-summary::before {
+  content: '▶';
+  display: inline-block;
+  margin-right: 8px;
+  font-size: 10px;
+  transition: transform .18s ease;
+}
+
+.advanced-settings[open] .advanced-settings-summary::before {
+  transform: rotate(90deg);
+}
+
 .session-field {
   margin-top: 25px;
 }
