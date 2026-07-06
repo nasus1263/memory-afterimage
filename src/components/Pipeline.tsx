@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ApiKeys, AspectRatio, ModelConfig, PipelineState, StageStatus } from '../types'
 import { refineMemo, generateImagePrompts } from '../services/llm'
 import { generateTTS } from '../services/tts'
@@ -59,6 +59,14 @@ export function Pipeline({
 }: Props) {
   const ran = useRef(false)
   const startTimes = useRef<Partial<Record<Stage, number>>>({})
+  const [, forceTick] = useState(0)
+
+  // compose 단계 실행 중에는 경과 시간을 실시간으로 갱신 표시
+  useEffect(() => {
+    if (state.compose !== 'running') return
+    const id = setInterval(() => forceTick((t) => t + 1), 200)
+    return () => clearInterval(id)
+  }, [state.compose])
 
   useEffect(() => {
     if (ran.current) return
@@ -178,6 +186,10 @@ export function Pipeline({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const composeElapsedMs = state.compose === 'running' && startTimes.current.compose != null
+    ? performance.now() - startTimes.current.compose
+    : state.durations.compose
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1.5">
@@ -187,7 +199,7 @@ export function Pipeline({
             stage={s}
             status={state[s]}
             message={state.messages[s]}
-            durationMs={state.durations[s]}
+            durationMs={s === 'compose' ? composeElapsedMs : state.durations[s]}
             subitems={s === 'image' ? state.imageMessages : undefined}
           />
         ))}
