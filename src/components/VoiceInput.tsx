@@ -132,27 +132,29 @@ export function VoiceInput({ apiKey, keys, config, onComplete, onListeningChange
 
       {!rec.unsupported && (
         <div className="retry-popup-actions">
-          <button className="retry-close-button" type="button" onClick={replayPrompt}>
-            <ReplayIcon />
-            다시 듣기
-          </button>
-          <button className="retry-close-button" type="button" onClick={retryRecording} disabled={phase !== 'listening'}>
-            <RetryIcon />
-            다시 시도하기
-          </button>
-          {isAnswerAutoFillEnabled() && (
-            <button
-              type="button"
-              className="voice-answer-autofill-button"
-              disabled={phase !== 'listening' || generatingAnswer}
-              onClick={autoFillAnswer}
-            >
-              <SparkleIcon className={generatingAnswer ? 'animate-spin' : ''} />
-              자동 생성
+          <div className="retry-popup-actions-row">
+            <button className="retry-close-button" type="button" onClick={replayPrompt}>
+              <ReplayIcon />
+              다시 듣기
             </button>
-          )}
+            <button className="retry-close-button" type="button" onClick={retryRecording} disabled={phase !== 'listening'}>
+              <RetryIcon />
+              다시 시도하기
+            </button>
+            {isAnswerAutoFillEnabled() && (
+              <button
+                type="button"
+                className="voice-answer-autofill-button"
+                disabled={phase !== 'listening' || generatingAnswer}
+                onClick={autoFillAnswer}
+              >
+                <SparkleIcon className={generatingAnswer ? 'animate-spin' : ''} />
+                자동 생성
+              </button>
+            )}
+          </div>
           <button
-            className="retry-record-button"
+            className="retry-record-button retry-record-button-large"
             type="button"
             onClick={continueToNext}
             disabled={phase !== 'listening' || !(answerOverride ?? rec.finalText).trim()}

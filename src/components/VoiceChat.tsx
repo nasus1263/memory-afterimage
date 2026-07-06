@@ -235,23 +235,25 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
 
       {phase !== 'submitting' && (
         <div className="retry-popup-actions">
-          <button className="retry-close-button" type="button" onClick={replayQuestion}>다시 듣기</button>
-          {!rec.unsupported && (
-            <button className="retry-close-button" type="button" onClick={retryRecording} disabled={phase !== 'listening'}>다시 시도하기</button>
-          )}
-          {!rec.unsupported && isAnswerAutoFillEnabled() && (
-            <button
-              type="button"
-              className="voice-answer-autofill-button"
-              disabled={generatingAnswer || phase !== 'listening'}
-              onClick={autoFillAnswer}
-            >
-              <SparkleIcon className={generatingAnswer ? 'animate-spin' : ''} />
-              자동 생성
-            </button>
-          )}
+          <div className="retry-popup-actions-row">
+            <button className="retry-close-button" type="button" onClick={replayQuestion}>다시 듣기</button>
+            {!rec.unsupported && (
+              <button className="retry-close-button" type="button" onClick={retryRecording} disabled={phase !== 'listening'}>다시 시도하기</button>
+            )}
+            {!rec.unsupported && isAnswerAutoFillEnabled() && (
+              <button
+                type="button"
+                className="voice-answer-autofill-button"
+                disabled={generatingAnswer || phase !== 'listening'}
+                onClick={autoFillAnswer}
+              >
+                <SparkleIcon className={generatingAnswer ? 'animate-spin' : ''} />
+                자동 생성
+              </button>
+            )}
+          </div>
           <button
-            className="retry-record-button"
+            className="retry-record-button retry-record-button-large"
             type="button"
             onClick={continueToNext}
             disabled={phase === 'manual' ? !manualText.trim() : (phase !== 'listening' || !(answerOverride ?? rec.finalText).trim())}
