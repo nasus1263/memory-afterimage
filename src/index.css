@@ -53,6 +53,12 @@
   --radius-xl: 26px;
 }
 
+html {
+  /* 전반적 텍스트 10% 확대 — rem 기반 Tailwind 유틸리티(text-sm/base/lg 등)에 적용됨.
+     index.css의 고정 px font-size 값들은 별도로 각각 1.1배 해뒀음 (rem 아니라 이 규칙만으론 안 커짐) */
+  font-size: 110%;
+}
+
 html, body {
   margin: 0;
   min-height: 100%;
@@ -143,7 +149,7 @@ button:disabled {
 .brand-title {
   margin: 0;
   font-family: var(--font-serif);
-  font-size: 29px;
+  font-size: 32px;
   line-height: 1.05;
   letter-spacing: -0.03em;
   font-weight: 700;
@@ -152,7 +158,7 @@ button:disabled {
 
 .brand-subtitle {
   margin-top: 5px;
-  font-size: 16px;
+  font-size: 18px;
   color: var(--color-text-dim);
   letter-spacing: -0.02em;
 }
@@ -163,7 +169,7 @@ button:disabled {
   align-items: center;
   gap: 56px;
   height: 100%;
-  font-size: 17px;
+  font-size: 19px;
   letter-spacing: -0.02em;
 }
 
@@ -217,7 +223,7 @@ main {
 
 .hero h1 {
   margin: 0;
-  font-size: 35px;
+  font-size: 39px;
   line-height: 1.2;
   letter-spacing: -0.055em;
   font-weight: 800;
@@ -227,7 +233,7 @@ main {
 .hero p {
   margin: 20px 0 0;
   color: #5f5a54;
-  font-size: 17px;
+  font-size: 19px;
   line-height: 1.6;
   letter-spacing: -0.025em;
 }
@@ -236,14 +242,14 @@ main {
   color: var(--color-gold-dim);
   font-weight: 800;
   letter-spacing: 0.12em;
-  font-size: 16px;
+  font-size: 18px;
   text-transform: uppercase;
   margin-bottom: 12px;
 }
 
 .pane-title {
   font-family: var(--font-serif);
-  font-size: clamp(22px, 4vw, 38px);
+  font-size: clamp(24px, 4.4vw, 42px);
   font-weight: 500;
   line-height: 1.25;
   letter-spacing: -0.05em;
@@ -253,7 +259,7 @@ main {
 
 .pane-desc {
   color: var(--color-text-dim);
-  font-size: clamp(13px, 1.6vw, 15px);
+  font-size: clamp(14px, 1.8vw, 17px);
   line-height: 1.7;
   margin: 0;
   word-break: keep-all;
@@ -427,7 +433,7 @@ main {
   margin: 33px 0 22px;
   color: var(--color-gold);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 30px;
+  font-size: 33px;
   font-weight: 700;
   letter-spacing: .03em;
 }
@@ -490,7 +496,7 @@ main {
   border: 1px solid rgba(91, 76, 62, 0.17);
   box-shadow: 0 14px 36px rgba(61, 46, 33, 0.045);
   color: #7a746d;
-  font-size: 23px;
+  font-size: 25px;
   letter-spacing: -0.035em;
   display: flex;
   align-items: center;
@@ -516,7 +522,7 @@ main {
   margin: 14px auto 0;
   padding: 12px 16px;
   border-radius: 16px;
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.7;
   word-break: keep-all;
 }
@@ -563,7 +569,7 @@ main {
   border-radius: 999px;
   background: rgba(37, 35, 33, 0.9);
   color: #f8e5bd;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.04em;
   box-shadow: 0 10px 30px rgba(37, 35, 33, 0.25);
@@ -589,7 +595,7 @@ main {
   border: 1px solid rgba(91, 76, 62, 0.2);
   background: rgba(255, 255, 255, 0.9);
   color: var(--color-text-dim);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   box-shadow: var(--shadow-paper);
   backdrop-filter: blur(10px);
@@ -600,7 +606,7 @@ main {
   margin: 86px 0 42px;
   text-align: center;
   color: var(--color-text-dim);
-  font-size: 16px;
+  font-size: 18px;
 }
 
 /* ── input card (기억 입력하기) ──────────────────────────── */
@@ -643,7 +649,7 @@ main {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 19px;
+  font-size: 21px;
   font-weight: 700;
   letter-spacing: -0.025em;
   color: var(--color-text);
@@ -666,7 +672,7 @@ main {
 
 .voice-zone h2 {
   margin: 6px 0 0;
-  font-size: 28px;
+  font-size: 31px;
   line-height: 1.35;
   letter-spacing: -0.045em;
   font-weight: 800;
@@ -675,7 +681,7 @@ main {
 
 .voice-zone p {
   margin: 9px 0 0;
-  font-size: 16px;
+  font-size: 18px;
   letter-spacing: -0.025em;
   color: #6c665f;
 }
@@ -690,7 +696,7 @@ main {
 
 .listening-screen h2 {
   margin: 27px 0 0;
-  font-size: 40px;
+  font-size: 44px;
   line-height: 1.15;
   letter-spacing: -0.05em;
   font-weight: 800;
@@ -703,7 +709,7 @@ main {
   align-items: center;
   gap: 19px;
   color: var(--color-text-dim);
-  font-size: 16px;
+  font-size: 18px;
   margin-top: 29px;
 }
 
@@ -756,7 +762,7 @@ main {
 
 .counter {
   color: var(--color-text-dim);
-  font-size: 16px;
+  font-size: 18px;
   white-space: nowrap;
 }
 
@@ -767,7 +773,7 @@ main {
   border-radius: 999px;
   background: rgba(255, 255, 255, .72);
   color: var(--color-dark);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
@@ -789,7 +795,7 @@ main {
   min-height: 44px;
   display: flex;
   align-items: center;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--color-text-dim);
   list-style: none;
@@ -803,7 +809,7 @@ main {
   content: '▶';
   display: inline-block;
   margin-right: 8px;
-  font-size: 10px;
+  font-size: 11px;
   transition: transform .18s ease;
 }
 
@@ -833,7 +839,7 @@ main {
   border: 1px solid rgba(91, 76, 62, 0.2);
   background: rgba(255, 255, 255, 0.64);
   color: var(--color-text-dim);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   cursor: pointer;
   transition: border-color .18s ease, color .18s ease, background .18s ease;
@@ -892,7 +898,7 @@ main {
   align-items: center;
   gap: 9px;
   min-height: 44px;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--color-text);
   cursor: pointer;
@@ -914,7 +920,7 @@ main {
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.64);
   color: var(--color-text);
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .caption-colors {
@@ -927,7 +933,7 @@ main {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 16px;
+  font-size: 18px;
   color: var(--color-text-dim);
 }
 
@@ -949,7 +955,7 @@ main {
   max-width: 88%;
   padding: 5px 12px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -974,7 +980,7 @@ main {
 .upload-dropzone p {
   margin: 0;
   color: var(--color-text-dim);
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .upload-dropzone.drag-over {
@@ -1014,7 +1020,7 @@ main {
   border-radius: 50%;
   background: rgba(35, 33, 30, 0.72);
   color: #fff;
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1;
   cursor: pointer;
   display: grid;
@@ -1033,7 +1039,7 @@ main {
   border-radius: 999px;
   background: var(--color-gold-dim);
   color: #fffaf3;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 14px 34px rgba(116, 71, 49, .2);
@@ -1068,7 +1074,7 @@ main {
 .chat-question-label {
   display: block;
   margin-bottom: 8px;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--color-text);
   letter-spacing: -0.02em;
@@ -1119,7 +1125,7 @@ main {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.64);
   color: var(--color-gold-dim);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -1153,7 +1159,7 @@ main {
   border: 1px solid rgba(91, 76, 62, 0.2);
   background: rgba(255, 255, 255, 0.64);
   color: var(--color-text-dim);
-  font-size: 16px;
+  font-size: 18px;
   cursor: pointer;
   transition: border-color .18s ease, color .18s ease, background .18s ease;
 }
@@ -1179,7 +1185,7 @@ main {
 .step-label {
   margin: 0;
   color: var(--color-gold);
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1;
   font-weight: 800;
   letter-spacing: .22em;
@@ -1189,7 +1195,7 @@ main {
 .loading-desc,
 .result-desc {
   color: #66615b;
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1.65;
   letter-spacing: -0.025em;
 }
@@ -1202,7 +1208,7 @@ main {
   margin: 8px 0 0;
   /* #8a8580는 bg 대비 3.50:1로 AA 미달 → --color-text-dim(5.51:1)로 교체 */
   color: var(--color-text-dim);
-  font-size: 22px;
+  font-size: 24px;
   line-height: 1.72;
   letter-spacing: -0.045em;
   font-weight: 600;
@@ -1215,7 +1221,7 @@ main {
 .record-help {
   margin: 28px 0 0;
   color: #77716a;
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1.65;
   letter-spacing: -0.025em;
 }
@@ -1309,7 +1315,7 @@ main {
   border-radius: 50%;
   background: rgba(255, 255, 255, .14);
   color: rgba(255, 255, 255, .88);
-  font-size: 34px;
+  font-size: 37px;
   line-height: 1;
   cursor: pointer;
 }
@@ -1335,7 +1341,7 @@ main {
   border-radius: 999px;
   background: rgba(255, 255, 255, .64);
   color: var(--color-dark);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   cursor: pointer;
   box-shadow: var(--shadow-paper);
@@ -1357,7 +1363,7 @@ main {
   border-radius: 999px;
   background: #FEE500;
   color: #391B1B;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   cursor: pointer;
   box-shadow: var(--shadow-paper);
@@ -1416,7 +1422,7 @@ main {
 
 .retry-popup-card h3 {
   margin: 0;
-  font-size: 25px;
+  font-size: 28px;
   line-height: 1.3;
   letter-spacing: -0.045em;
   color: var(--color-text);
@@ -1425,7 +1431,7 @@ main {
 .retry-popup-card p {
   margin: 13px 0 0;
   color: #6c665f;
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.6;
   letter-spacing: -0.025em;
 }
@@ -1450,7 +1456,7 @@ main {
   height: 48px;
   padding: 0 20px;
   border-radius: 999px;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
@@ -1481,7 +1487,7 @@ main {
 .retry-record-button-large {
   height: 86px;
   padding: 0 36px;
-  font-size: 29px;
+  font-size: 32px;
   gap: 14px;
 }
 
@@ -1497,18 +1503,18 @@ main {
     grid-template-columns: 1fr;
     gap: 18px;
   }
-  .nav { order: 3; gap: 32px; font-size: 16px; }
+  .nav { order: 3; gap: 32px; font-size: 18px; }
   .nav button { padding: 4px 0 12px; }
   .user-area { position: absolute; right: 16px; top: 20px; }
   main { width: min(100% - 32px, var(--max)); margin-top: 50px; }
-  .hero h1 { font-size: 29px; }
+  .hero h1 { font-size: 32px; }
   .input-card { padding: 28px 22px 23px; }
   .mic-wrap { width: 200px; height: 200px; }
   .mic-button { width: 132px; height: 132px; }
-  .voice-zone h2 { font-size: 24px; }
+  .voice-zone h2 { font-size: 26px; }
   .wave-wrap { gap: 5px; height: 112px; margin-top: 32px; }
   .bar { width: 5px; }
-  .live-transcript { font-size: 18px; padding: 0 20px; }
+  .live-transcript { font-size: 20px; padding: 0 20px; }
   .stop-button { width: 112px; height: 112px; }
   .memory-orb { width: 220px; height: 220px; }
   .result-image-window { padding: 12px; }

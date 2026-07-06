@@ -54,7 +54,7 @@ function TestRow({
           {STATUS_ICON[state.status]}
         </span>
         <span className="font-medium">{label}</span>
-        {state.msg && <span className="text-[11px] text-text-dim ml-1">{state.msg}</span>}
+        {state.msg && <span className="text-[12px] text-text-dim ml-1">{state.msg}</span>}
       </div>
       <button
         className="ml-auto bg-transparent border border-gold-dim text-gold-dim rounded-sm py-1 px-3 text-xs whitespace-nowrap cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed enabled:hover:border-gold enabled:hover:text-gold"
@@ -64,7 +64,7 @@ function TestRow({
         {state.status === 'running' ? '실행 중...' : '테스트'}
       </button>
       {state.text && (
-        <pre className="text-[11px] text-text-dim bg-white/[0.04] rounded-sm p-2 overflow-x-auto whitespace-pre-wrap break-all m-0 max-h-40 overflow-y-auto">{state.text}</pre>
+        <pre className="text-[12px] text-text-dim bg-white/[0.04] rounded-sm p-2 overflow-x-auto whitespace-pre-wrap break-all m-0 max-h-40 overflow-y-auto">{state.text}</pre>
       )}
       {state.url && state.mime?.startsWith('image') && (
         <img className="w-full max-h-[200px] rounded-sm object-contain bg-black" src={state.url} alt="test result" />

@@ -42,7 +42,7 @@ function KeyInput({
           </button>
         )}
       </div>
-      {hint && <span className="block text-[11px] text-text-dim mt-0.5">{hint}</span>}
+      {hint && <span className="block text-[12px] text-text-dim mt-0.5">{hint}</span>}
     </div>
   )
 }
@@ -71,7 +71,7 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
   return (
     <div className="flex flex-col gap-6">
       <section>
-        <h3 className="text-gold-dim text-[11px] tracking-wider uppercase mb-3.5">답변 자동 생성 버튼</h3>
+        <h3 className="text-gold-dim text-[12px] tracking-wider uppercase mb-3.5">답변 자동 생성 버튼</h3>
         <label className="flex items-start gap-2.5 cursor-pointer">
           <input
             className="mt-0.5 accent-gold-dim cursor-pointer shrink-0"
@@ -80,12 +80,12 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
             onChange={(e) => toggleAnswerAutoFill(e.target.checked)}
           />
           <span className="text-text text-sm font-medium">답변 자동 생성 버튼 활성화</span>
-          <span className="inline text-[11px] text-text-dim ml-2">추가 질문 답변 화면마다 추론 모델로 답변 초안을 생성하는 버튼 표시 (음성 답변에서는 답변만 채우고 다음 단계로 자동 진행하지 않음)</span>
+          <span className="inline text-[12px] text-text-dim ml-2">추가 질문 답변 화면마다 추론 모델로 답변 초안을 생성하는 버튼 표시 (음성 답변에서는 답변만 채우고 다음 단계로 자동 진행하지 않음)</span>
         </label>
       </section>
 
       <section>
-        <h3 className="text-gold-dim text-[11px] tracking-wider uppercase mb-3.5">디버그</h3>
+        <h3 className="text-gold-dim text-[12px] tracking-wider uppercase mb-3.5">디버그</h3>
         <label className="flex items-start gap-2.5 cursor-pointer mb-2">
           <input
             className="mt-0.5 accent-running cursor-pointer shrink-0"
@@ -94,7 +94,7 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
             onChange={(e) => toggleAutoAnswer(e.target.checked)}
           />
           <span className="text-running text-sm font-medium">답변 자동 생성</span>
-          <span className="inline text-[11px] text-text-dim ml-2">추가 질문에 LLM이 자동으로 답변 채움</span>
+          <span className="inline text-[12px] text-text-dim ml-2">추가 질문에 LLM이 자동으로 답변 채움</span>
         </label>
         <label className="flex items-start gap-2.5 cursor-pointer">
           <input
@@ -104,12 +104,12 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
             onChange={(e) => toggleDummyImage(e.target.checked)}
           />
           <span className="text-running text-sm font-medium">더미 이미지 사용</span>
-          <span className="inline text-[11px] text-text-dim ml-2">이미지 API 호출 건너뜀 → sample 이미지 반환</span>
+          <span className="inline text-[12px] text-text-dim ml-2">이미지 API 호출 건너뜀 → sample 이미지 반환</span>
         </label>
       </section>
 
       <section>
-        <h3 className="text-gold-dim text-[11px] tracking-wider uppercase mb-3.5">API 키</h3>
+        <h3 className="text-gold-dim text-[12px] tracking-wider uppercase mb-3.5">API 키</h3>
         <KeyInput label="OpenAI" value={keys.openai} onChange={(v) => onKeys({ ...keys, openai: v })} />
         <KeyInput label="Anthropic" value={keys.anthropic} onChange={(v) => onKeys({ ...keys, anthropic: v })} hint="※ 브라우저 CORS 제한 있을 수 있음" />
         <KeyInput label="Google AI Studio" value={keys.google} onChange={(v) => onKeys({ ...keys, google: v })} hint="무료 티어 사용 가능" />
@@ -130,7 +130,7 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
       </section>
 
       <section>
-        <h3 className="text-gold-dim text-[11px] tracking-wider uppercase mb-3.5">모델 선택</h3>
+        <h3 className="text-gold-dim text-[12px] tracking-wider uppercase mb-3.5">모델 선택</h3>
 
         <div className="mb-3">
           <label className={groupLabelCls}>LLM (본문 다듬기)</label>
@@ -221,7 +221,7 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
       </section>
 
       <section>
-        <h3 className="text-gold-dim text-[11px] tracking-wider uppercase mb-3.5">API 테스트</h3>
+        <h3 className="text-gold-dim text-[12px] tracking-wider uppercase mb-3.5">API 테스트</h3>
         <ApiTest keys={keys} config={config} />
       </section>
     </div>
