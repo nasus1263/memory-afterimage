@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
+import { speakText } from '../services/promptSpeech'
 import { VoiceZone } from './VoiceZone'
 
 interface Props {
+  apiKey?: string
   onComplete: (text: string) => void
   onListeningChange?: (listening: boolean) => void
 }
@@ -11,7 +13,7 @@ type Phase = 'speaking' | 'listening'
 
 const PROMPT_TEXT = '기억하고 싶은 여행의 순간을 들려주세요'
 
-export function VoiceInput({ onComplete, onListeningChange }: Props) {
+export function VoiceInput({ apiKey, onComplete, onListeningChange }: Props) {
   const [phase, setPhase] = useState<Phase>('speaking')
   const startedRef = useRef(false)
 
@@ -22,19 +24,9 @@ export function VoiceInput({ onComplete, onListeningChange }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
-  function speak(text: string, onEnd: () => void) {
-    if (!('speechSynthesis' in window)) { onEnd(); return }
-    window.speechSynthesis.cancel()
-    const utter = new SpeechSynthesisUtterance(text)
-    utter.lang = 'ko-KR'
-    utter.onend = onEnd
-    utter.onerror = onEnd
-    window.speechSynthesis.speak(utter)
-  }
-
   function startFlow() {
     setPhase('speaking')
-    speak(PROMPT_TEXT, () => {
+    speakText(PROMPT_TEXT, apiKey, () => {
       if (rec.unsupported) return
       setPhase('listening')
       rec.start()

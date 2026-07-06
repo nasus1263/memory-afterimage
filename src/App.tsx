@@ -443,7 +443,7 @@ export default function App() {
 
             {inputMode === 'voice' ? (
               <>
-                <VoiceInput onComplete={goToChat} onListeningChange={setVoiceListening} />
+                <VoiceInput apiKey={keys.elevenlabs} onComplete={goToChat} onListeningChange={setVoiceListening} />
                 <div className="divider">또는</div>
                 <button className="ghost-link mx-auto block" onClick={() => setInputMode('text')}>
                   텍스트로 입력하기

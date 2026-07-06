@@ -4,6 +4,7 @@ import { summarizeChat } from '../services/llm'
 import { isAutoAnswerMode } from '../services/debug'
 import { useQuestions } from '../hooks/useQuestions'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
+import { speakText, stopSpeaking } from '../services/promptSpeech'
 import { VoiceZone } from './VoiceZone'
 
 interface Props {
@@ -35,13 +36,7 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
   }
 
   function speak(text: string, onEnd: () => void) {
-    if (!('speechSynthesis' in window)) { onEnd(); return }
-    window.speechSynthesis.cancel()
-    const utter = new SpeechSynthesisUtterance(stripEmoji(text))
-    utter.lang = 'ko-KR'
-    utter.onend = onEnd
-    utter.onerror = onEnd
-    window.speechSynthesis.speak(utter)
+    speakText(stripEmoji(text), keys.elevenlabs, onEnd)
   }
 
   function askQuestion(i: number) {
@@ -73,7 +68,7 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
 
   function selectChoice(choiceIndex: number) {
     const answer = choices[currentIndex]?.[choiceIndex] ?? ''
-    window.speechSynthesis.cancel()
+    stopSpeaking()
     rec.stop()
     commitAnswer(answer)
   }
