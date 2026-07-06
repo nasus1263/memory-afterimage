@@ -1,10 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
+import type { ApiKeys, ModelConfig } from '../types'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
 import { speakText } from '../services/promptSpeech'
+import { generateSingleAnswer } from '../services/llm'
+import { isAnswerAutoFillEnabled } from '../store/settings'
+import { useAlert } from '../hooks/useAlert'
+import { SparkleIcon } from './icons'
 import { VoiceZone } from './VoiceZone'
 
 interface Props {
   apiKey?: string
+  keys: ApiKeys
+  config: ModelConfig
   onComplete: (text: string) => void
   onListeningChange?: (listening: boolean) => void
 }
@@ -40,11 +47,14 @@ function ContinueIcon() {
   )
 }
 
-export function VoiceInput({ apiKey, onComplete, onListeningChange }: Props) {
+export function VoiceInput({ apiKey, keys, config, onComplete, onListeningChange }: Props) {
   const [phase, setPhase] = useState<Phase>('speaking')
+  const [answerOverride, setAnswerOverride] = useState<string | null>(null)
+  const [generatingAnswer, setGeneratingAnswer] = useState(false)
   const startedRef = useRef(false)
 
   const rec = useSpeechRecognition()
+  const { showAlert } = useAlert()
 
   useEffect(() => {
     onListeningChange?.(phase === 'listening')
@@ -68,19 +78,35 @@ export function VoiceInput({ apiKey, onComplete, onListeningChange }: Props) {
   }, [])
 
   function continueToNext() {
-    const text = rec.finalText.trim()
+    const text = (answerOverride ?? rec.finalText).trim()
     rec.stop()
     onComplete(text)
   }
 
   function retryRecording() {
+    setAnswerOverride(null)
     rec.stop()
     rec.start()
   }
 
   function replayPrompt() {
+    setAnswerOverride(null)
     if (phase === 'listening') rec.stop()
     startFlow()
+  }
+
+  async function autoFillAnswer() {
+    if (generatingAnswer) return
+    setGeneratingAnswer(true)
+    try {
+      const answer = await generateSingleAnswer('', PROMPT_TEXT, config, keys)
+      setAnswerOverride(answer)
+    } catch (e: any) {
+      showAlert('답변을 자동으로 만들지 못했어요. 다시 시도해주세요.')
+      console.error('[VoiceInput] 답변 자동 생성 실패', e)
+    } finally {
+      setGeneratingAnswer(false)
+    }
   }
 
   return (
@@ -96,8 +122,11 @@ export function VoiceInput({ apiKey, onComplete, onListeningChange }: Props) {
 
       {!rec.unsupported && (
         <div className={`live-transcript${phase !== 'listening' ? ' is-disabled' : ''}`} aria-live="polite">
-          {phase === 'listening' && rec.finalText}
-          {phase === 'listening' && rec.interimText && <span className="interim">{rec.interimText}</span>}
+          {phase === 'listening' && answerOverride == null && rec.finalText}
+          {phase === 'listening' && answerOverride == null && rec.interimText && (
+            <span className="interim">{rec.interimText}</span>
+          )}
+          {phase === 'listening' && answerOverride}
         </div>
       )}
 
@@ -111,11 +140,22 @@ export function VoiceInput({ apiKey, onComplete, onListeningChange }: Props) {
             <RetryIcon />
             다시 시도하기
           </button>
+          {isAnswerAutoFillEnabled() && (
+            <button
+              type="button"
+              className="voice-answer-autofill-button"
+              disabled={phase !== 'listening' || generatingAnswer}
+              onClick={autoFillAnswer}
+            >
+              <SparkleIcon className={generatingAnswer ? 'animate-spin' : ''} />
+              자동 생성
+            </button>
+          )}
           <button
             className="retry-record-button"
             type="button"
             onClick={continueToNext}
-            disabled={phase !== 'listening' || !rec.finalText.trim()}
+            disabled={phase !== 'listening' || !(answerOverride ?? rec.finalText).trim()}
           >
             <ContinueIcon />
             계속하기
