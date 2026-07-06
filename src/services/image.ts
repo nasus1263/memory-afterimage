@@ -125,7 +125,7 @@ async function imageNvidia(prompt: string, _model: string, key: string, onProgre
       prompt,
       mode: 'base',
       cfg_scale: 5,
-      width: 1344,
+      width: 768,
       height: 768,
       samples: 1,
       seed: 0,
