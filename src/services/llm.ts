@@ -8,6 +8,9 @@ The user will describe a travel memory. You must output JSON with exactly these 
   "imagePrompt": "English image generation prompt (cinematic, painterly, detailed, evocative — describe the scene as idealized memory, 100-150 words)",
   "audioKeyword": "waves" // exactly 1 single English ambient sound word, no phrases (e.g. "waves", "rain", "cicadas")
 }
+CRITICAL: "refinedText" MUST be written in Korean (한국어) — never in English or any other language,
+regardless of the input language. It is narration spoken aloud in Korean by a Korean TTS voice; English
+text there breaks the voice. Only "imagePrompt" and "audioKeyword" are in English.
 Output ONLY the JSON, no markdown, no explanation.`
 
 const KEYWORD_SYSTEM_PROMPT = `You are a creative AI for an immersive memory art installation.
