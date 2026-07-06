@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { listMemories, deleteMemory, type MemoryRecord } from '../services/memories'
+import { KakaoTalkIcon } from './icons'
 
 export function Memories() {
   const [items, setItems] = useState<MemoryRecord[] | null>(null)
@@ -34,12 +35,22 @@ export function Memories() {
           <div className="p-3.5 flex flex-col gap-1.5">
             <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] text-text-dim">{new Date(item.createdAt).toLocaleString('ko-KR')}</span>
-              <button
-                className="bg-transparent border border-border text-text-dim py-1 px-2.5 rounded text-xs cursor-pointer transition-colors hover:border-error hover:text-error"
-                onClick={() => handleDelete(item.id)}
-              >
-                삭제
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  className="bg-transparent border-none p-0.5 cursor-pointer leading-none"
+                  aria-label="카카오톡 공유"
+                  onClick={() => alert('카카오톡 공유 기능은 준비 중입니다.')}
+                >
+                  <KakaoTalkIcon className="w-[18px] h-[18px]" />
+                </button>
+                <button
+                  className="bg-transparent border border-border text-text-dim py-1 px-2.5 rounded text-xs cursor-pointer transition-colors hover:border-error hover:text-error"
+                  onClick={() => handleDelete(item.id)}
+                >
+                  삭제
+                </button>
+              </div>
             </div>
             <p className="text-sm text-text-dim">{item.text}</p>
           </div>

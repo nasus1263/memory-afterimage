@@ -27,6 +27,18 @@ export function InstagramIcon({ className }: IconProps) {
   )
 }
 
+export function KakaoTalkIcon({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" role="img" aria-label="카카오톡">
+      <circle cx="12" cy="12" r="12" fill="#FEE500" />
+      <path
+        fill="#391B1B"
+        d="M12 5.5c-4.14 0-7.5 2.62-7.5 5.85 0 2.08 1.4 3.9 3.5 4.94-.15.55-.56 2.03-.64 2.35-.1.4.15.4.31.29.13-.09 2.07-1.4 2.9-1.97.45.06.92.1 1.43.1 4.14 0 7.5-2.62 7.5-5.85S16.14 5.5 12 5.5z"
+      />
+    </svg>
+  )
+}
+
 export function TikTokIcon({ className }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="TikTok">

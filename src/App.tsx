@@ -13,6 +13,7 @@ import { saveMemory } from './services/memories'
 import { SECONDS_PER_IMAGE } from './services/composer'
 import { loadProgress, saveProgress, clearProgress, type SessionProgress } from './store/progress'
 import { NewMark, InputMark, ChatMark, ProcessMark, SettingsMark, MemoriesMark } from './components/watermarks'
+import { KakaoTalkIcon } from './components/icons'
 
 const ROUTE_WATERMARKS: Record<string, () => React.JSX.Element> = {
   '/new': NewMark,
@@ -354,6 +355,14 @@ export default function App() {
                   <a className="image-save-button" href={finalUrl} download="기억의_잔상.mp4">
                     ↓ 다운로드 (MP4)
                   </a>
+                  <button
+                    type="button"
+                    className="kakao-share-button"
+                    onClick={() => alert('카카오톡 공유 기능은 준비 중입니다.')}
+                  >
+                    <KakaoTalkIcon className="kakao-share-icon" />
+                    카카오톡 공유
+                  </button>
                   <button className="result-reset-button" onClick={handleReset}>
                     처음으로 돌아가기
                   </button>
