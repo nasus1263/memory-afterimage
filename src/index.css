@@ -124,7 +124,7 @@ button:disabled {
   width: min(var(--max), calc(100% - 68px));
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 280px 1fr 280px;
+  grid-template-columns: 300px 1fr 300px;
   align-items: center;
   gap: 20px;
 }
@@ -154,6 +154,7 @@ button:disabled {
   letter-spacing: -0.03em;
   font-weight: 700;
   color: var(--color-text);
+  white-space: nowrap;
 }
 
 .brand-subtitle {
@@ -161,6 +162,7 @@ button:disabled {
   font-size: 18px;
   color: var(--color-text-dim);
   letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
 .nav {
