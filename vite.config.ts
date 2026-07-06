@@ -37,6 +37,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/nvidia-genai/, ''),
       },
+      // GPT-SoVITS 로컬 보이스 클로닝 서버(api.py, :9880) — CORS 헤더 미제공이라 프록시 경유
+      '/gpt-sovits': {
+        target: 'http://127.0.0.1:9880',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/gpt-sovits/, ''),
+      },
     },
   },
   optimizeDeps: {

@@ -12,7 +12,7 @@ export interface ChatQA {
 }
 
 export type LLMProvider = 'google' | 'nvidia'
-export type TTSProvider = 'local-kokoro' | 'google' | 'elevenlabs'
+export type TTSProvider = 'local-kokoro' | 'google' | 'elevenlabs' | 'gpt-sovits'
 export type ImageProvider = 'google' | 'nvidia' | 'restapi'
 export type AudioProvider = 'freesound'
 
