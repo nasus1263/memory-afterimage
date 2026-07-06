@@ -187,12 +187,6 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
         />
       ) : null}
 
-      {phase !== 'submitting' && (
-        <button type="button" className="ghost-link mx-auto block" onClick={replayQuestion}>
-          다시 듣기
-        </button>
-      )}
-
       {!rec.unsupported && phase !== 'submitting' && (
         <div className={`live-transcript${phase !== 'listening' ? ' is-disabled' : ''}`} aria-live="polite">
           {phase === 'listening' && answerOverride == null && rec.finalText}
@@ -241,6 +235,7 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
 
       {phase !== 'submitting' && (
         <div className="retry-popup-actions">
+          <button className="retry-close-button" type="button" onClick={replayQuestion}>다시 듣기</button>
           {!rec.unsupported && (
             <button className="retry-close-button" type="button" onClick={retryRecording} disabled={phase !== 'listening'}>다시 시도하기</button>
           )}
