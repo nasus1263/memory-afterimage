@@ -94,15 +94,6 @@ export function VoiceInput({ apiKey, onComplete, onListeningChange }: Props) {
         }
       />
 
-      {!rec.unsupported && phase !== 'listening' && (
-        <div className="flex justify-center mt-3.5">
-          <button className="retry-close-button" type="button" onClick={replayPrompt}>
-            <ReplayIcon />
-            다시 듣기
-          </button>
-        </div>
-      )}
-
       {!rec.unsupported && (
         <div className={`live-transcript${phase !== 'listening' ? ' is-disabled' : ''}`} aria-live="polite">
           {phase === 'listening' && (
@@ -114,13 +105,13 @@ export function VoiceInput({ apiKey, onComplete, onListeningChange }: Props) {
         </div>
       )}
 
-      {phase === 'listening' && (
+      {!rec.unsupported && (
         <div className="retry-popup-actions">
           <button className="retry-close-button" type="button" onClick={replayPrompt}>
             <ReplayIcon />
             다시 듣기
           </button>
-          <button className="retry-close-button" type="button" onClick={retryRecording}>
+          <button className="retry-close-button" type="button" onClick={retryRecording} disabled={phase !== 'listening'}>
             <RetryIcon />
             다시 시도하기
           </button>
@@ -128,7 +119,7 @@ export function VoiceInput({ apiKey, onComplete, onListeningChange }: Props) {
             className="retry-record-button"
             type="button"
             onClick={continueToNext}
-            disabled={!rec.finalText.trim()}
+            disabled={phase !== 'listening' || !rec.finalText.trim()}
           >
             <ContinueIcon />
             계속하기
