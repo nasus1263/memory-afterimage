@@ -104,8 +104,6 @@ export function Pipeline({
         setMsg('refine', 'API 요청 전송...')
         const llmResult = await refineMemo(userText, config, keys)
         if (cancelled) return
-        console.log('[DEBUG refine] llmResult:', llmResult)
-        console.log('[DEBUG refine] imagePrompt:', JSON.stringify(llmResult.imagePrompt))
         setMsg('refine', `완료 (${llmResult.refinedText.length}자)`)
         set(setState, { ...stageStatus({ refine: 'done' }), llmResult })
         markDone('refine')
@@ -145,7 +143,6 @@ export function Pipeline({
           const imagePrompts = isDummyImageMode()
             ? new Array(aiCount).fill(llmResult.imagePrompt)
             : await generateImagePrompts(llmResult.imagePrompt, aiCount, config, keys)
-          console.log('[DEBUG image] 변형 프롬프트 배열:', imagePrompts)
           set(setState, { imageMessages: new Array(aiCount).fill('대기 중...') })
           const generatedBlobs = await generateImages(imagePrompts, config, keys, (i, msg) => {
             setState((prev) => {
