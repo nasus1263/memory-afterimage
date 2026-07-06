@@ -110,15 +110,10 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
 
       <section>
         <h3 className="text-gold-dim text-[12px] tracking-wider uppercase mb-3.5">API 키</h3>
-        <KeyInput label="OpenAI" value={keys.openai} onChange={(v) => onKeys({ ...keys, openai: v })} />
-        <KeyInput label="Anthropic" value={keys.anthropic} onChange={(v) => onKeys({ ...keys, anthropic: v })} hint="※ 브라우저 CORS 제한 있을 수 있음" />
         <KeyInput label="Google AI Studio" value={keys.google} onChange={(v) => onKeys({ ...keys, google: v })} hint="무료 티어 사용 가능" />
         <KeyInput label="NVIDIA NIM (nvapi-...)" value={keys.nvidia} onChange={(v) => onKeys({ ...keys, nvidia: v })} hint="✓ 무료 1000크레딧 — build.nvidia.com 무료 계정 후 API Keys 탭" />
         <KeyInput label="ElevenLabs" value={keys.elevenlabs} onChange={(v) => onKeys({ ...keys, elevenlabs: v })} hint="✓ 무료 10K chars/월 — elevenlabs.io → Profile → API Key" />
-        <KeyInput label="fal.ai" value={keys.fal} onChange={(v) => onKeys({ ...keys, fal: v })} hint="$20 가입 크레딧 (비즈니스 이메일)" />
-        <KeyInput label="HuggingFace" value={keys.huggingface} onChange={(v) => onKeys({ ...keys, huggingface: v })} hint="✓ 무료 Serverless Inference API (계정 없이도 가능)" />
         <KeyInput label="Freesound" value={keys.freesound} onChange={(v) => onKeys({ ...keys, freesound: v })} hint="✓ 무료 — freesound.org 계정 후 /apiv2/apply 에서 키 발급" />
-        <KeyInput label="Jamendo" value={keys.jamendo} onChange={(v) => onKeys({ ...keys, jamendo: v })} hint="✓ 무료 — developers.jamendo.com 에서 client_id 발급" />
         <KeyInput
           label="REST API 이미지 서버 주소"
           value={keys.restapi}
@@ -215,7 +210,6 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
             onChange={(e) => onConfig({ ...config, audio: { provider: e.target.value as any } })}
           >
             <option value="freesound">Freesound ✓무료 (freesound.org)</option>
-            <option value="jamendo">Jamendo ✓무료 (developers.jamendo.com)</option>
           </select>
         </div>
       </section>

@@ -1,12 +1,4 @@
 export const LLM_MODELS = {
-  openai: [
-    { id: 'gpt-4o', label: 'GPT-4o' },
-    { id: 'gpt-4o-mini', label: 'GPT-4o mini (저렴)' },
-  ],
-  anthropic: [
-    { id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
-    { id: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5 (저렴)' },
-  ],
   google: [
     { id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash ✓무료 15RPM/1500RPD' },
     { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash ✓무료 10RPM/1500RPD' },
@@ -28,10 +20,6 @@ export const TTS_MODELS = {
   'local-kokoro': [
     { id: 'local', label: '브라우저 Web Speech API ✓무료·오프라인 (녹음 불가 — 음성은 스피커 재생)' },
   ],
-  openai: [
-    { id: 'tts-1', label: 'TTS-1 (빠름)' },
-    { id: 'tts-1-hd', label: 'TTS-1 HD (고품질)' },
-  ],
   google: [
     { id: 'gemini-3.1-flash-tts-preview', label: 'Gemini 3.1 Flash TTS ✓무료(preview)' },
     { id: 'gemini-2.5-flash-preview-tts', label: 'Gemini 2.5 Flash TTS 유료 $0.30/M' },
@@ -45,7 +33,6 @@ export const TTS_MODELS = {
 }
 
 export const TTS_VOICES: Record<string, string[]> = {
-  openai: ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'],
   google: ['Aoede', 'Charon', 'Fenrir', 'Kore', 'Puck'],
   'local-kokoro': [],
   // ElevenLabs voice IDs — elevenslabs.io/voice-library 에서 추가 가능
@@ -57,23 +44,11 @@ export const TTS_VOICES: Record<string, string[]> = {
 }
 
 export const IMAGE_MODELS = {
-  openai: [
-    { id: 'dall-e-3', label: 'DALL-E 3' },
-  ],
   google: [
     // Imagen 4 deprecated 2026-06-24 → 대체: Gemini image generation
     { id: 'gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash Image ✓무료(free tier)' },
     { id: 'imagen-4-fast', label: 'Imagen 4 Fast ⚠deprecated 2026-06-24 / 2 IPM' },
     { id: 'imagen-4-ultra', label: 'Imagen 4 Ultra ⚠deprecated 2026-06-24' },
-  ],
-  huggingface: [
-    { id: 'black-forest-labs/FLUX.1-schnell', label: 'FLUX.1 Schnell ✓무료(rate-limited)' },
-    { id: 'stabilityai/stable-diffusion-xl-base-1.0', label: 'SDXL ✓무료(rate-limited)' },
-  ],
-  fal: [
-    { id: 'fal-ai/flux-pro', label: 'FLUX Pro ($20 크레딧)' },
-    { id: 'fal-ai/flux/dev', label: 'FLUX Dev ($20 크레딧)' },
-    { id: 'fal-ai/flux/schnell', label: 'FLUX Schnell ($20 크레딧)' },
   ],
   // NVIDIA NIM: integrate.api.nvidia.com/v1/images/generations, OpenAI-compatible
   // 무료: 1000 크레딧 / 40 RPM (build.nvidia.com 무료 계정)

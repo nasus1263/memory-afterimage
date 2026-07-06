@@ -5,9 +5,8 @@ const KEYS_KEY = 'memory_afterimage_keys'
 const CONFIG_KEY = 'memory_afterimage_config'
 
 const DEFAULT_KEYS: ApiKeys = {
-  openai: '', anthropic: '', google: '', nvidia: '', elevenlabs: '',
-  fal: '', huggingface: '',
-  freesound: '', jamendo: '',
+  google: '', nvidia: '', elevenlabs: '',
+  freesound: '',
   restapi: '',
 }
 

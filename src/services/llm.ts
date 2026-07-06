@@ -1,5 +1,5 @@
 import type { ApiKeys, ChatQA, LLMResult, ModelConfig } from '../types'
-import { OPENAI_BASE, ANTHROPIC_BASE, GOOGLE_BASE, NVIDIA_LLM_BASE } from '../config/endpoints'
+import { GOOGLE_BASE, NVIDIA_LLM_BASE } from '../config/endpoints'
 
 const SYSTEM_PROMPT = `You are a creative AI for an immersive memory art installation.
 The user will describe a travel memory. You must output JSON with exactly these fields:
@@ -88,23 +88,6 @@ function extractJSON<T>(raw: string): T {
   }
 }
 
-async function callOpenAI(systemPrompt: string, text: string, model: string, key: string): Promise<string> {
-  const res = await fetch(`${OPENAI_BASE}/chat/completions`, {
-    method: 'POST',
-    signal: makeSignal(),
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }],
-      response_format: { type: 'json_object' },
-      max_tokens: 1024,
-    }),
-  })
-  if (!res.ok) throw new Error(`OpenAI LLM ${res.status}: ${await res.text()}`)
-  const data = await res.json()
-  return data.choices[0].message.content
-}
-
 async function callNvidia(systemPrompt: string, text: string, model: string, key: string, baseUrl: string): Promise<string> {
   // NVIDIA NIM: response_format not universally supported; rely on system prompt + extractJSON
   const res = await fetch(`${baseUrl}/chat/completions`, {
@@ -121,27 +104,6 @@ async function callNvidia(systemPrompt: string, text: string, model: string, key
   if (!res.ok) throw new Error(`NVIDIA LLM ${res.status}: ${await res.text()}`)
   const data = await res.json()
   return data.choices[0].message.content
-}
-
-async function callAnthropic(systemPrompt: string, text: string, model: string, key: string): Promise<string> {
-  const res = await fetch(`${ANTHROPIC_BASE}/messages`, {
-    method: 'POST',
-    signal: makeSignal(),
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': key,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: text }],
-    }),
-  })
-  if (!res.ok) throw new Error(`Anthropic LLM ${res.status}: ${await res.text()}`)
-  const data = await res.json()
-  return data.content[0].text
 }
 
 async function callGoogle(systemPrompt: string, text: string, model: string, key: string): Promise<string> {
@@ -170,9 +132,7 @@ async function callProvider(
   keys: ApiKeys
 ): Promise<string> {
   const { provider, model } = config.llm
-  if (provider === 'openai') return callOpenAI(systemPrompt, userText, model, keys.openai)
   if (provider === 'nvidia') return callNvidia(systemPrompt, userText, model, keys.nvidia, NVIDIA_LLM_BASE)
-  if (provider === 'anthropic') return callAnthropic(systemPrompt, userText, model, keys.anthropic)
   if (provider === 'google') return callGoogle(systemPrompt, userText, model, keys.google)
   throw new Error(`Unknown LLM provider: ${provider}`)
 }

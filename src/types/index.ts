@@ -11,21 +11,16 @@ export interface ChatQA {
   answer: string
 }
 
-export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'nvidia'
-export type TTSProvider = 'local-kokoro' | 'openai' | 'google' | 'elevenlabs'
-export type ImageProvider = 'openai' | 'google' | 'huggingface' | 'fal' | 'nvidia' | 'restapi'
-export type AudioProvider = 'freesound' | 'jamendo'
+export type LLMProvider = 'google' | 'nvidia'
+export type TTSProvider = 'local-kokoro' | 'google' | 'elevenlabs'
+export type ImageProvider = 'google' | 'nvidia' | 'restapi'
+export type AudioProvider = 'freesound'
 
 export interface ApiKeys {
-  openai: string
-  anthropic: string
   google: string
   nvidia: string
   elevenlabs: string
-  fal: string
-  huggingface: string
   freesound: string
-  jamendo: string
   restapi: string
 }
 

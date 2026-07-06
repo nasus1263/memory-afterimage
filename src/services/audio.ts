@@ -1,5 +1,5 @@
 import type { ApiKeys, ModelConfig } from '../types'
-import { FREESOUND_BASE, JAMENDO_BASE } from '../config/endpoints'
+import { FREESOUND_BASE } from '../config/endpoints'
 import { refineAudioKeyword } from './llm'
 
 async function searchFreesound(keyword: string, key: string): Promise<Blob> {
@@ -19,24 +19,6 @@ async function searchFreesound(keyword: string, key: string): Promise<Blob> {
   return audioRes.blob()
 }
 
-// Jamendo: free music API with ambient/soundtrack tracks
-async function searchJamendo(keyword: string, key: string): Promise<Blob> {
-  const res = await fetch(
-    `${JAMENDO_BASE}/tracks/?client_id=${key}&format=json&limit=5&tags=${encodeURIComponent(keyword)}&audioformat=mp32&include=musicinfo&groupby=artist_id`
-  )
-  if (!res.ok) throw new Error(`Jamendo search error: ${res.status}`)
-  const data = await res.json()
-  if (!data.results?.length) throw new Error('No Jamendo results')
-
-  const track = data.results[0]
-  const audioUrl = track.audiodownload ?? track.audio
-  if (!audioUrl) throw new Error('No Jamendo audio URL')
-
-  const audioRes = await fetch(audioUrl)
-  if (!audioRes.ok) throw new Error(`Jamendo download error: ${audioRes.status}`)
-  return audioRes.blob()
-}
-
 export async function fetchAmbientAudio(
   keyword: string,
   config: ModelConfig,
@@ -50,13 +32,6 @@ export async function fetchAmbientAudio(
       if (!keys.freesound) throw new Error('Freesound API key missing')
       onProgress?.(`Freesound 검색... (키워드: ${keyword})`)
       const blob = await searchFreesound(keyword, keys.freesound)
-      onProgress?.('오디오 다운로드 완료')
-      return blob
-    }
-    if (provider === 'jamendo') {
-      if (!keys.jamendo) throw new Error('Jamendo client_id missing')
-      onProgress?.(`Jamendo 검색... (키워드: ${keyword})`)
-      const blob = await searchJamendo(keyword, keys.jamendo)
       onProgress?.('오디오 다운로드 완료')
       return blob
     }

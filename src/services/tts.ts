@@ -1,5 +1,5 @@
 import type { ApiKeys, ModelConfig, TTSAlignment } from '../types'
-import { OPENAI_BASE, GOOGLE_BASE, ELEVENLABS_BASE } from '../config/endpoints'
+import { GOOGLE_BASE, ELEVENLABS_BASE } from '../config/endpoints'
 
 export interface TTSResult {
   blob: Blob
@@ -20,18 +20,6 @@ async function getBlobDuration(blob: Blob): Promise<number> {
       resolve(30)
     })
   })
-}
-
-async function ttsOpenAI(text: string, model: string, voice: string, key: string): Promise<TTSResult> {
-  const res = await fetch(`${OPENAI_BASE}/audio/speech`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-    body: JSON.stringify({ model, input: text, voice, response_format: 'mp3' }),
-  })
-  if (!res.ok) throw new Error(`OpenAI TTS error: ${res.status}`)
-  const blob = await res.blob()
-  const duration = await getBlobDuration(blob)
-  return { blob, duration }
 }
 
 async function ttsGoogle(text: string, model: string, voice: string, key: string): Promise<TTSResult> {
@@ -119,7 +107,6 @@ export async function generateTTS(
   keys: ApiKeys
 ): Promise<TTSResult> {
   const { provider, model, voice } = config.tts
-  if (provider === 'openai') return ttsOpenAI(text, model, voice, keys.openai)
   if (provider === 'google') return ttsGoogle(text, model, voice, keys.google)
   if (provider === 'elevenlabs') return ttsElevenLabs(text, model, voice, keys.elevenlabs)
   if (provider === 'local-kokoro') return ttsLocal(text)
