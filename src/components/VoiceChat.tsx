@@ -253,7 +253,7 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
             className="retry-record-button"
             type="button"
             onClick={continueToNext}
-            disabled={phase === 'manual' && !manualText.trim()}
+            disabled={phase === 'manual' ? !manualText.trim() : !(answerOverride ?? rec.finalText).trim()}
           >
             계속하기
           </button>
