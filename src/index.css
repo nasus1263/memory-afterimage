@@ -1090,6 +1090,11 @@ main {
   border-color: var(--color-gold-dim);
 }
 
+.chat-answer-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .chat-answer-row {
   display: flex;
   align-items: center;

@@ -33,9 +33,14 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
 
   const answersRef = useRef<string[]>([])
   const startedRef = useRef(false)
+  const manualInputRef = useRef<HTMLInputElement>(null)
 
   const rec = useSpeechRecognition()
   const { showAlert } = useAlert()
+
+  useEffect(() => {
+    if (phase === 'manual') manualInputRef.current?.focus()
+  }, [phase])
 
   function stripEmoji(text: string): string {
     return text.replace(EMOJI_RE, '').replace(/\s+/g, ' ').trim()
@@ -182,13 +187,13 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
         />
       ) : null}
 
-      {(phase === 'listening' || phase === 'manual') && (
+      {phase !== 'submitting' && (
         <button type="button" className="ghost-link mx-auto block" onClick={replayQuestion}>
           다시 듣기
         </button>
       )}
 
-      {(phase === 'speaking' || phase === 'listening') && (
+      {!rec.unsupported && phase !== 'submitting' && (
         <div className={`live-transcript${phase !== 'listening' ? ' is-disabled' : ''}`} aria-live="polite">
           {phase === 'listening' && answerOverride == null && rec.finalText}
           {phase === 'listening' && answerOverride == null && rec.interimText && (
@@ -208,22 +213,23 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
         </div>
       )}
 
-      {phase === 'manual' && (
+      {rec.unsupported && phase !== 'submitting' && (
         <div className="chat-answer-row">
           <input
+            ref={manualInputRef}
             className="chat-answer-input"
             type="text"
             value={manualText}
             onChange={(e) => setManualText(e.target.value)}
             placeholder="답변을 입력하세요"
-            autoFocus
+            disabled={phase !== 'manual'}
           />
           {isAnswerAutoFillEnabled() && (
             <button
               type="button"
               className="voice-answer-autofill-button"
               aria-label="답변 자동 생성"
-              disabled={generatingAnswer}
+              disabled={generatingAnswer || phase !== 'manual'}
               onClick={autoFillAnswer}
             >
               <SparkleIcon className={generatingAnswer ? 'animate-spin' : ''} />
@@ -233,16 +239,16 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
         </div>
       )}
 
-      {(phase === 'listening' || phase === 'manual') && (
+      {phase !== 'submitting' && (
         <div className="retry-popup-actions">
-          {phase === 'listening' && (
-            <button className="retry-close-button" type="button" onClick={retryRecording}>다시 시도하기</button>
+          {!rec.unsupported && (
+            <button className="retry-close-button" type="button" onClick={retryRecording} disabled={phase !== 'listening'}>다시 시도하기</button>
           )}
-          {phase === 'listening' && isAnswerAutoFillEnabled() && (
+          {!rec.unsupported && isAnswerAutoFillEnabled() && (
             <button
               type="button"
               className="voice-answer-autofill-button"
-              disabled={generatingAnswer}
+              disabled={generatingAnswer || phase !== 'listening'}
               onClick={autoFillAnswer}
             >
               <SparkleIcon className={generatingAnswer ? 'animate-spin' : ''} />
@@ -253,7 +259,7 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
             className="retry-record-button"
             type="button"
             onClick={continueToNext}
-            disabled={phase === 'manual' ? !manualText.trim() : !(answerOverride ?? rec.finalText).trim()}
+            disabled={phase === 'manual' ? !manualText.trim() : (phase !== 'listening' || !(answerOverride ?? rec.finalText).trim())}
           >
             계속하기
           </button>
