@@ -605,13 +605,13 @@ main {
 
 .input-card-settings-button {
   position: absolute;
-  top: 22px;
-  right: 24px;
+  top: 18px;
+  right: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1px solid rgba(91, 76, 62, 0.2);
   background: rgba(255, 255, 255, 0.64);
@@ -1191,10 +1191,9 @@ main {
   display: grid;
   place-items: center;
   cursor: pointer;
-  opacity: 0;
-  transform: translateY(6px);
-  pointer-events: none;
-  transition: opacity .18s ease, transform .18s ease, background .18s ease;
+  /* hover로만 보이면 터치 기기·저시력 사용자가 버튼 존재를 알기 어려움 → 항상 노출·항상 클릭 가능 */
+  opacity: 1;
+  transition: background .18s ease;
 }
 
 .fullscreen-image-button svg {
@@ -1205,13 +1204,6 @@ main {
   stroke-width: 2.9;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-
-.result-image-window:hover .fullscreen-image-button,
-.fullscreen-image-button:focus-visible {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
 }
 
 .fullscreen-image-button:hover {
