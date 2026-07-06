@@ -14,6 +14,7 @@ import { SECONDS_PER_IMAGE } from './services/composer'
 import { loadProgress, saveProgress, clearProgress, type SessionProgress } from './store/progress'
 import { NewMark, InputMark, ChatMark, ProcessMark, SettingsMark, MemoriesMark } from './components/watermarks'
 import { KakaoTalkIcon } from './components/icons'
+import { useAlert } from './hooks/useAlert'
 
 const ROUTE_WATERMARKS: Record<string, () => React.JSX.Element> = {
   '/new': NewMark,
@@ -59,6 +60,7 @@ function useRoute() {
 
 export default function App() {
   const { path, navigate } = useRoute()
+  const { showAlert } = useAlert()
   const [keys, setKeys] = useState<ApiKeys>(loadKeys)
   const [config, setConfig] = useState<ModelConfig>(loadConfig)
   const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice')
@@ -139,11 +141,11 @@ export default function App() {
       console.log('[App] finalBlob 생성됨', { size: pipelineState.finalBlob.size, type: pipelineState.finalBlob.type })
       if (pipelineState.finalBlob.size === 0) {
         console.error('[App] finalBlob 크기가 0입니다 (compose 결과물이 비어있음)')
-        alert('영상 생성 실패: 결과 파일 크기가 0입니다. 콘솔을 확인하세요.')
+        showAlert('영상을 만드는 데 문제가 생겼어요. 처음부터 다시 시도해주세요.')
       }
       saveMemory({ text: userText, video: pipelineState.finalBlob, createdAt: Date.now() }).catch((e) => {
         console.error('[App] saveMemory 실패', e)
-        alert(`영상 저장(IndexedDB) 실패: ${e?.message ?? e}`)
+        showAlert('완성된 영상을 저장하지 못했어요. 다시 시도해주세요.')
       })
       clearProgress()
     }
@@ -344,7 +346,7 @@ export default function App() {
                     onError={(e) => {
                       const err = (e.target as HTMLVideoElement).error
                       console.error('[App] 결과 영상 재생 오류', err)
-                      alert(`영상 재생 오류 (code ${err?.code}): ${err?.message || '알 수 없는 오류'}`)
+                      showAlert('영상을 재생할 수 없어요. 다운로드해서 확인해보세요.')
                     }}
                   />
                   <button
@@ -368,7 +370,7 @@ export default function App() {
                   <button
                     type="button"
                     className="kakao-share-button"
-                    onClick={() => alert('카카오톡 공유 기능은 준비 중입니다.')}
+                    onClick={() => showAlert('카카오톡 공유 기능은 곧 추가될 예정이에요.', { tone: 'info' })}
                   >
                     <KakaoTalkIcon className="kakao-share-icon" />
                     카카오톡 공유
@@ -394,7 +396,7 @@ export default function App() {
                     onError={(e) => {
                       const err = (e.target as HTMLVideoElement).error
                       console.error('[App] 미리보기 영상 재생 오류', err)
-                      alert(`영상 재생 오류 (code ${err?.code}): ${err?.message || '알 수 없는 오류'}`)
+                      showAlert('영상을 재생할 수 없어요. 다운로드해서 확인해보세요.')
                     }}
                   />
                 </div>

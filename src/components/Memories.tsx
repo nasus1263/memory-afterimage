@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { listMemories, deleteMemory, type MemoryRecord } from '../services/memories'
 import { KakaoTalkIcon } from './icons'
+import { useAlert } from '../hooks/useAlert'
 
 export function Memories() {
   const [items, setItems] = useState<MemoryRecord[] | null>(null)
+  const { showAlert } = useAlert()
 
   useEffect(() => {
     listMemories().then(setItems)
@@ -40,7 +42,7 @@ export function Memories() {
                   type="button"
                   className="min-w-11 min-h-11 flex items-center justify-center bg-transparent border-none cursor-pointer"
                   aria-label="카카오톡 공유"
-                  onClick={() => alert('카카오톡 공유 기능은 준비 중입니다.')}
+                  onClick={() => showAlert('카카오톡 공유 기능은 곧 추가될 예정이에요.', { tone: 'info' })}
                 >
                   <KakaoTalkIcon className="w-[22px] h-[22px]" />
                 </button>
