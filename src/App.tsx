@@ -86,15 +86,19 @@ export default function App() {
     setUserText(p.userText)
   }
 
-  useEffect(() => {
-    if (path !== '/') return
+  function goHome(replace = false) {
     const progress = loadProgress()
     if (progress) {
       applyProgress(progress)
-      navigate(progress.route, true)
+      navigate(progress.route, replace)
     } else {
-      navigate('/input', true)
+      navigate('/input', replace)
     }
+  }
+
+  useEffect(() => {
+    if (path !== '/') return
+    goHome(true)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path, navigate])
 
@@ -224,7 +228,7 @@ export default function App() {
 
       <header className="topbar">
         <div className="topbar-inner">
-          <button className="brand" onClick={() => navigate('/new')} aria-label="기억의 잔상 홈">
+          <button className="brand" onClick={() => goHome()} aria-label="기억의 잔상 홈">
             <svg className="logo" viewBox="0 0 64 64" fill="none" aria-hidden="true">
               <path d="M10 47L27.5 24.5L38 38L44 30L56 47" stroke="#6F4631" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M21 24.5C21 16.5 27.5 10 35.5 10C41.1 10 46 13.2 48.4 17.9" stroke="#D28A38" strokeWidth="2.2" strokeLinecap="round" />
