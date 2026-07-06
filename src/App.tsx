@@ -12,11 +12,11 @@ import { VoiceChat } from './components/VoiceChat'
 import { saveMemory } from './services/memories'
 import { SECONDS_PER_IMAGE } from './services/composer'
 import { loadProgress, saveProgress, clearProgress, type SessionProgress } from './store/progress'
-import { NewMark, InputMark, ChatMark, ProcessMark, SettingsMark, MemoriesMark } from './components/watermarks'
+import { NewMark, InputMark, ChatMark, ProcessMark, SettingsMark, MemoriesMark, type MarkComponentProps } from './components/watermarks'
 import { KakaoTalkIcon } from './components/icons'
 import { useAlert } from './hooks/useAlert'
 
-const ROUTE_WATERMARKS: Record<string, () => React.JSX.Element> = {
+const ROUTE_WATERMARKS: Record<string, (props: MarkComponentProps) => React.JSX.Element> = {
   '/new': NewMark,
   '/input': InputMark,
   '/chat': ChatMark,
@@ -64,7 +64,6 @@ export default function App() {
   const [keys, setKeys] = useState<ApiKeys>(loadKeys)
   const [config, setConfig] = useState<ModelConfig>(loadConfig)
   const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice')
-  const [voiceListening, setVoiceListening] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const resultVideoRef = useRef<HTMLVideoElement>(null)
   const [userText, setUserText] = useState('')
@@ -190,7 +189,6 @@ export default function App() {
     clearProgress()
     setUserText('')
     setInputMode('voice')
-    setVoiceListening(false)
     setShowPreview(false)
     setPipelineState(IDLE_PIPELINE)
     setComposeProgress(0)
@@ -464,7 +462,7 @@ export default function App() {
 
             {inputMode === 'voice' ? (
               <>
-                <VoiceInput apiKey={keys.elevenlabs} keys={keys} config={config} onComplete={goToChat} onListeningChange={setVoiceListening} />
+                <VoiceInput apiKey={keys.elevenlabs} keys={keys} config={config} onComplete={goToChat} />
                 <div className="divider">또는</div>
                 <button className="ghost-link mx-auto block" onClick={() => setInputMode('text')}>
                   텍스트로 입력하기

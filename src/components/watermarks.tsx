@@ -15,7 +15,7 @@ function Mark({ children, strokeWidth = 0.7, className }: MarkProps) {
   )
 }
 
-type MarkComponentProps = Omit<MarkProps, 'children'>
+export type MarkComponentProps = Omit<MarkProps, 'children'>
 
 export function NewMark(props: MarkComponentProps) {
   return (
