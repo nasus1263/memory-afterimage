@@ -165,10 +165,14 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
         </button>
       )}
 
-      {phase === 'listening' && (
-        <div className="live-transcript" aria-live="polite">
-          {rec.finalText}
-          <span className="interim">{rec.interimText}</span>
+      {(phase === 'speaking' || phase === 'listening') && (
+        <div className={`live-transcript${phase !== 'listening' ? ' is-disabled' : ''}`} aria-live="polite">
+          {phase === 'listening' && (
+            <>
+              {rec.finalText}
+              <span className="interim">{rec.interimText}</span>
+            </>
+          )}
         </div>
       )}
 

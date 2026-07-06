@@ -503,6 +503,10 @@ main {
   color: var(--color-text-dim);
 }
 
+.live-transcript.is-disabled {
+  opacity: 0.55;
+}
+
 .live-transcript .interim {
   color: var(--color-text-dim);
 }

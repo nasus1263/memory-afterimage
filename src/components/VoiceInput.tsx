@@ -103,10 +103,14 @@ export function VoiceInput({ apiKey, onComplete, onListeningChange }: Props) {
         </div>
       )}
 
-      {phase === 'listening' && (
-        <div className="live-transcript" aria-live="polite">
-          {rec.finalText}
-          <span className="interim">{rec.interimText}</span>
+      {!rec.unsupported && (
+        <div className={`live-transcript${phase !== 'listening' ? ' is-disabled' : ''}`} aria-live="polite">
+          {phase === 'listening' && (
+            <>
+              {rec.finalText}
+              <span className="interim">{rec.interimText}</span>
+            </>
+          )}
         </div>
       )}
 
