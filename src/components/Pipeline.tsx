@@ -58,7 +58,6 @@ export function Pipeline({
   userText, keys, config, state, setState, onProgress, composeProgress,
   secondsPerImage, userImages, showCaptions, captionBgColor, captionTextColor, aspectRatio,
 }: Props) {
-  const ran = useRef(false)
   const startTimes = useRef<Partial<Record<Stage, number>>>({})
   const [, forceTick] = useState(0)
 
@@ -70,8 +69,10 @@ export function Pipeline({
   }, [state.compose])
 
   useEffect(() => {
-    if (ran.current) return
-    ran.current = true
+    // StrictMode(dev)는 mount→unmount→remount로 이 effect를 2번 실행한다. useRef 가드는
+    // remount 시 ref가 새로 만들어져 무력하므로, cleanup에서 취소 플래그를 세워 첫 실행을 중단시킨다.
+    // 이렇게 하면 두 번째(실제) 실행만 파이프라인을 완주해 영상이 1개만 생성된다.
+    let cancelled = false
 
     const setMsg = makeSetMsg(setState)
 
@@ -102,6 +103,9 @@ export function Pipeline({
         set(setState, stageStatus({ refine: 'running' }))
         setMsg('refine', 'API 요청 전송...')
         const llmResult = await refineMemo(userText, config, keys)
+        if (cancelled) return
+        console.log('[DEBUG refine] llmResult:', llmResult)
+        console.log('[DEBUG refine] imagePrompt:', JSON.stringify(llmResult.imagePrompt))
         setMsg('refine', `완료 (${llmResult.refinedText.length}자)`)
         set(setState, { ...stageStatus({ refine: 'done' }), llmResult })
         markDone('refine')
@@ -141,6 +145,7 @@ export function Pipeline({
           const imagePrompts = isDummyImageMode()
             ? new Array(aiCount).fill(llmResult.imagePrompt)
             : await generateImagePrompts(llmResult.imagePrompt, aiCount, config, keys)
+          console.log('[DEBUG image] 변형 프롬프트 배열:', imagePrompts)
           set(setState, { imageMessages: new Array(aiCount).fill('대기 중...') })
           const generatedBlobs = await generateImages(imagePrompts, config, keys, (i, msg) => {
             setState((prev) => {
@@ -160,6 +165,7 @@ export function Pipeline({
         if (!ambBlob) setMsg('audio', '오디오 없음 (건너뜀)')
 
         // ── 4. ffmpeg 합성 ────────────────────────────
+        if (cancelled) return
         currentStage = 'compose'
         markRunning('compose')
         set(setState, stageStatus({ compose: 'running' }))
@@ -188,6 +194,8 @@ export function Pipeline({
     }
 
     run()
+
+    return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

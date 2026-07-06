@@ -100,6 +100,7 @@ export async function generateImage(
   keys: ApiKeys,
   onProgress?: (msg: string) => void
 ): Promise<Blob> {
+  console.log('[DEBUG generateImage] provider=%s 최종 프롬프트 ←', config.image.provider, prompt)
   if (isDummyImageMode()) return getDummyImage()
   const { provider, model } = config.image
   if (provider === 'google') return imageGoogle(prompt, model, keys.google, onProgress)
