@@ -1,9 +1,10 @@
-import type { ApiKeys, ModelConfig } from '../types'
+import type { ApiKeys, ModelConfig, TTSAlignment } from '../types'
 import { OPENAI_BASE, GOOGLE_BASE, ELEVENLABS_BASE } from '../config/endpoints'
 
 export interface TTSResult {
   blob: Blob
   duration: number
+  alignment?: TTSAlignment
 }
 
 async function getBlobDuration(blob: Blob): Promise<number> {
@@ -92,16 +93,24 @@ function ttsLocal(text: string): TTSResult {
   return { blob, duration }
 }
 
+// with-timestamps 엔드포인트: 오디오(base64) + 문자 단위 alignment(자막 싱크용)를 함께 반환
 async function ttsElevenLabs(text: string, model: string, voice: string, key: string): Promise<TTSResult> {
-  const res = await fetch(`${ELEVENLABS_BASE}/text-to-speech/${voice}`, {
+  const res = await fetch(`${ELEVENLABS_BASE}/text-to-speech/${voice}/with-timestamps`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'xi-api-key': key },
     body: JSON.stringify({ text, model_id: model }),
   })
   if (!res.ok) throw new Error(`ElevenLabs TTS ${res.status}: ${await res.text()}`)
-  const blob = await res.blob()
+  const data = await res.json()
+  const bytes = Uint8Array.from(atob(data.audio_base64), (c) => c.charCodeAt(0))
+  const blob = new Blob([bytes], { type: 'audio/mpeg' })
   const duration = await getBlobDuration(blob)
-  return { blob, duration }
+  const alignment: TTSAlignment | undefined = data.alignment && {
+    characters: data.alignment.characters,
+    characterStartTimesSeconds: data.alignment.character_start_times_seconds,
+    characterEndTimesSeconds: data.alignment.character_end_times_seconds,
+  }
+  return { blob, duration, alignment }
 }
 
 export async function generateTTS(

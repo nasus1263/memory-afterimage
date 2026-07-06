@@ -1,7 +1,7 @@
 import { FFmpeg } from '@ffmpeg/ffmpeg'
 import { fetchFile } from '@ffmpeg/util'
 import { FFMPEG_CORE_BASE } from '../config/endpoints'
-import type { AspectRatio } from '../types'
+import type { AspectRatio, TTSAlignment } from '../types'
 
 export const SECONDS_PER_IMAGE = 7
 const FADE_DURATION = 1
@@ -98,21 +98,39 @@ export interface CaptionOptions {
   textColor: string
 }
 
-// 10자 초과 또는 5단어 단위로 자막을 끊는다.
-export function splitCaptionChunks(text: string): string[] {
-  const words = text.trim().split(/\s+/).filter(Boolean)
-  const chunks: string[] = []
-  let current: string[] = []
+interface CaptionChunk {
+  text: string
+  startIdx: number // 원본 text 기준 시작 문자 인덱스
+  endIdx: number // 끝 문자 인덱스 (exclusive)
+}
+
+// 10자 초과 또는 5단어 단위로 자막을 끊는다. alignment 매칭을 위해 원본 text상의 문자 인덱스도 함께 기록.
+function splitCaptionChunksWithIndices(text: string): CaptionChunk[] {
+  const words = [...text.matchAll(/\S+/g)]
+  const chunks: CaptionChunk[] = []
+  let current: RegExpMatchArray[] = []
+  const flush = () => {
+    if (!current.length) return
+    const first = current[0]
+    const last = current[current.length - 1]
+    chunks.push({
+      text: current.map((w) => w[0]).join(' '),
+      startIdx: first.index!,
+      endIdx: last.index! + last[0].length,
+    })
+    current = []
+  }
   for (const word of words) {
     current.push(word)
-    const joined = current.join(' ')
-    if (current.length >= 5 || joined.length > 10) {
-      chunks.push(joined)
-      current = []
-    }
+    const joined = current.map((w) => w[0]).join(' ')
+    if (current.length >= 5 || joined.length > 10) flush()
   }
-  if (current.length) chunks.push(current.join(' '))
+  flush()
   return chunks
+}
+
+export function splitCaptionChunks(text: string): string[] {
+  return splitCaptionChunksWithIndices(text).map((c) => c.text)
 }
 
 // 각 자막 청크에 글자 수 비례 시간 구간을 배정 (0..total)
@@ -127,6 +145,24 @@ function captionTimeRanges(chunks: string[], total: number): { start: number; en
     t += dur
   }
   return ranges
+}
+
+// ElevenLabs alignment(문자 단위 타임스탬프)로 자막 구간을 정확히 배정.
+// alignment 문자 수가 원본 text 길이와 다르면 (API가 정규화하는 경우) 안전하게 null 반환 → 호출부에서 비례 배분으로 폴백.
+function captionTimeRangesFromAlignment(
+  chunks: CaptionChunk[],
+  text: string,
+  alignment: TTSAlignment
+): { start: number; end: number }[] | null {
+  if (alignment.characters.length !== text.length) return null
+  return chunks.map(({ startIdx, endIdx }) => {
+    const s = Math.max(0, Math.min(startIdx, alignment.characterStartTimesSeconds.length - 1))
+    const e = Math.max(0, Math.min(endIdx - 1, alignment.characterEndTimesSeconds.length - 1))
+    return {
+      start: alignment.characterStartTimesSeconds[s],
+      end: alignment.characterEndTimesSeconds[e],
+    }
+  })
 }
 
 // 자막 청크 하나를 영상 프레임 크기의 투명 PNG로 렌더링. 자막 하단이 영상 하단으로부터 10% 위치에 오도록 배치.
@@ -177,11 +213,13 @@ export async function composeVideo(
   onProgress?: (p: number) => void,
   onMessage?: (msg: string) => void,
   caption?: CaptionOptions | null,
-  aspectRatio: AspectRatio = '16:9'
+  aspectRatio: AspectRatio = '16:9',
+  ttsAlignment?: TTSAlignment
 ): Promise<Blob> {
   const { w: OUT_W, h: OUT_H } = getOutDims(aspectRatio)
   const n = imageBlobs.length
-  const captionChunks = caption ? splitCaptionChunks(caption.text) : []
+  const captionChunksWithIdx = caption ? splitCaptionChunksWithIndices(caption.text) : []
+  const captionChunks = captionChunksWithIdx.map((c) => c.text)
   const hasCrossfade = n > 1
   const hasCaptions = captionChunks.length > 0
   // 최종 단계는 여러 ffmpeg 하위 작업(이미지 클립 n개 + 전환 + 자막 + 오디오 믹싱 + 최종 인코딩)으로 나뉘므로,
@@ -280,7 +318,9 @@ export async function composeVideo(
   // Step 2.5: burn in captions, timed proportionally across the total runtime
   if (caption && hasCaptions) {
     onMessage?.('자막 합성...')
-    const ranges = captionTimeRanges(captionChunks, total)
+    const ranges =
+      (ttsAlignment && captionTimeRangesFromAlignment(captionChunksWithIdx, caption.text, ttsAlignment)) ??
+      captionTimeRanges(captionChunks, total)
     const inputArgs: string[] = ['-i', videoFile]
     for (let i = 0; i < captionChunks.length; i++) {
       const png = await renderCaptionPNG(captionChunks[i], caption.bgColor, caption.textColor, OUT_W, OUT_H)
