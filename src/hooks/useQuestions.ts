@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ApiKeys, ChatQA, ModelConfig } from '../types'
 import { BASE_QUESTIONS } from '../config/questions'
 import { generateNextQuestion } from '../services/llm'
+import { stripEmoji } from '../utils/emoji'
 
 export function useQuestions(userText: string, config: ModelConfig, keys: ApiKeys) {
   const [index, setIndex] = useState(0)
@@ -31,7 +32,7 @@ export function useQuestions(userText: string, config: ModelConfig, keys: ApiKey
 
   function submitAnswer(answer: string) {
     if (question == null) return
-    setHistory((prev) => [...prev, { question, answer }])
+    setHistory((prev) => [...prev, { question, answer: stripEmoji(answer) }])
     setIndex((i) => i + 1)
   }
 

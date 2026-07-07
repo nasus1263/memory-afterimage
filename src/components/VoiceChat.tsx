@@ -9,6 +9,7 @@ import { speakText, stopSpeaking } from '../services/promptSpeech'
 import { useAlert } from '../hooks/useAlert'
 import { SparkleIcon, ReplayIcon, RetryIcon, ContinueIcon } from './icons'
 import { VoiceZone } from './VoiceZone'
+import { stripEmoji } from '../utils/emoji'
 
 interface Props {
   userText: string
@@ -19,8 +20,6 @@ interface Props {
 
 // 'manual' = STT 미지원 브라우저용 텍스트 직접입력 단계
 type Phase = 'speaking' | 'listening' | 'manual' | 'submitting'
-
-const EMOJI_RE = new RegExp('[\\p{Extended_Pictographic}\\u{FE0F}\\u{200D}]', 'gu')
 
 export function VoiceChat({ userText, keys, config, onComplete }: Props) {
   const { question, choices, done, history, error: fetchError, submitAnswer } = useQuestions(userText, config, keys)
@@ -39,10 +38,6 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
   useEffect(() => {
     if (phase === 'manual') manualInputRef.current?.focus()
   }, [phase])
-
-  function stripEmoji(text: string): string {
-    return text.replace(EMOJI_RE, '').replace(/\s+/g, ' ').trim()
-  }
 
   function speak(text: string, onEnd: () => void) {
     speakText(stripEmoji(text), keys.elevenlabs, onEnd)

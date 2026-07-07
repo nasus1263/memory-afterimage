@@ -5,6 +5,8 @@ import type { AspectRatio, TTSAlignment } from '../types'
 
 export const SECONDS_PER_IMAGE = 7
 const FADE_DURATION = 1
+// 오디오 트랙 시작 무음 패딩(초). adelay 값과 자막 타이밍 오프셋이 반드시 일치해야 한다.
+const AUDIO_START_DELAY = 1
 const OUT_FPS = 24
 const ZOOM_MAX = 1.15
 
@@ -320,9 +322,14 @@ export async function composeVideo(
   // Step 2.5: burn in captions, timed proportionally across the total runtime
   if (caption && hasCaptions) {
     onMessage?.('자막 합성...')
-    const ranges =
+    // 오디오가 adelay로 AUDIO_START_DELAY만큼 밀려서 재생되므로, 자막 구간도 같은 만큼 뒤로 민다.
+    const rawRanges =
       (ttsAlignment && captionTimeRangesFromAlignment(captionChunksWithIdx, caption.text, ttsAlignment)) ??
-      captionTimeRanges(captionChunks, total)
+      captionTimeRanges(captionChunks, ttsDuration)
+    const ranges = rawRanges.map(({ start, end }) => ({
+      start: start + AUDIO_START_DELAY,
+      end: end + AUDIO_START_DELAY,
+    }))
     const inputArgs: string[] = ['-i', videoFile]
     for (let i = 0; i < captionChunks.length; i++) {
       const png = await renderCaptionPNG(captionChunks[i], caption.bgColor, caption.textColor, OUT_W, OUT_H)
@@ -367,7 +374,7 @@ export async function composeVideo(
       '-stream_loop', '-1',
       '-i', 'ambient.mp3',
       '-filter_complex',
-      `[0:a]adelay=1000:all=1,loudnorm=I=-16:TP=-1.5:LRA=11[a1];` +
+      `[0:a]adelay=${AUDIO_START_DELAY * 1000}:all=1,loudnorm=I=-16:TP=-1.5:LRA=11[a1];` +
       `[1:a]loudnorm=I=-30:TP=-1.5:LRA=11,atrim=duration=${total}[a2];` +
       `[a1][a2]amix=inputs=2:duration=first:normalize=0[aout]`,
       '-map', '[aout]',
@@ -378,7 +385,7 @@ export async function composeVideo(
     await execChecked(ff, [
       '-y',
       '-i', srcTts,
-      '-filter_complex', '[0:a]adelay=1000:all=1[aout]',
+      '-filter_complex', `[0:a]adelay=${AUDIO_START_DELAY * 1000}:all=1[aout]`,
       '-map', '[aout]',
       '-t', String(total),
       'mixed.mp3',
