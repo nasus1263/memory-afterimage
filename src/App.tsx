@@ -204,7 +204,7 @@ export default function App() {
       applyProgress(progress)
       navigate(progress.route)
     } else {
-      navigate('/new')
+      navigate('/input')
     }
   }
 
