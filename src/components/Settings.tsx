@@ -5,7 +5,7 @@ import {
   IMAGE_MODELS,
 } from '../config/models'
 import { isAutoAnswerMode, setAutoAnswerMode, isDummyImageMode, setDummyImageMode } from '../services/debug'
-import { isAnswerAutoFillEnabled, setAnswerAutoFillEnabled } from '../store/settings'
+import { isAnswerAutoFillEnabled, setAnswerAutoFillEnabled, isProgressAutoSaveEnabled, setProgressAutoSaveEnabled } from '../store/settings'
 import { ApiTest } from './ApiTest'
 
 interface Props {
@@ -52,10 +52,16 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
   const [autoAnswer, setAutoAnswer] = useState(isAutoAnswerMode())
   const [dummyImage, setDummyImage] = useState(isDummyImageMode())
   const [answerAutoFill, setAnswerAutoFill] = useState(isAnswerAutoFillEnabled())
+  const [progressAutoSave, setProgressAutoSave] = useState(isProgressAutoSaveEnabled())
 
   function toggleAutoAnswer(on: boolean) {
     setAutoAnswerMode(on)
     setAutoAnswer(on)
+  }
+
+  function toggleProgressAutoSave(on: boolean) {
+    setProgressAutoSaveEnabled(on)
+    setProgressAutoSave(on)
   }
 
   function toggleAnswerAutoFill(on: boolean) {
@@ -81,6 +87,20 @@ export function Settings({ keys, config, onKeys, onConfig }: Props) {
           />
           <span className="text-text text-sm font-medium">답변 자동 생성 버튼 활성화</span>
           <span className="inline text-[12px] text-text-dim ml-2">추가 질문 답변 화면마다 추론 모델로 답변 초안을 생성하는 버튼 표시 (음성 답변에서는 답변만 채우고 다음 단계로 자동 진행하지 않음)</span>
+        </label>
+      </section>
+
+      <section>
+        <h3 className="text-gold-dim text-[12px] tracking-wider uppercase mb-3.5">진행 상황 자동 저장</h3>
+        <label className="flex items-start gap-2.5 cursor-pointer">
+          <input
+            className="mt-0.5 accent-gold-dim cursor-pointer shrink-0"
+            type="checkbox"
+            checked={progressAutoSave}
+            onChange={(e) => toggleProgressAutoSave(e.target.checked)}
+          />
+          <span className="text-text text-sm font-medium">진행 상황 자동 저장(이어하기) 활성화</span>
+          <span className="inline text-[12px] text-text-dim ml-2">켜면 작업 진행 상황을 저장해 다음 접속 시 이어서 진행. 꺼져 있으면(기본값) 사이트에 들어올 때 항상 메인 화면부터 시작</span>
         </label>
       </section>
 

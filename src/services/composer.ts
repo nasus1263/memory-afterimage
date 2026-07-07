@@ -356,13 +356,20 @@ export async function composeVideo(
   onMessage?.('오디오 믹싱...')
   beginStep()
   if (ambientBlob) {
+    // Freesound 배경음은 파일마다 원래 볼륨이 제각각이라 고정 배율로는 밸런스가 불안정하다
+    // (원래 작은 파일은 안 들리고, 큰 파일은 음성을 묻는다). 그래서 volume 배율 대신
+    // loudnorm(EBU R128 라우드니스 정규화)으로 각 트랙을 목표 LUFS에 맞춘다 → 파일 원본
+    // 볼륨과 무관하게 항상 같은 밸런스. 음성 -16 LUFS(또렷·크게), 배경음 -30 LUFS(음성보다
+    // ~14 LUFS 낮음 = 은은하게 뒤). amix normalize=0으로 섞을 때 자동 절반 감쇠를 막는다.
     await execChecked(ff, [
       '-y',
       '-i', srcTts,
       '-stream_loop', '-1',
       '-i', 'ambient.mp3',
       '-filter_complex',
-      `[0:a]adelay=1000:all=1[a1];[1:a]volume=2.0,atrim=duration=${total}[a2];[a1][a2]amix=inputs=2:duration=first[aout]`,
+      `[0:a]adelay=1000:all=1,loudnorm=I=-16:TP=-1.5:LRA=11[a1];` +
+      `[1:a]loudnorm=I=-30:TP=-1.5:LRA=11,atrim=duration=${total}[a2];` +
+      `[a1][a2]amix=inputs=2:duration=first:normalize=0[aout]`,
       '-map', '[aout]',
       '-t', String(total),
       'mixed.mp3',

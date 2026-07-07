@@ -46,3 +46,16 @@ export function isAnswerAutoFillEnabled(): boolean {
 export function setAnswerAutoFillEnabled(on: boolean) {
   localStorage.setItem(ANSWER_AUTOFILL_KEY, on ? 'true' : 'false')
 }
+
+const PROGRESS_AUTOSAVE_KEY = 'memory_progress_autosave_enabled'
+
+// 진행 상황 자동 저장(이어하기). 기본 OFF → 루트 접속 시 항상 메인부터 시작.
+// 켜면 각 단계에서 진행 상황을 저장해 다음 접속 시 이어할 수 있음.
+export function isProgressAutoSaveEnabled(): boolean {
+  const v = localStorage.getItem(PROGRESS_AUTOSAVE_KEY)
+  return v === null ? false : v === 'true' // default OFF
+}
+
+export function setProgressAutoSaveEnabled(on: boolean) {
+  localStorage.setItem(PROGRESS_AUTOSAVE_KEY, on ? 'true' : 'false')
+}

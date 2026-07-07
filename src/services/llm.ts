@@ -1,5 +1,5 @@
 import type { ApiKeys, ChatQA, LLMResult, ModelConfig } from '../types'
-import { GOOGLE_BASE, NVIDIA_LLM_BASE } from '../config/endpoints'
+import { GOOGLE_BASE, NVIDIA_LLM_BASE, OLLAMA_BASE } from '../config/endpoints'
 
 const SYSTEM_PROMPT = `You are a creative AI for an immersive memory art installation.
 The user will describe a travel memory. You must output JSON with exactly these fields:
@@ -8,6 +8,15 @@ The user will describe a travel memory. You must output JSON with exactly these 
   "imagePrompt": "English image generation prompt (cinematic, painterly, detailed, evocative — describe the scene as idealized memory, 100-150 words)",
   "audioKeyword": "waves" // exactly 1 single English ambient sound word, no phrases (e.g. "waves", "rain", "cicadas")
 }
+CRITICAL LANGUAGE RULES — each field has a FIXED language, regardless of the input language:
+- "refinedText" MUST be Korean (한국어), written in Hangul ONLY. It is narration spoken by a Korean TTS voice
+  that CRASHES on non-Hangul characters. Therefore transliterate EVERY foreign word, place name, and proper noun
+  into Hangul using Korean loanword spelling — never leave Latin letters. Examples: "CN Tower"→"씨엔 타워",
+  "Niagara Falls"→"나이아가라 폭포", "Eiffel"→"에펠", "Louvre"→"루브르". No English letters may appear in refinedText.
+- "imagePrompt" MUST be English ONLY. It is fed to an image model trained on English; Korean or any non-English
+  text produces wrong, unrelated images. Do NOT write imagePrompt in Korean under any circumstances — translate
+  the scene into natural English. Every word of imagePrompt must be English.
+- "audioKeyword" MUST be a single English word.
 Output ONLY the JSON, no markdown, no explanation.`
 
 const KEYWORD_SYSTEM_PROMPT = `You are a creative AI for an immersive memory art installation.
@@ -22,6 +31,9 @@ Generate exactly N distinct English image prompts (cinematic, painterly, detaile
 the same mood, color palette, and style as the base prompt, but each depicts a clearly different moment, angle, or detail of
 the same memory (e.g. different framing, time of moment, focal subject) — like consecutive frames from the same scene, not
 unrelated images.
+CRITICAL: every prompt MUST be written in English ONLY — never Korean or any other language. These are fed to an
+image model trained on English; non-English text produces wrong images. Even if the base prompt is not English,
+output all prompts in natural English.
 Output ONLY JSON: { "prompts": ["...", "...", ...] } with exactly N items, no markdown, no explanation.`
 
 const QUESTIONS_SYSTEM_PROMPT = `You are a creative interviewer AI for an immersive memory art installation.
@@ -76,6 +88,25 @@ function repairTruncatedJSON(s: string): string {
   return out
 }
 
+// 이미지 프롬프트는 반드시 영어여야 한다(FLUX 등 영어 학습 모델). 로컬 소형 모델이 종종 한국어로
+// 생성하므로, 한글 음절이 섞이면 실패로 간주해 withRetry가 재생성하도록 한다.
+const HANGUL_RE = /[가-힣]/
+function assertEnglishImagePrompt(prompt: string): void {
+  if (HANGUL_RE.test(prompt)) {
+    throw new Error(`imagePrompt must be English but contains Korean: ${prompt.slice(0, 40)}...`)
+  }
+}
+
+// refinedText는 GPT-SoVITS(한국어 전용, 비한글에 크래시)로 낭독되므로 라틴 문자가 없어야 한다.
+// 로컬 모델이 고유명사를 영어로 남기면 실패로 간주해 withRetry가 재생성하도록 한다.
+const LATIN_RE = /[A-Za-z]/
+function assertHangulNarration(text: string): void {
+  if (LATIN_RE.test(text)) {
+    const latin = text.match(/[A-Za-z]+/g)?.slice(0, 5).join(', ')
+    throw new Error(`refinedText must be Hangul-only but contains Latin letters: ${latin}`)
+  }
+}
+
 function extractJSON<T>(raw: string): T {
   // strip <think>...</think> blocks (DeepSeek reasoning models)
   const stripped = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim()
@@ -125,6 +156,27 @@ async function callGoogle(systemPrompt: string, text: string, model: string, key
   return data.candidates[0].content.parts[0].text
 }
 
+async function callOllama(systemPrompt: string, text: string, model: string, baseUrl: string): Promise<string> {
+  // Ollama OpenAI 호환 엔드포인트. 로컬이라 인증 없음.
+  // response_format json_object로 소형 모델의 JSON 이탈을 억제(extractJSON/withRetry가 백업).
+  // num_ctx는 이 경로에서 지원되지 않아, 긴 refinedText는 max_tokens로 출력 여유를 확보.
+  const res = await fetch(`${baseUrl}/chat/completions`, {
+    method: 'POST',
+    signal: makeSignal(),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: text }],
+      max_tokens: 2048,
+      temperature: 0.7,
+      response_format: { type: 'json_object' },
+    }),
+  })
+  if (!res.ok) throw new Error(`Ollama LLM ${res.status}: ${await res.text()}`)
+  const data = await res.json()
+  return data.choices[0].message.content
+}
+
 async function callProvider(
   systemPrompt: string,
   userText: string,
@@ -134,6 +186,7 @@ async function callProvider(
   const { provider, model } = config.llm
   if (provider === 'nvidia') return callNvidia(systemPrompt, userText, model, keys.nvidia, NVIDIA_LLM_BASE)
   if (provider === 'google') return callGoogle(systemPrompt, userText, model, keys.google)
+  if (provider === 'ollama') return callOllama(systemPrompt, userText, model, OLLAMA_BASE)
   throw new Error(`Unknown LLM provider: ${provider}`)
 }
 
@@ -160,7 +213,10 @@ export async function refineMemo(
 ): Promise<LLMResult> {
   return withRetry(async () => {
     const raw = await callProvider(SYSTEM_PROMPT, userText, config, keys)
-    return extractJSON<LLMResult>(raw)
+    const result = extractJSON<LLMResult>(raw)
+    assertEnglishImagePrompt(result.imagePrompt)
+    assertHangulNarration(result.refinedText)
+    return result
   })
 }
 
@@ -191,8 +247,12 @@ export async function generateImagePrompts(
       keys
     )
     const { prompts } = extractJSON<{ prompts: string[] }>(raw)
-    if (!Array.isArray(prompts) || prompts.length !== count) throw new Error(`Expected ${count} image prompts, got ${prompts?.length}`)
-    return prompts
+    // LLM이 종종 요청한 개수보다 1~2개 더 반환한다(특히 소형 모델). 초과분은 잘라내고,
+    // 부족할 때만 에러를 던져 재시도를 유발한다.
+    if (!Array.isArray(prompts) || prompts.length < count) throw new Error(`Expected ${count} image prompts, got ${prompts?.length}`)
+    const sliced = prompts.slice(0, count)
+    sliced.forEach(assertEnglishImagePrompt)
+    return sliced
   })
 }
 

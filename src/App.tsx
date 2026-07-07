@@ -12,6 +12,7 @@ import { VoiceChat } from './components/VoiceChat'
 import { saveMemory } from './services/memories'
 import { SECONDS_PER_IMAGE } from './services/composer'
 import { loadProgress, saveProgress, clearProgress, type SessionProgress } from './store/progress'
+import { isProgressAutoSaveEnabled } from './store/settings'
 import { NewMark, InputMark, ChatMark, ProcessMark, SettingsMark, MemoriesMark, type MarkComponentProps } from './components/watermarks'
 import { KakaoTalkIcon } from './components/icons'
 import { useAlert } from './hooks/useAlert'
@@ -89,7 +90,9 @@ export default function App() {
   }
 
   function goHome(replace = false) {
-    const progress = loadProgress()
+    // 진행 상황 자동 저장(이어하기)이 켜져 있을 때만 저장된 지점으로 복귀.
+    // 꺼져 있으면(기본값) 항상 메인(입력 화면)부터 시작한다.
+    const progress = isProgressAutoSaveEnabled() ? loadProgress() : null
     if (progress) {
       applyProgress(progress)
       navigate(progress.route, replace)
