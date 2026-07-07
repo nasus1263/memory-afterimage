@@ -7,6 +7,7 @@ import { isAnswerAutoFillEnabled } from '../store/settings'
 import { useAlert } from '../hooks/useAlert'
 import { SparkleIcon, ReplayIcon, RetryIcon, ContinueIcon } from './icons'
 import { VoiceZone } from './VoiceZone'
+import { setVoiceRef } from '../services/voiceRef'
 
 interface Props {
   apiKey?: string
@@ -52,7 +53,18 @@ export function VoiceInput({ apiKey, keys, config, onComplete, onListeningChange
 
   function continueToNext() {
     const text = (answerOverride ?? rec.finalText).trim()
+    // 즉석 클로닝: 사용자가 실제로 말한 경우에만(자동생성 답변 아님) 그 녹음+대사를 세션 참조로 저장.
+    // rec.getRecordedBlob()은 recorder.onstop이 최종 청크까지 flush할 때까지 기다린 Promise다
+    // → 잘린 참조로 인한 "엉뚱한 목소리/앞부분 소실"을 방지. 저장은 module 홀더라 화면 전환과 무관.
+    const spoken = rec.finalText.trim()
+    const captureRef = answerOverride == null && spoken.length > 0
+    const blobReady = rec.getRecordedBlob()
     rec.stop()
+    if (captureRef) {
+      blobReady.then((blob) => {
+        if (blob && blob.size > 0) setVoiceRef({ blob, text: spoken })
+      })
+    }
     onComplete(text)
   }
 

@@ -18,7 +18,11 @@ export const OLLAMA_BASE = '/ollama/v1'
 // prod(GitHub Pages)에는 로컬 서버가 없으므로 dev 전용 기능.
 export const GPT_SOVITS_BASE = '/gpt-sovits'
 
-// 고정 참조(사용자 목소리) — 서버 로컬 파일 경로 + 그 wav의 실제 대사(prompt_text).
+// 즉석 클로닝: 브라우저 녹음 blob을 서버에 올려 refer_wav_path(로컬 경로)로 바꿔주는 엔드포인트.
+export const GPT_SOVITS_UPLOAD_REF = `${GPT_SOVITS_BASE}/upload_ref`
+
+// 고정 참조(폴백용 사용자 목소리) — 서버 로컬 파일 경로 + 그 wav의 실제 대사(prompt_text).
+// 즉석 참조(방금 녹음한 목소리)가 없을 때만 쓰인다. 새로고침으로 세션 참조가 사라진 경우 등.
 // GPT-SoVITS는 refer_wav_path(서버가 읽는 경로)와 prompt_text가 한 쌍이어야 함.
 // 다른 목소리로 바꾸려면: 새 wav를 아래 경로에 두고 REF_PROMPT_TEXT를 그 대사로 교체.
 export const GPT_SOVITS_REF_WAV_PATH =
