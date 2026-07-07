@@ -23,16 +23,14 @@ type Phase = 'speaking' | 'listening' | 'manual' | 'submitting'
 const EMOJI_RE = new RegExp('[\\p{Extended_Pictographic}\\u{FE0F}\\u{200D}]', 'gu')
 
 export function VoiceChat({ userText, keys, config, onComplete }: Props) {
-  const { questions, choices, initialAnswers, error: fetchError } = useQuestions(userText, config, keys)
-  const [currentIndex, setCurrentIndex] = useState(0)
+  const { question, choices, done, history, error: fetchError, submitAnswer } = useQuestions(userText, config, keys)
   const [phase, setPhase] = useState<Phase>('speaking')
   const [manualText, setManualText] = useState('')
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [answerOverride, setAnswerOverride] = useState<string | null>(null)
   const [generatingAnswer, setGeneratingAnswer] = useState(false)
 
-  const answersRef = useRef<string[]>([])
-  const startedRef = useRef(false)
+  const askedForRef = useRef<string | null>(null)
   const manualInputRef = useRef<HTMLInputElement>(null)
 
   const rec = useSpeechRecognition()
@@ -50,36 +48,37 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
     speakText(stripEmoji(text), keys.elevenlabs, onEnd)
   }
 
-  function askQuestion(i: number) {
-    if (!questions) return
-    if (i >= questions.length) { finalize(); return }
-    setCurrentIndex(i)
+  useEffect(() => {
+    if (!question || askedForRef.current === question) return
+    askedForRef.current = question
     setManualText('')
     setAnswerOverride(null)
+    if (isAutoAnswerMode()) {
+      generateSingleAnswer(userText, question, config, keys)
+        .then((answer) => submitAnswer(answer))
+        .catch((e: any) => setSubmitError(e?.message ?? String(e)))
+      return
+    }
     setPhase('speaking')
-    speak(questions[i], () => {
+    speak(question, () => {
       if (rec.unsupported) { setPhase('manual'); return }
       setPhase('listening')
       rec.start()
     })
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [question])
 
   useEffect(() => {
-    if (!questions || startedRef.current) return
-    startedRef.current = true
-    answersRef.current = [...initialAnswers]
-    if (isAutoAnswerMode()) finalize()
-    else askQuestion(0)
+    if (done) finalize()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questions])
+  }, [done])
 
   function commitAnswer(answer: string) {
-    answersRef.current[currentIndex] = answer
-    askQuestion(currentIndex + 1)
+    submitAnswer(answer)
   }
 
   function selectChoice(choiceIndex: number) {
-    const answer = choices[currentIndex]?.[choiceIndex] ?? ''
+    const answer = choices[choiceIndex] ?? ''
     stopSpeaking()
     rec.stop()
     commitAnswer(answer)
@@ -98,10 +97,10 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
   }
 
   async function autoFillAnswer() {
-    if (!questions || generatingAnswer) return
+    if (!question || generatingAnswer) return
     setGeneratingAnswer(true)
     try {
-      const answer = await generateSingleAnswer(userText, questions[currentIndex], config, keys)
+      const answer = await generateSingleAnswer(userText, question, config, keys)
       if (phase === 'manual') setManualText(answer)
       else setAnswerOverride(answer)
     } catch (e: any) {
@@ -113,11 +112,11 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
   }
 
   function replayQuestion() {
-    if (!questions) return
+    if (!question) return
     const resumePhase = phase
     if (resumePhase === 'listening') rec.stop()
     setPhase('speaking')
-    speak(questions[currentIndex], () => {
+    speak(question, () => {
       if (resumePhase === 'listening' && !rec.unsupported) {
         setPhase('listening')
         rec.start()
@@ -128,19 +127,17 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
   }
 
   async function finalize() {
-    if (!questions) return
     setSubmitError(null)
     setPhase('submitting')
     try {
-      const qa = questions.map((q, i) => ({ question: q, answer: answersRef.current[i] ?? '' }))
-      const summary = await summarizeChat(userText, qa, config, keys)
+      const summary = await summarizeChat(userText, history, config, keys)
       onComplete(summary)
     } catch (e: any) {
       setSubmitError(e?.message ?? String(e))
     }
   }
 
-  if (fetchError && !questions) {
+  if (fetchError && !question) {
     return (
       <section className="input-card" aria-label="추가 질문">
         <p className="notice error">오류: {fetchError}</p>
@@ -148,7 +145,7 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
     )
   }
 
-  if (!questions || (isAutoAnswerMode() && phase !== 'submitting')) {
+  if (!question || (isAutoAnswerMode() && phase !== 'submitting')) {
     return (
       <section className="input-card" aria-label="추가 질문 준비 중" aria-live="polite">
         <div className="memory-orb" aria-hidden="true">
@@ -159,7 +156,7 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
     )
   }
 
-  const currentChoices = choices[currentIndex] ?? []
+  const currentChoices = choices
 
   return (
     <section className="input-card" aria-label="추가 질문 (음성)">
@@ -178,7 +175,7 @@ export function VoiceChat({ userText, keys, config, onComplete }: Props) {
         <VoiceZone
           active={phase === 'listening'}
           interactive={false}
-          title={questions[currentIndex]}
+          title={question}
           subtitle={
             phase === 'speaking' ? '질문을 듣고 있어요...'
             : phase === 'listening' ? '말씀해주세요. 끝나면 계속하기를 눌러주세요.'

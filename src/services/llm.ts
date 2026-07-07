@@ -36,26 +36,16 @@ image model trained on English; non-English text produces wrong images. Even if 
 output all prompts in natural English.
 Output ONLY JSON: { "prompts": ["...", "...", ...] } with exactly N items, no markdown, no explanation.`
 
-const QUESTIONS_SYSTEM_PROMPT = `You are a creative interviewer AI for an immersive memory art installation.
-You will be given a base list of Korean interview questions and the user's initial travel-memory description.
-Personalize and refine each question so it naturally follows from what the user already said, digging for
-concrete sensory and emotional detail without repeating information the user already gave.
-Keep exactly the same number of questions as the base list, in Korean, each a single short question (≤40 chars).
-For each question, ALSO generate exactly 4 short, distinct, plausible Korean answer choices (each ≤20 chars) the
-user could quickly pick instead of typing, relevant to that question and the user's memory context.
-Prepend each question and each choice with one relevant emoji followed by a space (e.g. "🌅 노을이 예뻤나요?").
-Output ONLY JSON: { "questions": ["...", ...], "choices": [["...","...","...","..."], ...] } — "questions" and
-"choices" must each have exactly N items matching the base list length, and each "choices" entry must have exactly
-4 strings, no markdown, no explanation.`
-
-const QUESTIONS_WITH_ANSWERS_SYSTEM_PROMPT = `You are a creative interviewer AI for an immersive memory art installation, currently in a debug/testing mode.
-You will be given a base list of Korean interview questions and the user's initial travel-memory description.
-Personalize and refine each question the same way you normally would, but ALSO write a short plausible Korean
-sample answer for each question, as if the user had answered it, consistent with the user's memory description.
-Keep exactly the same number of questions as the base list, in Korean, each question a single short line (≤40 chars)
-and each answer a short natural sentence (≤60 chars).
-Prepend each question with one relevant emoji followed by a space (e.g. "🌅 노을이 예뻤나요?").
-Output ONLY JSON: { "questions": ["...", ...], "answers": ["...", ...] } with exactly N items each, matching the base list length, no markdown, no explanation.`
+const NEXT_QUESTION_SYSTEM_PROMPT = `You are a creative interviewer AI for an immersive memory art installation.
+You will be given the user's initial travel-memory description, the conversation so far (prior question/answer
+pairs, if any), and one base Korean interview question topic. Personalize and refine that ONE base question so it
+naturally follows from everything already said, digging for concrete sensory and emotional detail without
+repeating information already given. Output a single short Korean question (≤40 chars), prepended with one
+relevant emoji followed by a space (e.g. "🌅 노을이 예뻤나요?").
+ALSO generate exactly 4 short, distinct, plausible Korean answer choices (each ≤20 chars, each prepended with one
+relevant emoji) the user could quickly pick instead of typing, relevant to that question and everything said so far.
+Output ONLY JSON: { "question": "...", "choices": ["...","...","...","..."] } — "choices" must have exactly 4
+strings, no markdown, no explanation.`
 
 const SINGLE_ANSWER_SYSTEM_PROMPT = `You are helping a user recall a travel memory for an immersive memory art installation.
 You will be given the user's initial travel-memory description and one follow-up interview question.
@@ -256,51 +246,31 @@ export async function generateImagePrompts(
   })
 }
 
-export async function generateQuestions(
+export async function generateNextQuestion(
   userText: string,
-  baseQuestions: string[],
+  baseQuestion: string,
+  history: ChatQA[],
   config: ModelConfig,
   keys: ApiKeys
-): Promise<{ questions: string[]; choices: string[][] }> {
+): Promise<{ question: string; choices: string[] }> {
   return withRetry(async () => {
+    const historyText = history.length
+      ? `\n\nConversation so far:\n${history.map((h) => `Q: ${h.question}\nA: ${h.answer}`).join('\n\n')}`
+      : ''
     const raw = await callProvider(
-      QUESTIONS_SYSTEM_PROMPT,
-      `Base questions:\n${baseQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\nUser's memory:\n${userText}`,
+      NEXT_QUESTION_SYSTEM_PROMPT,
+      `User's memory:\n${userText}${historyText}\n\nBase question to personalize:\n${baseQuestion}`,
       config,
       keys
     )
-    const { questions, choices } = extractJSON<{ questions: string[]; choices: string[][] }>(raw)
-    if (!Array.isArray(questions) || questions.length !== baseQuestions.length) {
-      throw new Error(`Expected ${baseQuestions.length} questions, got ${questions?.length}`)
+    const { question, choices } = extractJSON<{ question: string; choices: string[] }>(raw)
+    if (typeof question !== 'string' || !question) {
+      throw new Error(`Expected a question string, got ${JSON.stringify(question)}`)
     }
-    if (!Array.isArray(choices) || choices.length !== baseQuestions.length || choices.some((c) => !Array.isArray(c) || c.length !== 4)) {
-      throw new Error(`Expected ${baseQuestions.length} choice groups of 4, got ${JSON.stringify(choices)}`)
+    if (!Array.isArray(choices) || choices.length !== 4) {
+      throw new Error(`Expected 4 choices, got ${JSON.stringify(choices)}`)
     }
-    return { questions, choices }
-  })
-}
-
-export async function generateQuestionsWithAnswers(
-  userText: string,
-  baseQuestions: string[],
-  config: ModelConfig,
-  keys: ApiKeys
-): Promise<{ questions: string[]; answers: string[] }> {
-  return withRetry(async () => {
-    const raw = await callProvider(
-      QUESTIONS_WITH_ANSWERS_SYSTEM_PROMPT,
-      `Base questions:\n${baseQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\nUser's memory:\n${userText}`,
-      config,
-      keys
-    )
-    const { questions, answers } = extractJSON<{ questions: string[]; answers: string[] }>(raw)
-    if (!Array.isArray(questions) || questions.length !== baseQuestions.length) {
-      throw new Error(`Expected ${baseQuestions.length} questions, got ${questions?.length}`)
-    }
-    if (!Array.isArray(answers) || answers.length !== baseQuestions.length) {
-      throw new Error(`Expected ${baseQuestions.length} answers, got ${answers?.length}`)
-    }
-    return { questions, answers }
+    return { question, choices }
   })
 }
 
